@@ -459,21 +459,38 @@ const getLeaveBalances = asyncHandler(async (req, res) => {
     const { year } = req.query;
     const currentUser = req.session.user;
     
+    console.log(`DEBUG: getLeaveBalances called with employeeId: ${employeeId}, year: ${year}`);
+    console.log(`DEBUG: Current user role: ${currentUser.role}, employee_id: ${currentUser.employee_id}`);
+    
+    // Validate employeeId
+    if (!employeeId || isNaN(parseInt(employeeId))) {
+        throw new ValidationError('Valid employee ID is required');
+    }
+    
     // Check permissions
     if (currentUser.role !== 'admin' && parseInt(employeeId) !== currentUser.employee_id) {
+        console.log(`DEBUG: Access denied - user ${currentUser.employee_id} trying to access employee ${employeeId}`);
         throw new ValidationError('Access denied');
     }
     
-    const result = await LeaveBalance.getEmployeeBalances(employeeId, year);
-    
-    if (!result.success) {
-        throw new Error(result.error);
+    try {
+        const result = await LeaveBalance.getEmployeeBalances(employeeId, year);
+        
+        console.log(`DEBUG: LeaveBalance.getEmployeeBalances result:`, result);
+        
+        if (!result.success) {
+            console.error(`DEBUG: Error from LeaveBalance.getEmployeeBalances:`, result.error);
+            throw new Error(result.error);
+        }
+        
+        res.json({
+            success: true,
+            data: result.data
+        });
+    } catch (error) {
+        console.error(`DEBUG: Exception in getLeaveBalances:`, error);
+        throw error;
     }
-    
-    res.json({
-        success: true,
-        data: result.data
-    });
 });
 
 // GET /api/leaves/statistics - Get leave statistics

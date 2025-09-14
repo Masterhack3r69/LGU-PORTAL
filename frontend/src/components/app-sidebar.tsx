@@ -3,7 +3,6 @@ import {
   Users,
   Calendar,
   DollarSign,
-  FileText,
   BarChart3,
   Settings,
   Building2,
@@ -64,6 +63,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: "Add Employee",
           url: "/employees/new",
         },
+        {
+          title: "Document Approval",
+          url: "/employees/documents",
+        },
       ],
     });
   }
@@ -72,85 +75,36 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   // Leave Management - Different items for different roles
   navMain.push({
     title: "Leave Management",
-    url: "/leaves",
+    url: user?.role === 'admin' ? "/leaves" : "/leaves/employee",
     icon: Calendar,
-    items: user?.role === 'admin' ? [
-      {
-        title: "Leave Applications",
-        url: "/leaves/applications",
-      },
-      {
-        title: "Leave Approvals",
-        url: "/leaves/approvals",
-      },
-      {
-        title: "Leave Balances",
-        url: "/leaves/balances",
-      },
-      {
-        title: "Leave Types",
-        url: "/leaves/types",
-      },
-    ] : [
-      // Employees only see their own applications and balances
-      {
-        title: "My Applications",
-        url: "/leaves/applications",
-      },
-      {
-        title: "My Leave Balance",
-        url: "/leaves/balances",
-      },
-    ],
+    items: [], // No dropdown items since everything is in tabs
   });
 
-  // Benefits - Always shown but with different access levels
+  // Employee Payroll - Show for employees only
+  if (user?.role === 'employee') {
+    navMain.push({
+      title: "My Payroll",
+      url: "/my-payroll",
+      icon: DollarSign,
+      items: [],
+    });
+  }
+
+  // Benefits - Direct link since main interface uses tabs
   navMain.push({
-    title: "Benefits",
+    title: user?.role === 'admin' ? "Benefits Management" : "My Benefits",
     url: "/benefits",
     icon: Award,
-    items: user?.role === 'admin' ? [
-      {
-        title: "Employee Benefits",
-        url: "/benefits/employee",
-      },
-      {
-        title: "Benefit Types",
-        url: "/benefits/types",
-      },
-      {
-        title: "Annual Benefits",
-        url: "/benefits/annual",
-      }
-    ] : [
-      // Employees only see their own benefits
-      {
-        title: "My Benefits",
-        url: "/benefits/employee",
-      },
-    ],
+    items: [], // No dropdown items since everything is in tabs
   });
 
-  // Documents - Only show for admins
+  // Compensation - Admin only
   if (user?.role === 'admin') {
     navMain.push({
-      title: "Document Management",
-      url: "/documents",
-      icon: FileText,
-      items: [
-        {
-          title: "Document Review",
-          url: "/admin/documents",
-        },
-        {
-          title: "Document Types",
-          url: "/admin/document-types",
-        },
-        {
-          title: "All Documents",
-          url: "/documents",
-        }
-      ],
+      title: "Compensation Management",
+      url: "/compensation",
+      icon: DollarSign,
+      items: [],
     });
   }
 
@@ -188,24 +142,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: "Payroll Management",
       url: "/payroll",
       icon: DollarSign,
-      items: [
-        {
-          title: "Payroll Periods",
-          url: "/payroll/periods",
-        },
-        {
-          title: "Generate Payroll",
-          url: "/payroll/generate",
-        },
-        {
-          title: "Payroll History",
-          url: "/payroll/history",
-        },
-        {
-          title: "Compensation",
-          url: "/payroll/compensation",
-        },
-      ],
+      items: [],
     });
 
     // Add System Administration for admins only

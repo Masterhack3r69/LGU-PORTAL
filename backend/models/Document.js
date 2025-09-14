@@ -19,6 +19,14 @@ class Document {
         this.reviewed_at = data.reviewed_at || null;
         this.review_notes = data.review_notes || null;
         this.description = data.description || null;
+        
+        // Joined fields from database queries
+        this.document_type_name = data.document_type_name || null;
+        this.document_type_description = data.document_type_description || null;
+        this.employee_name = data.employee_name || null;
+        this.employee_number = data.employee_number || null;
+        this.uploaded_by_username = data.uploaded_by_username || null;
+        this.reviewed_by_username = data.reviewed_by_username || null;
     }
 
     // Validate document data
@@ -267,8 +275,10 @@ class Document {
         query += ' ORDER BY ed.upload_date DESC';
 
         if (filters.limit) {
-            query += ' LIMIT ?';
-            params.push(parseInt(filters.limit));
+            const limitValue = parseInt(filters.limit);
+            if (!isNaN(limitValue) && limitValue > 0) {
+                query += ` LIMIT ${limitValue}`;
+            }
         }
 
         const result = await executeQuery(query, params);
@@ -416,9 +426,9 @@ class Document {
 
         const queries = [
             `SELECT COUNT(*) as total FROM employee_documents ed ${whereClause}`,
-            `SELECT COUNT(*) as total FROM employee_documents ed ${whereClause} AND ed.status = 'Pending'`,
-            `SELECT COUNT(*) as total FROM employee_documents ed ${whereClause} AND ed.status = 'Approved'`,
-            `SELECT COUNT(*) as total FROM employee_documents ed ${whereClause} AND ed.status = 'Rejected'`,
+            `SELECT COUNT(*) as total FROM employee_documents ed ${whereClause}${whereClause ? ' AND' : 'WHERE'} ed.status = 'Pending'`,
+            `SELECT COUNT(*) as total FROM employee_documents ed ${whereClause}${whereClause ? ' AND' : 'WHERE'} ed.status = 'Approved'`,
+            `SELECT COUNT(*) as total FROM employee_documents ed ${whereClause}${whereClause ? ' AND' : 'WHERE'} ed.status = 'Rejected'`,
             `SELECT dt.name, COUNT(*) as count 
              FROM employee_documents ed 
              LEFT JOIN document_types dt ON ed.document_type_id = dt.id 

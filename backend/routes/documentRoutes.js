@@ -211,6 +211,34 @@ router.get('/:id/download', asyncHandler(async (req, res) => {
     fileStream.pipe(res);
 }));
 
+// GET /api/documents/statistics - Get document statistics
+router.get('/statistics', asyncHandler(async (req, res) => {
+    const { employee_id, document_type_id } = req.query;
+    const currentUser = req.session.user;
+    
+    const filters = {};
+    
+    // If not admin, only show own documents
+    if (currentUser.role !== 'admin') {
+        filters.employee_id = currentUser.employee_id;
+    } else if (employee_id) {
+        filters.employee_id = employee_id;
+    }
+    
+    if (document_type_id) filters.document_type_id = document_type_id;
+    
+    const result = await Document.getStatistics(filters);
+    
+    if (!result.success) {
+        throw new Error(result.error);
+    }
+    
+    res.json({
+        success: true,
+        data: result.data
+    });
+}));
+
 // GET /api/documents/:id - Get document by ID
 router.get('/:id', asyncHandler(async (req, res) => {
     const { id } = req.params;
@@ -335,34 +363,6 @@ router.delete('/:id', asyncHandler(async (req, res) => {
     res.json({
         success: true,
         message: 'Document deleted successfully'
-    });
-}));
-
-// GET /api/documents/statistics - Get document statistics
-router.get('/statistics', asyncHandler(async (req, res) => {
-    const { employee_id, document_type_id } = req.query;
-    const currentUser = req.session.user;
-    
-    const filters = {};
-    
-    // If not admin, only show own documents
-    if (currentUser.role !== 'admin') {
-        filters.employee_id = currentUser.employee_id;
-    } else if (employee_id) {
-        filters.employee_id = employee_id;
-    }
-    
-    if (document_type_id) filters.document_type_id = document_type_id;
-    
-    const result = await Document.getStatistics(filters);
-    
-    if (!result.success) {
-        throw new Error(result.error);
-    }
-    
-    res.json({
-        success: true,
-        data: result.data
     });
 }));
 

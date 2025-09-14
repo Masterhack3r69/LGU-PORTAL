@@ -6,10 +6,22 @@ import { EmployeeListPage } from '@/pages/employees/EmployeeListPage';
 import { EmployeeCreatePage } from '@/pages/employees/EmployeeCreatePage';
 import { EmployeeEditPage } from '@/pages/employees/EmployeeEditPage';
 import { ProfilePage } from '@/pages/ProfilePage';
-import { DocumentManagementPage } from '@/pages/admin/DocumentManagementPage';
+import { DocumentManagementPage } from '@/pages/employees/DocumentManagementPage';
 import { DocumentTypesManagement } from '@/components/admin/DocumentTypesManagement';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { NotAuthorized } from '@/components/NotAuthorized';
+
+// Leave Management Pages
+import { LeaveManagementPage } from '@/pages/leaves/LeaveManagementPage';
+import { EmployeeLeaveManagementPage } from '@/pages/leaves/EmployeeLeaveManagementPage';
+import { LeaveApplicationsPage } from '@/pages/leaves/LeaveApplicationsPage';
+import { LeaveBalancesPage } from '@/pages/leaves/LeaveBalancesPage';
+import { LeaveApprovalsPage } from '@/pages/leaves/LeaveApprovalsPage';
+import { LeaveTypesPage } from '@/pages/leaves/LeaveTypesPage';
+import { PayrollPage } from '@/pages/PayrollPage';
+import { EmployeePayrollPage } from '@/pages/EmployeePayrollPage';
+import { BenefitsPage } from '@/pages/BenefitsPage';
+import { CompensationPage } from '@/pages/CompensationPage';
 
 function App() {
   return (
@@ -58,24 +70,84 @@ function App() {
               </ProtectedRoute>
             } 
           />
+          <Route 
+            path="documents" 
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <DocumentManagementPage />
+              </ProtectedRoute>
+            } 
+          />
         </Route>
         
         {/* Leave Management - accessible to all authenticated users */}
-        <Route 
-          path="leaves" 
-          element={
-            <ProtectedRoute allowedRoles={['admin', 'employee']}>
-              <div>Leaves - Coming Soon</div>
-            </ProtectedRoute>
-          } 
-        />
+        <Route path="leaves">
+          <Route 
+            index 
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'employee']}>
+                <LeaveManagementPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="employee" 
+            element={
+              <ProtectedRoute allowedRoles={['employee']}>
+                <EmployeeLeaveManagementPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="applications" 
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'employee']}>
+                <LeaveApplicationsPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="balances" 
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'employee']}>
+                <LeaveBalancesPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="approvals" 
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <LeaveApprovalsPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="types" 
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <LeaveTypesPage />
+              </ProtectedRoute>
+            } 
+          />
+        </Route>
         
         {/* Payroll Management - Admin only */}
         <Route 
           path="payroll" 
           element={
             <ProtectedRoute allowedRoles={['admin']}>
-              <div>Payroll - Coming Soon</div>
+              <PayrollPage />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Employee Payroll - Accessible to employees for their own payroll */}
+        <Route 
+          path="my-payroll" 
+          element={
+            <ProtectedRoute allowedRoles={['employee']}>
+              <EmployeePayrollPage />
             </ProtectedRoute>
           } 
         />
@@ -85,7 +157,17 @@ function App() {
           path="benefits" 
           element={
             <ProtectedRoute allowedRoles={['admin', 'employee']}>
-              <div>Benefits - Coming Soon</div>
+              <BenefitsPage />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Compensation - Admin only */}
+        <Route 
+          path="compensation" 
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <CompensationPage />
             </ProtectedRoute>
           } 
         />

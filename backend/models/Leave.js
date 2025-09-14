@@ -932,11 +932,11 @@ class LeaveBalance {
         const currentYear = year || new Date().getFullYear();
         
         const query = `
-            SELECT elb.*, lt.name as leave_type_name, lt.code as leave_type_code,
+            SELECT elb.*, lt.id as leave_type_id, lt.name as leave_type_name, lt.code as leave_type_code,
                    lt.max_days_per_year, lt.is_monetizable, lt.requires_medical_certificate,
                    COALESCE(elb.current_balance, 0) as available_balance
-            FROM employee_leave_balances elb
-            RIGHT JOIN leave_types lt ON elb.leave_type_id = lt.id 
+            FROM leave_types lt
+            LEFT JOIN employee_leave_balances elb ON lt.id = elb.leave_type_id 
                 AND elb.employee_id = ? AND elb.year = ?
             ORDER BY lt.name
         `;
@@ -950,23 +950,30 @@ class LeaveBalance {
                     // No balance record exists, create default
                     return {
                         id: null,
-                        employee_id: employeeId,
-                        leave_type_id: row.id,
+                        employee_id: parseInt(employeeId),
+                        leave_type_id: row.leave_type_id,
                         year: currentYear,
                         earned_days: 0,
                         used_days: 0,
                         monetized_days: 0,
                         carried_forward: 0,
+                        pending_days: 0,
                         current_balance: 0,
-                        leave_type_name: row.name,
-                        leave_type_code: row.code,
+                        leave_type_name: row.leave_type_name,
+                        leave_type_code: row.leave_type_code,
                         max_days_per_year: row.max_days_per_year,
                         is_monetizable: row.is_monetizable,
                         requires_medical_certificate: row.requires_medical_certificate,
-                        available_balance: 0
+                        available_balance: 0,
+                        created_at: null,
+                        updated_at: null
                     };
                 }
-                return row;
+                return {
+                    ...row,
+                    employee_id: parseInt(employeeId),
+                    pending_days: row.pending_days || 0
+                };
             });
             
             return {

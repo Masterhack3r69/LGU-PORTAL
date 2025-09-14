@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,8 +24,8 @@ export function DocumentManagementPage() {
   const [isReviewing, setIsReviewing] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [filters, setFilters] = useState({
-    status: '',
-    document_type_id: '',
+    status: 'all',
+    document_type_id: 'all',
     employee_search: ''
   });
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
@@ -40,8 +40,8 @@ export function DocumentManagementPage() {
       setIsLoading(true);
       const [docsResult, typesResult, statsResult] = await Promise.all([
         documentService.getDocuments({
-          ...(filters.status && { status: filters.status as 'Pending' | 'Approved' | 'Rejected' }),
-          ...(filters.document_type_id && { document_type_id: parseInt(filters.document_type_id) }),
+          ...(filters.status !== 'all' && { status: filters.status as 'Pending' | 'Approved' | 'Rejected' }),
+          ...(filters.document_type_id !== 'all' && { document_type_id: parseInt(filters.document_type_id) }),
           limit: 100
         }),
         documentService.getDocumentTypes(),
@@ -222,7 +222,7 @@ export function DocumentManagementPage() {
                   <SelectValue placeholder="All statuses" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All statuses</SelectItem>
+                  <SelectItem value="all">All statuses</SelectItem>
                   <SelectItem value="Pending">Pending</SelectItem>
                   <SelectItem value="Approved">Approved</SelectItem>
                   <SelectItem value="Rejected">Rejected</SelectItem>
@@ -236,7 +236,7 @@ export function DocumentManagementPage() {
                   <SelectValue placeholder="All types" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All types</SelectItem>
+                  <SelectItem value="all">All types</SelectItem>
                   {documentTypes.map((type) => (
                     <SelectItem key={type.id} value={type.id.toString()}>
                       {type.name}
