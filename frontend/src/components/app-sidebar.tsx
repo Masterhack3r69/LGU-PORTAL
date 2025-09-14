@@ -9,6 +9,7 @@ import {
   Award,
   Shield,
   Home,
+  Calculator,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -91,12 +92,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }
 
   // Benefits - Direct link since main interface uses tabs
-  navMain.push({
-    title: user?.role === 'admin' ? "Benefits Management" : "My Benefits",
-    url: "/benefits",
-    icon: Award,
-    items: [], // No dropdown items since everything is in tabs
-  });
+   if (user?.role === 'admin') {
+    navMain.push({
+      title: "Benefits Management",
+      url: "/benefits",
+      icon: Award,
+      items: [], // No dropdown items since everything is in tabs
+    });
+  }
 
   // Compensation - Admin only
   if (user?.role === 'admin') {
@@ -105,6 +108,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       url: "/compensation",
       icon: DollarSign,
       items: [],
+    });
+  }
+
+  // Terminal Leave Benefits - Admin only
+  if (user?.role === 'admin') {
+    navMain.push({
+      title: "Terminal Leave Benefits",
+      url: "/tlb",
+      icon: Calculator,
+      items: [], // No dropdown items since everything is in tabs
     });
   }
 

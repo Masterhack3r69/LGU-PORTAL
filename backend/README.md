@@ -7,7 +7,7 @@ A comprehensive Employee Management System designed for internal company use, bu
 - **Employee Records Management** - Complete employee profiles and document management
 - **Leave Management** - Leave applications, approvals, and balance tracking
 - **Payroll Management** - Salary computation and payroll history
-- **Terminal Leave Benefits** - Automated TLB calculations
+- **Terminal Leave Benefits (TLB)** - Automated TLB calculations and management
 - **Compensation & Benefits** - Bonuses, allowances, and benefits tracking
 - **Learning & Development** - Training records and certifications
 - **Service Records** - Employment history and position tracking

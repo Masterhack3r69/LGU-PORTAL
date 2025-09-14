@@ -22,6 +22,7 @@ import { PayrollPage } from '@/pages/PayrollPage';
 import { EmployeePayrollPage } from '@/pages/EmployeePayrollPage';
 import { BenefitsPage } from '@/pages/BenefitsPage';
 import { CompensationPage } from '@/pages/CompensationPage';
+import { TLBManagementPage } from '@/pages/TLBManagementPage';
 
 function App() {
   return (
@@ -168,6 +169,16 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['admin']}>
               <CompensationPage />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Terminal Leave Benefits - Admin only */}
+        <Route 
+          path="tlb" 
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <TLBManagementPage />
             </ProtectedRoute>
           } 
         />

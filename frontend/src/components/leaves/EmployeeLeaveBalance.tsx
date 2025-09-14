@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -21,13 +21,7 @@ const EmployeeLeaveBalance: React.FC<EmployeeLeaveBalanceProps> = ({
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
 
-  useEffect(() => {
-    if (employeeId) {
-      loadBalances();
-    }
-  }, [employeeId, selectedYear]);
-
-  const loadBalances = async () => {
+  const loadBalances = useCallback(async () => {
     if (!employeeId) {
       setIsLoading(false);
       return;
@@ -54,7 +48,13 @@ const EmployeeLeaveBalance: React.FC<EmployeeLeaveBalanceProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [employeeId, selectedYear]);
+
+  useEffect(() => {
+    if (employeeId) {
+      loadBalances();
+    }
+  }, [employeeId, loadBalances]);
 
   if (!employeeId) {
     return (

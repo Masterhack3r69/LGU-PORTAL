@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,11 +31,7 @@ export function DocumentManagementPage() {
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
 
   // Load data
-  useEffect(() => {
-    loadData();
-  }, [filters]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setIsLoading(true);
       const [docsResult, typesResult, statsResult] = await Promise.all([
@@ -65,7 +61,11 @@ export function DocumentManagementPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [filters]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleReview = (document: Document) => {
     setSelectedDocument(document);

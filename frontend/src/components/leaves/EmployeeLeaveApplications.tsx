@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -48,11 +48,7 @@ const EmployeeLeaveApplications: React.FC<EmployeeLeaveApplicationsProps> = ({
     resolver: zodResolver(editLeaveSchema),
   });
 
-  useEffect(() => {
-    loadApplications();
-  }, [employeeId]);
-
-  const loadApplications = async () => {
+  const loadApplications = useCallback(async () => {
     try {
       setIsLoading(true);
       console.log(`Loading applications for employee ${employeeId}`);
@@ -69,7 +65,11 @@ const EmployeeLeaveApplications: React.FC<EmployeeLeaveApplicationsProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [employeeId]);
+
+  useEffect(() => {
+    loadApplications();
+  }, [loadApplications]);
 
   const handleEdit = (application: LeaveApplication) => {
     if (application.status !== 'Pending') {

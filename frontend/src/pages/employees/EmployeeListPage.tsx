@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -457,7 +457,7 @@ export function EmployeeListPage() {
     totalPages: 0,
   });
 
-  const fetchEmployees = async () => {
+  const fetchEmployees = useCallback(async () => {
     try {
       setIsLoading(true);
       const response = await employeeService.getEmployees(filters);
@@ -472,11 +472,11 @@ export function EmployeeListPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [filters]);
 
   useEffect(() => {
     fetchEmployees();
-  }, [filters]);
+  }, [fetchEmployees]);
 
   // Debounced search effect
   useEffect(() => {

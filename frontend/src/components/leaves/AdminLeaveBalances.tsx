@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,13 +34,7 @@ const AdminLeaveBalances: React.FC = () => {
     reason: '',
   });
 
-  useEffect(() => {
-    loadEmployees();
-    loadLeaveTypes();
-    loadBalances();
-  }, [selectedEmployee, selectedYear]);
-
-  const loadEmployees = async () => {
+  const loadEmployees = useCallback(async () => {
     try {
       const response = await employeeService.getEmployees({ page: 1, limit: 1000 });
       setEmployees(response.employees.filter(emp => emp.employment_status === 'Active'));
@@ -48,9 +42,9 @@ const AdminLeaveBalances: React.FC = () => {
       console.error('Error loading employees:', error);
       toast.error('Failed to load employees');
     }
-  };
+  }, []);
 
-  const loadLeaveTypes = async () => {
+  const loadLeaveTypes = useCallback(async () => {
     try {
       const types = await leaveService.getLeaveTypes();
       setLeaveTypes(types);
@@ -58,9 +52,9 @@ const AdminLeaveBalances: React.FC = () => {
       console.error('Error loading leave types:', error);
       toast.error('Failed to load leave types');
     }
-  };
+  }, []);
 
-  const loadBalances = async () => {
+  const loadBalances = useCallback(async () => {
     try {
       setIsLoading(true);
       if (selectedEmployee && selectedEmployee !== 'all') {
@@ -77,7 +71,13 @@ const AdminLeaveBalances: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [selectedEmployee, selectedYear]);
+
+  useEffect(() => {
+    loadEmployees();
+    loadLeaveTypes();
+    loadBalances();
+  }, [loadEmployees, loadLeaveTypes, loadBalances]);
 
   const filteredEmployees = employees.filter(emp => 
     !searchTerm || 

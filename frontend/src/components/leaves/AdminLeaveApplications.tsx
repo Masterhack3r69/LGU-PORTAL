@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,11 +18,7 @@ const AdminLeaveApplications: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  useEffect(() => {
-    loadApplications();
-  }, [currentPage, statusFilter]);
-
-  const loadApplications = async () => {
+  const loadApplications = useCallback(async () => {
     try {
       setIsLoading(true);
       const response = await leaveService.getLeaveApplications({
@@ -38,7 +34,11 @@ const AdminLeaveApplications: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [currentPage, statusFilter]);
+
+  useEffect(() => {
+    loadApplications();
+  }, [loadApplications]);
 
   const handleApprove = async (application: LeaveApplication) => {
     try {
