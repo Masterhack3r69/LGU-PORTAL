@@ -10,7 +10,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileText, Download, CheckCircle, X, Clock, AlertCircle, Eye, Search, Filter } from 'lucide-react';
+import { FileText, Download, CheckCircle, X, Clock, AlertCircle, Eye, Search, RefreshCw } from 'lucide-react';
 import { documentService } from '@/services/documentService';
 import type { Document, DocumentType, DocumentStatistics } from '@/types/employee';
 
@@ -165,41 +165,48 @@ export function DocumentManagementPage() {
 
       {/* Statistics Cards */}
       {statistics && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+          {/* Total Documents Card */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Documents</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
+              <FileText className="h-5 w-5 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{statistics.total}</div>
+              <div className="text-4xl font-bold">{statistics.total}</div>
             </CardContent>
           </Card>
+
+          {/* Pending Review Card */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Pending Review</CardTitle>
-              <Clock className="h-4 w-4 text-yellow-600" />
+              <Clock className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-yellow-600">{statistics.pending}</div>
+              <div className="text-4xl font-bold text-yellow-600 dark:text-yellow-400">{statistics.pending}</div>
             </CardContent>
           </Card>
+
+          {/* Approved Card */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Approved</CardTitle>
-              <CheckCircle className="h-4 w-4 text-green-600" />
+              <CheckCircle className="h-5w-5 text-green-600 dark:text-green-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">{statistics.approved}</div>
+              <div className="text-4xl font-bold text-green-600 dark:text-green-400">{statistics.approved}</div>
             </CardContent>
           </Card>
+
+          {/* Rejected Card */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Rejected</CardTitle>
-              <X className="h-4 w-4 text-red-600" />
+              <X className="h-5 w-5 text-red-600 dark:text-red-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-600">{statistics.rejected}</div>
+              <div className="text-4xl font-bold text-red-600 dark:text-red-400">{statistics.rejected}</div>
             </CardContent>
           </Card>
         </div>
@@ -207,32 +214,29 @@ export function DocumentManagementPage() {
 
       {/* Filters */}
       <Card>
-        <CardHeader>
+        {/* <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Filter className="h-5 w-5" />
             Filters
           </CardTitle>
-        </CardHeader>
+        </CardHeader> */}
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="status-filter">Status</Label>
-              <Select value={filters.status} onValueChange={(value) => setFilters({...filters, status: value})}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All statuses" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All statuses</SelectItem>
-                  <SelectItem value="Pending">Pending</SelectItem>
-                  <SelectItem value="Approved">Approved</SelectItem>
-                  <SelectItem value="Rejected">Rejected</SelectItem>
-                </SelectContent>
-              </Select>
+          <div className="flex gap-4">
+            <div className="space-y-2 flex-1">
+              <div className="relative ">
+                <Search className=" absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="employee-search"
+                  placeholder="Search by name or employee number..."
+                  value={filters.employee_search}
+                  onChange={(e) => setFilters({...filters, employee_search: e.target.value})}
+                  className="pl-10"
+                />
+              </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="type-filter">Document Type</Label>
               <Select value={filters.document_type_id} onValueChange={(value) => setFilters({...filters, document_type_id: value})}>
-                <SelectTrigger>
+                <SelectTrigger className="w-[200px]">
                   <SelectValue placeholder="All types" />
                 </SelectTrigger>
                 <SelectContent>
@@ -245,19 +249,30 @@ export function DocumentManagementPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="employee-search">Employee Search</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="employee-search"
-                  placeholder="Search by name or employee number..."
-                  value={filters.employee_search}
-                  onChange={(e) => setFilters({...filters, employee_search: e.target.value})}
-                  className="pl-10"
-                />
-              </div>
+            
+             <div className="space-y-2 ">
+                <Select value={filters.status} onValueChange={(value) => setFilters({...filters, status: value})}>
+                <SelectTrigger >
+                  <SelectValue placeholder="All statuses" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All statuses</SelectItem>
+                  <SelectItem value="Pending">Pending</SelectItem>
+                  <SelectItem value="Approved">Approved</SelectItem>
+                  <SelectItem value="Rejected">Rejected</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
+            {/* Refresh Button */}
+            <Button
+              variant="outline"
+              onClick={loadData}
+              disabled={isLoading}
+              className="w-[100px]"
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              {isLoading ? 'Refreshing...' : 'Refresh'}
+            </Button>
           </div>
         </CardContent>
       </Card>

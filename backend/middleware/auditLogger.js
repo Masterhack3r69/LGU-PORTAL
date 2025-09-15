@@ -274,9 +274,18 @@ const getAuditLogs = async (filters = {}) => {
     try {
         let query = `
             SELECT 
-                al.*,
+                al.id,
+                al.user_id,
+                al.action,
+                al.table_name,
+                al.record_id,
+                al.old_values,
+                al.new_values,
+                al.ip_address,
+                al.user_agent,
+                al.created_at,
                 u.username,
-                CONCAT(e.first_name, ' ', e.last_name) as user_full_name
+                CONCAT(IFNULL(e.first_name, ''), ' ', IFNULL(e.last_name, '')) as user_full_name
             FROM audit_logs al
             LEFT JOIN users u ON al.user_id = u.id
             LEFT JOIN employees e ON u.id = e.user_id
@@ -287,7 +296,7 @@ const getAuditLogs = async (filters = {}) => {
 
         if (filters.userId) {
             query += ' AND al.user_id = ?';
-            params.push(filters.userId);
+            params.push(parseInt(filters.userId));
         }
 
         if (filters.tableName) {
@@ -297,7 +306,7 @@ const getAuditLogs = async (filters = {}) => {
 
         if (filters.recordId) {
             query += ' AND al.record_id = ?';
-            params.push(filters.recordId);
+            params.push(parseInt(filters.recordId));
         }
 
         if (filters.action) {
@@ -317,9 +326,13 @@ const getAuditLogs = async (filters = {}) => {
 
         query += ' ORDER BY al.created_at DESC';
 
+        // Handle LIMIT without prepared statement parameter to avoid MySQL issues
         if (filters.limit) {
-            query += ' LIMIT ?';
-            params.push(parseInt(filters.limit));
+            const limit = parseInt(filters.limit);
+            // Validate limit to prevent SQL injection
+            if (limit > 0 && limit <= 1000) {
+                query += ` LIMIT ${limit}`;
+            }
         }
 
         const result = await executeQuery(query, params);

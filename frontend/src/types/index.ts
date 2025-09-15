@@ -5,3 +5,4 @@ export * from './leave';
 export * from './payroll';
 export * from './tlb';
 export * from './training';
+export * from './audit';

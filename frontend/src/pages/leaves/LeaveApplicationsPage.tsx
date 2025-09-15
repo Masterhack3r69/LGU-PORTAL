@@ -12,7 +12,7 @@ export const LeaveApplicationsPage: React.FC = () => {
 
   if (!user?.employee_id) {
     return (
-      <div className="container mx-auto p-6">
+      <div className="container mx-auto">
         <div className="text-center text-muted-foreground">
           Employee information not found. Please contact your administrator.
         </div>

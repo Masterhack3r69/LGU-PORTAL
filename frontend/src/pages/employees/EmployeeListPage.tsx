@@ -35,7 +35,7 @@ import {
 import { employeeService } from '@/services/employeeService';
 import { documentService } from '@/services/documentService';
 import type { Employee, EmployeeFilters, Document } from '@/types/employee';
-import { Plus, Search, Eye, Edit, Trash2, FileText, MoreHorizontal, Filter } from 'lucide-react';
+import { Plus, Search, Eye, Edit, Trash2, FileText, MoreHorizontal, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface EmployeeViewDialogProps {
@@ -676,7 +676,7 @@ export function EmployeeListPage() {
               </SelectContent>
             </Select>
             <Button variant="outline" onClick={fetchEmployees}>
-              <Filter className="mr-2 h-4 w-4" />
+              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
           </div>

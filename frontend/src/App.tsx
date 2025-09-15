@@ -27,6 +27,7 @@ import { TLBManagementPage } from '@/pages/TLBManagementPage';
 // Training Management Pages
 import AdminTrainingPage from '@/pages/training/AdminTrainingPage';
 import EmployeeTrainingPage from '@/pages/training/EmployeeTrainingPage';
+import AuditLogsPage from '@/pages/admin/AuditLogsPage';
 
 function App() {
   return (
@@ -257,14 +258,24 @@ function App() {
         />
         
         {/* System Administration - Admin only */}
-        <Route 
-          path="admin/*" 
-          element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <div>Admin Panel - Coming Soon</div>
-            </ProtectedRoute>
-          } 
-        />
+        <Route path="admin">
+          <Route 
+            path="audit" 
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AuditLogsPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="*" 
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <div>Admin Panel - Coming Soon</div>
+              </ProtectedRoute>
+            } 
+          />
+        </Route>
         
         {/* Settings - accessible to all authenticated users */}
         <Route 

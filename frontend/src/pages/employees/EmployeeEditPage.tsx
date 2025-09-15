@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { DatePicker } from '@/components/ui/date-picker';
 import { employeeService } from '@/services/employeeService';
 import type { Employee, UpdateEmployeeDTO } from '@/types/employee';
 import { ArrowLeft, Save } from 'lucide-react';
@@ -233,17 +234,17 @@ export function EmployeeEditPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="outline" onClick={() => navigate('/employees')}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Employees
-        </Button>
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Edit Employee</h1>
           <p className="text-muted-foreground">
             Update employee information for {employee.first_name} {employee.last_name}
           </p>
         </div>
+        <Button variant="outline" onClick={() => navigate('/employees')}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Employees
+        </Button>
       </div>
 
       <Form {...form}>
@@ -252,17 +253,16 @@ export function EmployeeEditPage() {
           <Card>
             <CardHeader>
               <CardTitle>Personal Information</CardTitle>
-              <CardDescription>
-                Basic personal details of the employee
-              </CardDescription>
+              <CardDescription>Basic personal details of the employee</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* First Row: 5 fields - Employee ID, First Name, Middle Name, Last Name, Suffix */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                 <FormField
                   control={form.control}
                   name="employee_number"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem >
                       <FormLabel>Employee Number *</FormLabel>
                       <FormControl>
                         <Input placeholder="EMP-001" {...field} />
@@ -275,7 +275,7 @@ export function EmployeeEditPage() {
                   control={form.control}
                   name="first_name"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem >
                       <FormLabel>First Name *</FormLabel>
                       <FormControl>
                         <Input placeholder="John" {...field} />
@@ -311,10 +311,11 @@ export function EmployeeEditPage() {
                   )}
                 />
                 <FormField
+                
                   control={form.control}
                   name="suffix"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem >
                       <FormLabel>Suffix</FormLabel>
                       <FormControl>
                         <Input placeholder="Jr., Sr., III" {...field} />
@@ -323,15 +324,35 @@ export function EmployeeEditPage() {
                     </FormItem>
                   )}
                 />
+              </div>
+
+              {/* Second Row: 5 fields - Birth Date, Gender, Civil Status, Email, Contact Number */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+                <FormField
+                  control={form.control}
+                  name="birth_date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <DatePicker
+                        id="birth_date"
+                        label="Birth Date"
+                        placeholder="Select birth date"
+                        value={field.value ? new Date(field.value) : undefined}
+                        onChange={(date) => field.onChange(date ? date.toISOString().split('T')[0] : '')}
+                      />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <FormField
                   control={form.control}
                   name="sex"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem >
                       <FormLabel>Gender</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger className='w-full'>
                             <SelectValue placeholder="Select gender" />
                           </SelectTrigger>
                         </FormControl>
@@ -346,26 +367,13 @@ export function EmployeeEditPage() {
                 />
                 <FormField
                   control={form.control}
-                  name="birth_date"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Birth Date</FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
                   name="civil_status"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem >
                       <FormLabel>Civil Status</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger className='w-full'>
                             <SelectValue placeholder="Select civil status" />
                           </SelectTrigger>
                         </FormControl>
@@ -381,16 +389,14 @@ export function EmployeeEditPage() {
                     </FormItem>
                   )}
                 />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="birth_place"
+                  name="email_address"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Birth Place</FormLabel>
+                    <FormItem className="md:col-span-2">
+                      <FormLabel>Email Address</FormLabel>
                       <FormControl>
-                        <Input placeholder="City, Province" {...field} />
+                        <Input type="email" placeholder="john.doe@company.com" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -410,20 +416,22 @@ export function EmployeeEditPage() {
                   )}
                 />
               </div>
-              <FormField
-                control={form.control}
-                name="email_address"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email Address</FormLabel>
-                    <FormControl>
-                      <Input type="email" placeholder="john.doe@company.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+
+              {/* Third Row: 2 fields - Birth Place, Current Address */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="birth_place"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Birth Place</FormLabel>
+                      <FormControl>
+                        <Input placeholder="City, Province" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <FormField
                   control={form.control}
                   name="current_address"
@@ -437,6 +445,10 @@ export function EmployeeEditPage() {
                     </FormItem>
                   )}
                 />
+              </div>
+
+              {/* Fourth Row: 1 field - Permanent Address */}
+              <div className="grid grid-cols-1">
                 <FormField
                   control={form.control}
                   name="permanent_address"
@@ -454,258 +466,253 @@ export function EmployeeEditPage() {
             </CardContent>
           </Card>
 
-          {/* Employment Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Employment Information</CardTitle>
-              <CardDescription>
-                Job-related details and compensation
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <FormField
-                  control={form.control}
-                  name="appointment_date"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Appointment Date *</FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="plantilla_position"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Position</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Software Developer" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="plantilla_number"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Plantilla Number</FormLabel>
-                      <FormControl>
-                        <Input placeholder="P-001" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="salary_grade"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Salary Grade</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="number" 
-                          min="1" 
-                          max="33" 
-                          placeholder="15" 
-                          {...field}
-                          value={field.value ?? ''}
-                          onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
-                        />
-                      </FormControl>
-                      <FormDescription>Salary grade (1-33)</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="step_increment"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Step Increment</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="number" 
-                          min="1" 
-                          max="8" 
-                          placeholder="1" 
-                          {...field}
-                          value={field.value ?? ''}
-                          onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
-                        />
-                      </FormControl>
-                      <FormDescription>Step increment (1-8)</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="current_daily_rate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Daily Rate</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="number" 
-                          min="0" 
-                          step="0.01" 
-                          placeholder="1200.00" 
-                          {...field}
-                          value={field.value ?? ''}
-                          onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <FormField
-                control={form.control}
-                name="employment_status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Employment Status</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="w-[200px]">
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Active">Active</SelectItem>
-                        <SelectItem value="Resigned">Resigned</SelectItem>
-                        <SelectItem value="Retired">Retired</SelectItem>
-                        <SelectItem value="Terminated">Terminated</SelectItem>
-                        <SelectItem value="AWOL">AWOL</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              {/* Separation Information */}
-              {form.watch('employment_status') !== 'Active' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Employment Information Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Employment Information</CardTitle>
+                <CardDescription>
+                  Job-related details and compensation
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-6">
+                <div className="grid gap-4">
+                  {/* Row 1: Position */}
+                  <div className="grid grid-cols-1">
+                    <FormField
+                      control={form.control}
+                      name="plantilla_position"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Position</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Software Developer" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {/* Row 2: Plantilla Number and Appointment Date */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="plantilla_number"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Plantilla Number</FormLabel>
+                          <FormControl>
+                            <Input placeholder="P-001" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="appointment_date"
+                      render={({ field }) => (
+                        <FormItem>
+                          <DatePicker
+                            id="appointment_date"
+                            label="Appointment Date"
+                            placeholder="Select appointment date"
+                            value={field.value ? new Date(field.value) : undefined}
+                            onChange={(date) => field.onChange(date ? date.toISOString().split('T')[0] : '')}
+                            required
+                          />
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {/* Row 3: Salary Grade, Step Increment, and Daily Rate */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="current_daily_rate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Daily Rate</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              placeholder="1200.00"
+                              {...field}
+                              value={field.value ?? ''}
+                              onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="salary_grade"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Salary Grade</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min="1"
+                              max="33"
+                              placeholder="(1-33)"
+                              {...field}
+                              value={field.value ?? ''}
+                              onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="step_increment"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Step Increment</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min="1"
+                              max="8"
+                              placeholder="(1-8)"
+                              {...field}
+                              value={field.value ?? ''}
+                              onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                  </div>
+                  {/* Row 4: Status */}
+                  <div className="grid grid-cols-1">
+                    <FormField
+                      control={form.control}
+                      name="employment_status"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Employment Status</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Select status" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Active">Active</SelectItem>
+                              <SelectItem value="Resigned">Resigned</SelectItem>
+                              <SelectItem value="Retired">Retired</SelectItem>
+                              <SelectItem value="Terminated">Terminated</SelectItem>
+                              <SelectItem value="AWOL">AWOL</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Government IDs Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Government IDs</CardTitle>
+                <CardDescription>
+                  Government identification numbers
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-4">
+                <div className="grid grid-cols-1">
                   <FormField
                     control={form.control}
-                    name="separation_date"
+                    name="tin"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Separation Date</FormLabel>
+                        <FormLabel>TIN</FormLabel>
                         <FormControl>
-                          <Input type="date" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="separation_reason"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Separation Reason</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Reason for separation" {...field} />
+                          <Input placeholder="123-456-789-000" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Government IDs */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Government IDs</CardTitle>
-              <CardDescription>
-                Government identification numbers
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <FormField
-                  control={form.control}
-                  name="tin"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>TIN</FormLabel>
-                      <FormControl>
-                        <Input placeholder="123-456-789-000" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="gsis_number"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>GSIS Number</FormLabel>
-                      <FormControl>
-                        <Input placeholder="1234567890" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="pagibig_number"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Pag-IBIG Number</FormLabel>
-                      <FormControl>
-                        <Input placeholder="1234567890" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="philhealth_number"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>PhilHealth Number</FormLabel>
-                      <FormControl>
-                        <Input placeholder="12-345678901-2" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="sss_number"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>SSS Number</FormLabel>
-                      <FormControl>
-                        <Input placeholder="03-1234567-8" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </CardContent>
-          </Card>
+                <div className="grid grid-cols-1">
+                  <FormField
+                    control={form.control}
+                    name="gsis_number"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>GSIS Number</FormLabel>
+                        <FormControl>
+                          <Input placeholder="1234567890" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="grid grid-cols-1">
+                  <FormField
+                    control={form.control}
+                    name="pagibig_number"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Pag-IBIG Number</FormLabel>
+                        <FormControl>
+                          <Input placeholder="1234567890" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="grid grid-cols-1">
+                  <FormField
+                    control={form.control}
+                    name="philhealth_number"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>PhilHealth Number</FormLabel>
+                        <FormControl>
+                          <Input placeholder="12-345678901-2" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="grid grid-cols-1">
+                  <FormField
+                    control={form.control}
+                    name="sss_number"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>SSS Number</FormLabel>
+                        <FormControl>
+                          <Input placeholder="03-1234567-8" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
           {/* Form Actions */}
           <div className="flex justify-end gap-4">

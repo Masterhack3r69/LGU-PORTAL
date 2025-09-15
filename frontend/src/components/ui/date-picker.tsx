@@ -1,11 +1,10 @@
 "use client"
 
-import { format } from "date-fns"
-import { CalendarIcon } from "lucide-react"
-
-import { cn } from "@/lib/utils"
+import * as React from "react"
+import { ChevronDownIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
+import { Label } from "@/components/ui/label"
 import {
   Popover,
   PopoverContent,
@@ -13,65 +12,62 @@ import {
 } from "@/components/ui/popover"
 
 interface DatePickerProps {
-  value?: Date;
-  onChange: (date: Date | undefined) => void;
-  placeholder?: string;
+  id?: string;
   label?: string;
-  disabled?: (date: Date) => boolean;
-  error?: string;
-  required?: boolean;
+  placeholder?: string;
+  value?: Date | undefined;
+  onChange?: (date: Date | undefined) => void;
+  disabled?: boolean;
   className?: string;
+  required?: boolean;
 }
 
 export function DatePicker({
+  id,
+  label,
+  placeholder = "Select date",
   value,
   onChange,
-  placeholder = "Pick a date",
-  label,
-  disabled,
-  error,
+  disabled = false,
+  className = "w-full",
   required = false,
-  className
 }: DatePickerProps) {
+  const [open, setOpen] = React.useState(false)
+
+  const handleSelect = (date: Date | undefined) => {
+    onChange?.(date)
+    setOpen(false)
+  }
+
   return (
-    <div className={cn("flex flex-col space-y-2", className)}>
+    <div className="flex flex-col gap-3">
       {label && (
-        <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-          {label} {required && <span className="text-destructive">*</span>}
-        </label>
+        <Label htmlFor={id} className="px-1">
+          {label} {required && <span className="text-red-500">*</span>}
+        </Label>
       )}
-      <Popover>
+      <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
-            variant={"outline"}
-            className={cn(
-              "w-full justify-start text-left font-normal",
-              !value && "text-muted-foreground",
-              error && "border-destructive"
-            )}
+            variant="outline"
+            id={id}
+            className={`justify-between font-normal ${className}`}
+            disabled={disabled}
           >
-            {value ? (
-              format(value, "PPP")
-            ) : (
-              <span>{placeholder}</span>
-            )}
-            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+            {value ? value.toLocaleDateString() : placeholder}
+            <ChevronDownIcon className="h-4 w-4" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
+        <PopoverContent className="w-auto overflow-hidden p-0" align="start">
           <Calendar
             mode="single"
             selected={value}
-            onSelect={onChange}
-            disabled={disabled}
             captionLayout="dropdown"
-            initialFocus
+            onSelect={handleSelect}
+            disabled={disabled}
           />
         </PopoverContent>
       </Popover>
-      {error && (
-        <p className="text-sm font-medium text-destructive">{error}</p>
-      )}
     </div>
-  );
+  )
 }
