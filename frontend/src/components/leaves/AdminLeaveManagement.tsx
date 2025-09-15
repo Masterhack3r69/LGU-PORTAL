@@ -12,8 +12,8 @@ const AdminLeaveManagement: React.FC = () => {
   return (
     <div className="container mx-auto space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold">Leave Management</h1>
+      <div className="sticky top-0 z-10 bg-background pb-4 pt-2 border-b border-border">
+        <h1 className="text-3xl font-bold">Leave Management </h1>
         <p className="text-muted-foreground">Manage employee leave applications, balances, and policies</p>
       </div>
 

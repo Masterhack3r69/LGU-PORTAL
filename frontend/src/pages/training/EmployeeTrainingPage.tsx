@@ -1,8 +1,15 @@
-import React from 'react';
-import EmployeeTrainingManagement from '@/components/training/EmployeeTrainingManagement';
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const EmployeeTrainingPage: React.FC = () => {
-  return <EmployeeTrainingManagement />;
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Redirect to my trainings as the default employee training page
+    navigate('/training/my-trainings', { replace: true });
+  }, [navigate]);
+
+  return null;
 };
 
 export default EmployeeTrainingPage;

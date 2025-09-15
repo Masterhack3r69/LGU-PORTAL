@@ -141,12 +141,14 @@ export function DocumentManagementPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Document Management</h1>
-          <p className="text-muted-foreground">
-            Review and manage employee document submissions
-          </p>
+      <div className="sticky top-0 z-10 bg-background pb-4 pt-2 border-b border-border w-full">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Document Management</h1>
+            <p className="text-muted-foreground">
+              Review and manage employee document submissions
+            </p>
+          </div>
         </div>
       </div>
 

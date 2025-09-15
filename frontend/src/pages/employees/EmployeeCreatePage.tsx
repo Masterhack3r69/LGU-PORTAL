@@ -193,17 +193,19 @@ export function EmployeeCreatePage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Add New Employee</h1>
-          <p className="text-muted-foreground">
-            Create a new employee record
-          </p>
+      <div className="sticky top-0 z-10 bg-background pb-4 pt-2 border-b border-border">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Add New Employee</h1>
+            <p className="text-muted-foreground">
+              Create a new employee record
+            </p>
+          </div>
+          <Button variant="outline" onClick={() => navigate('/employees')}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Employees
+          </Button>
         </div>
-        <Button variant="outline" onClick={() => navigate('/employees')}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Employees
-        </Button>
       </div>
 
       <Form {...form}>

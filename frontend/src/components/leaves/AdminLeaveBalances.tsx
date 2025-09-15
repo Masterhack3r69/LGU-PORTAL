@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { BarChart3, Search, Plus, User, Loader2 } from 'lucide-react';
 import leaveService from '@/services/leaveService';
 import employeeService from '@/services/employeeService';
@@ -22,6 +22,7 @@ const AdminLeaveBalances: React.FC = () => {
   const [selectedEmployee, setSelectedEmployee] = useState<string>('all');
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showSearchDialog, setShowSearchDialog] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   
   // Form state for adding new balance
@@ -78,13 +79,6 @@ const AdminLeaveBalances: React.FC = () => {
     loadLeaveTypes();
     loadBalances();
   }, [loadEmployees, loadLeaveTypes, loadBalances]);
-
-  const filteredEmployees = employees.filter(emp => 
-    !searchTerm || 
-    emp.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    emp.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    emp.employee_number.includes(searchTerm)
-  );
 
   const selectedEmployeeData = employees.find(emp => emp.id.toString() === selectedEmployee && selectedEmployee !== 'all');
 
@@ -318,33 +312,86 @@ const AdminLeaveBalances: React.FC = () => {
         <CardContent>
           <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-4">
             <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search employees..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
-              <SelectTrigger className="w-full md:w-[250px]">
-                <SelectValue placeholder="Select employee" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Employees</SelectItem>
-                {filteredEmployees.map((employee) => (
-                  <SelectItem key={employee.id} value={employee.id.toString()}>
-                    <div className="flex items-center space-x-2">
-                      <User className="h-4 w-4" />
-                      <span>{employee.first_name} {employee.last_name}</span>
-                      <span className="text-muted-foreground">({employee.employee_number})</span>
+              <Dialog open={showSearchDialog} onOpenChange={setShowSearchDialog}>
+                <DialogTrigger asChild>
+                  <div className="relative cursor-pointer">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <Input
+                      placeholder="Search employees..."
+                      value=""
+                      readOnly
+                      className="pl-10 cursor-pointer"
+                    />
+                  </div>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Search Employees</DialogTitle>
+                    <DialogDescription>
+                      Search and select an employee to view their leave balances
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 p-6">
+                    {/* Search Input */}
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                      <Input
+                        placeholder="Search by name or employee ID..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10"
+                        autoFocus
+                      />
                     </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+
+                    {/* Search Results */}
+                    <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                      {searchTerm ? (
+                        employees
+                          .filter(emp => 
+                            emp.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            emp.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            emp.employee_number.toLowerCase().includes(searchTerm.toLowerCase())
+                          )
+                          .slice(0, 10)
+                          .map((employee) => (
+                            <div
+                              key={employee.id}
+                              className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-muted cursor-pointer transition-colors"
+                              onClick={() => {
+                                setSelectedEmployee(employee.id.toString());
+                                setShowSearchDialog(false);
+                                setSearchTerm('');
+                              }}
+                            >
+                              <User className="h-4 w-4 text-muted-foreground" />
+                              <div className="flex-1">
+                                <div className="font-medium">{employee.first_name} {employee.last_name}</div>
+                                <div className="text-sm text-muted-foreground">{employee.employee_number}</div>
+                              </div>
+                            </div>
+                          ))
+                      ) : (
+                        <div className="text-center text-muted-foreground py-8">
+                          Start typing to search for employees...
+                        </div>
+                      )}
+                      
+                      {searchTerm && employees.filter(emp => 
+                        emp.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        emp.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        emp.employee_number.toLowerCase().includes(searchTerm.toLowerCase())
+                      ).length === 0 && (
+                        <div className="text-center text-muted-foreground py-8">
+                          No employees found matching "{searchTerm}"
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+            
             <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
               <SelectTrigger className="w-full md:w-[120px]">
                 <SelectValue />

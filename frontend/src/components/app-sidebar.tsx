@@ -82,12 +82,42 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     items: [], // No dropdown items since everything is in tabs
   });
 
-  // Training Management - Show for all users
+  // Training Management - Show for all users with dropdown
   navMain.push({
     title: "Training Management",
-    url: user?.role === 'admin' ? "/training" : "/training/employee",
+    url: user?.role === 'admin' ? "/training/records" : "/training/my-trainings",
     icon: GraduationCap,
-    items: [], // No dropdown items since everything is in tabs
+    items: user?.role === 'admin' ? [
+      {
+        title: "Training Records",
+        url: "/training/records",
+      },
+      {
+        title: "Training Programs",
+        url: "/training/programs",
+      },
+      {
+        title: "Employee Training",
+        url: "/training/employees",
+      },
+      {
+        title: "Training Analytics",
+        url: "/training/analytics",
+      },
+    ] : [
+      {
+        title: "My Trainings",
+        url: "/training/my-trainings",
+      },
+      {
+        title: "Training Overview",
+        url: "/training/overview",
+      },
+      {
+        title: "My Certificates",
+        url: "/training/certificates",
+      },
+    ],
   });
 
   // Employee Payroll - Show for employees only

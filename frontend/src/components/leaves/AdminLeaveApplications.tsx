@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Search, Filter, CheckCircle, XCircle } from 'lucide-react';
+import { Search,CheckCircle, XCircle, RefreshCw } from 'lucide-react';
 import leaveService from '@/services/leaveService';
 import LeaveCard from './LeaveCard';
 import { toast } from 'sonner';
@@ -141,13 +141,13 @@ const AdminLeaveApplications: React.FC = () => {
 
       {/* Filters */}
       <Card>
-        <CardHeader>
+        {/* <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Calendar className="h-5 w-5" />
             <span>Leave Applications</span>
             <Filter className="h-4 w-4 ml-auto" />
           </CardTitle>
-        </CardHeader>
+        </CardHeader> */}
         <CardContent>
           <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-4">
             <div className="flex-1">
@@ -173,7 +173,18 @@ const AdminLeaveApplications: React.FC = () => {
                 <SelectItem value="Cancelled">Cancelled</SelectItem>
               </SelectContent>
             </Select>
+            {/* Refresh Button */}
+            <Button
+              variant="outline"
+              onClick={loadApplications}
+              disabled={isLoading}
+              className="flex items-center gap-2 md:w-auto w-full"
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              {isLoading ? 'Refreshing...' : 'Refresh'}
+            </Button>
           </div>
+          
         </CardContent>
       </Card>
 

@@ -27,6 +27,13 @@ import { TLBManagementPage } from '@/pages/TLBManagementPage';
 // Training Management Pages
 import AdminTrainingPage from '@/pages/training/AdminTrainingPage';
 import EmployeeTrainingPage from '@/pages/training/EmployeeTrainingPage';
+import AdminTrainingRecordsPage from '@/pages/training/AdminTrainingRecordsPage';
+import AdminTrainingProgramsPage from '@/pages/training/AdminTrainingProgramsPage';
+import AdminEmployeeTrainingPage from '@/pages/training/AdminEmployeeTrainingPage';
+import AdminTrainingAnalyticsPage from '@/pages/training/AdminTrainingAnalyticsPage';
+import EmployeeMyTrainingsPage from '@/pages/training/EmployeeMyTrainingsPage';
+import EmployeeTrainingOverviewPage from '@/pages/training/EmployeeTrainingOverviewPage';
+import EmployeeCertificatesPage from '@/pages/training/EmployeeCertificatesPage';
 import AuditLogsPage from '@/pages/admin/AuditLogsPage';
 
 function App() {
@@ -140,6 +147,7 @@ function App() {
         
         {/* Training Management - accessible to all authenticated users */}
         <Route path="training">
+          {/* Admin Training Routes */}
           <Route 
             index 
             element={
@@ -149,10 +157,67 @@ function App() {
             } 
           />
           <Route 
+            path="records" 
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminTrainingRecordsPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="programs" 
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminTrainingProgramsPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="employees" 
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminEmployeeTrainingPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="analytics" 
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminTrainingAnalyticsPage />
+              </ProtectedRoute>
+            } 
+          />
+          {/* Employee Training Routes */}
+          <Route 
             path="employee" 
             element={
               <ProtectedRoute allowedRoles={['employee']}>
                 <EmployeeTrainingPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="my-trainings" 
+            element={
+              <ProtectedRoute allowedRoles={['employee']}>
+                <EmployeeMyTrainingsPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="overview" 
+            element={
+              <ProtectedRoute allowedRoles={['employee']}>
+                <EmployeeTrainingOverviewPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="certificates" 
+            element={
+              <ProtectedRoute allowedRoles={['employee']}>
+                <EmployeeCertificatesPage />
               </ProtectedRoute>
             } 
           />
