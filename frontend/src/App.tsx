@@ -24,6 +24,10 @@ import { BenefitsPage } from '@/pages/BenefitsPage';
 import { CompensationPage } from '@/pages/CompensationPage';
 import { TLBManagementPage } from '@/pages/TLBManagementPage';
 
+// Training Management Pages
+import AdminTrainingPage from '@/pages/training/AdminTrainingPage';
+import EmployeeTrainingPage from '@/pages/training/EmployeeTrainingPage';
+
 function App() {
   return (
     <Routes>
@@ -128,6 +132,26 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <LeaveTypesPage />
+              </ProtectedRoute>
+            } 
+          />
+        </Route>
+        
+        {/* Training Management - accessible to all authenticated users */}
+        <Route path="training">
+          <Route 
+            index 
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminTrainingPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="employee" 
+            element={
+              <ProtectedRoute allowedRoles={['employee']}>
+                <EmployeeTrainingPage />
               </ProtectedRoute>
             } 
           />

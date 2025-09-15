@@ -10,6 +10,7 @@ import {
   Shield,
   Home,
   Calculator,
+  GraduationCap,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -78,6 +79,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     title: "Leave Management",
     url: user?.role === 'admin' ? "/leaves" : "/leaves/employee",
     icon: Calendar,
+    items: [], // No dropdown items since everything is in tabs
+  });
+
+  // Training Management - Show for all users
+  navMain.push({
+    title: "Training Management",
+    url: user?.role === 'admin' ? "/training" : "/training/employee",
+    icon: GraduationCap,
     items: [], // No dropdown items since everything is in tabs
   });
 

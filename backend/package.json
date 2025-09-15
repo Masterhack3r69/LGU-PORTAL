@@ -15,6 +15,9 @@
     "test:advanced-employees": "node advanced-employee-test.js",
     "test:stress": "node advanced-employee-test.js --stress",
     "demo:live-test": "node demo-live-test.js",
+    "test:training-live": "node test-training-live.js",
+    "test:training-quick": "node quick-training-test.js",
+    "validate:training": "node validate-training-system.js",
     "setup": "node scripts/setup.js",
     "seed": "node scripts/seed.js"
   },
