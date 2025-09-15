@@ -97,10 +97,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         url: "/training/programs",
       },
       {
-        title: "Employee Training",
-        url: "/training/employees",
-      },
-      {
         title: "Training Analytics",
         url: "/training/analytics",
       },
@@ -108,10 +104,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       {
         title: "My Trainings",
         url: "/training/my-trainings",
-      },
-      {
-        title: "Training Overview",
-        url: "/training/overview",
       },
       {
         title: "My Certificates",

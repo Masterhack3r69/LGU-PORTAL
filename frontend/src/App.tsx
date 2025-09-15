@@ -29,10 +29,8 @@ import AdminTrainingPage from '@/pages/training/AdminTrainingPage';
 import EmployeeTrainingPage from '@/pages/training/EmployeeTrainingPage';
 import AdminTrainingRecordsPage from '@/pages/training/AdminTrainingRecordsPage';
 import AdminTrainingProgramsPage from '@/pages/training/AdminTrainingProgramsPage';
-import AdminEmployeeTrainingPage from '@/pages/training/AdminEmployeeTrainingPage';
 import AdminTrainingAnalyticsPage from '@/pages/training/AdminTrainingAnalyticsPage';
 import EmployeeMyTrainingsPage from '@/pages/training/EmployeeMyTrainingsPage';
-import EmployeeTrainingOverviewPage from '@/pages/training/EmployeeTrainingOverviewPage';
 import EmployeeCertificatesPage from '@/pages/training/EmployeeCertificatesPage';
 import AuditLogsPage from '@/pages/admin/AuditLogsPage';
 
@@ -172,14 +170,7 @@ function App() {
               </ProtectedRoute>
             } 
           />
-          <Route 
-            path="employees" 
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <AdminEmployeeTrainingPage />
-              </ProtectedRoute>
-            } 
-          />
+          
           <Route 
             path="analytics" 
             element={
@@ -202,14 +193,6 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['employee']}>
                 <EmployeeMyTrainingsPage />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="overview" 
-            element={
-              <ProtectedRoute allowedRoles={['employee']}>
-                <EmployeeTrainingOverviewPage />
               </ProtectedRoute>
             } 
           />

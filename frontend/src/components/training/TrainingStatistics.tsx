@@ -91,7 +91,7 @@ const TrainingStatistics: React.FC = () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-semibold">Training Analytics</h2>
+        <h2 className="text-3xl font-bold">Training Analytics</h2>
         <p className="text-muted-foreground">
           Training insights and performance metrics for {currentYear}
         </p>

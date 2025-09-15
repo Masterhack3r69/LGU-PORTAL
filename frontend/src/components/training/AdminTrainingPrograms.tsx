@@ -165,9 +165,9 @@ const AdminTrainingPrograms: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-start">
+      <div className="flex items-center justify-between sticky top-0 z-10 bg-background pb-4 pt-2 border-b border-border">
         <div>
-          <h2 className="text-2xl font-semibold">Training Programs</h2>
+          <h2 className="text-3xl font-bold">Training Programs</h2>
           <p className="text-muted-foreground">
             Manage training program templates and definitions
           </p>

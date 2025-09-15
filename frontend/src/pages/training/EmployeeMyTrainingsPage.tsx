@@ -168,24 +168,25 @@ const EmployeeMyTrainingsPage: React.FC = () => {
   return (
     <div className="container mx-auto space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-start">
-        <div>
-          <h1 className="text-3xl font-bold">My Training Records</h1>
-          <p className="text-muted-foreground">
-            View and manage your training history
-          </p>
+      <div className="sticky top-0 z-10 bg-background pb-4 pt-2 border-b border-border">
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold">My Training Records</h1>
+            <p className="text-muted-foreground">
+              View and manage your training history
+            </p>
+          </div>
+          <Button onClick={openCreateForm} size="sm">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Training
+          </Button>
         </div>
-        <Button onClick={openCreateForm} size="sm">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Training
-        </Button>
       </div>
 
       {/* Filters */}
       <TrainingFilters
         filters={filters}
         onFiltersChange={handleFiltersChange}
-        showEmployeeFilter={false}
       />
 
       {/* Loading State */}

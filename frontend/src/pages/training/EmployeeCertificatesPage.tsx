@@ -48,7 +48,7 @@ const EmployeeCertificatesPage: React.FC = () => {
   return (
     <div className="container mx-auto space-y-6">
       {/* Header */}
-      <div>
+      <div className="sticky top-0 z-10 bg-background pb-4 pt-2 border-b border-border">
         <h1 className="text-3xl font-bold">My Certificates</h1>
         <p className="text-muted-foreground">
           View all your earned training certificates

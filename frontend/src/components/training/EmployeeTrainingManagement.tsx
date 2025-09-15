@@ -216,7 +216,7 @@ const EmployeeTrainingManagement: React.FC = () => {
         <TabsContent value="my-trainings" className="space-y-4">
           <div className="flex justify-between items-start">
             <div>
-              <h2 className="text-2xl font-semibold">My Training Records</h2>
+              <h2 className="text-3xl font-bold">My Training Records</h2>
               <p className="text-muted-foreground">
                 View and manage your training history
               </p>
@@ -231,7 +231,6 @@ const EmployeeTrainingManagement: React.FC = () => {
           <TrainingFilters
             filters={filters}
             onFiltersChange={handleFiltersChange}
-            showEmployeeFilter={false} // Hide employee filter for employee view
           />
 
           {/* Loading State */}
@@ -398,7 +397,7 @@ const EmployeeTrainingManagement: React.FC = () => {
         {/* Certificates Tab */}
         <TabsContent value="certificates" className="space-y-4">
           <div>
-            <h2 className="text-2xl font-semibold">My Certificates</h2>
+            <h2 className="text-3xl font-bold">My Certificates</h2>
             <p className="text-muted-foreground">
               View all your earned training certificates
             </p>

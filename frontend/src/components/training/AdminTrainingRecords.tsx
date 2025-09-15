@@ -170,10 +170,10 @@ const AdminTrainingRecords: React.FC<AdminTrainingRecordsProps> = ({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-start">
+      <div className="flex items-center justify-between sticky top-0 z-10 bg-background pb-4 pt-2 border-b border-border">
         <div>
-          <h2 className="text-2xl font-semibold">
-            {showEmployeeView ? 'Employee Training Overview' : 'Training Records'}
+          <h2 className="text-3xl font-bold">
+            {showEmployeeView ? 'Training Overview' : 'Training Records'}
           </h2>
           <p className="text-muted-foreground">
             {showEmployeeView 
@@ -193,37 +193,23 @@ const AdminTrainingRecords: React.FC<AdminTrainingRecordsProps> = ({
           </Button>
         </div>
       </div>
+       
 
-      {/* Filters */}
-      <TrainingFilters
-        filters={filters}
-        onFiltersChange={handleFiltersChange}
-        showEmployeeFilter={!showEmployeeView}
-      />
+      <div className='grid grid-cols-2 gap-4'>
+         {/* Filters */}
+        <TrainingFilters
+          filters={filters}
+          onFiltersChange={handleFiltersChange}
+        />
 
-      {/* Loading State */}
-      {isLoading && (
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-center">
-              <RefreshCw className="h-6 w-6 animate-spin mr-2" />
-              <span>Loading training records...</span>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Training Records */}
-      {!isLoading && (
-        <>
           {/* Statistics Bar */}
           {pagination && (
             <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between text-sm text-muted-foreground">
-                  <div className="flex items-center gap-4">
+              <CardContent>
+                <div className="flex m-2 justify-between text-sm text-muted-foreground">
+                  <div className="grid grid-cols-2 gap-2">
                     <div className="flex items-center gap-1">
-                      <Calendar className="h-4 w-4" />
+                      <Calendar className="h-4 w-4 " />
                       <span>Total: {pagination.totalCount}</span>
                     </div>
                     <div className="flex items-center gap-1">
@@ -240,6 +226,23 @@ const AdminTrainingRecords: React.FC<AdminTrainingRecordsProps> = ({
               </CardContent>
             </Card>
           )}
+      </div>
+      
+      {/* Loading State */}
+      {isLoading && (
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-center">
+              <RefreshCw className="h-6 w-6 animate-spin mr-2" />
+              <span>Loading training records...</span>
+            </div>
+          </CardContent>
+        </Card> 
+      )}
+
+      {/* Training Records */}
+      {!isLoading && (
+        <>
 
           {/* Training Grid */}
           {trainings.length > 0 ? (
