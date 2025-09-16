@@ -237,9 +237,9 @@ export function EmployeeEditPage() {
       <div className="sticky top-0 z-10 bg-background pb-4 pt-2 border-b border-border">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Edit Employee</h1>
+            <h1 className="text-xl font-semibold tracking-tight">Edit Employee</h1>
             <p className="text-muted-foreground">
-              Update employee information for {employee.first_name} {employee.last_name}
+              {employee.first_name} {employee.last_name}
             </p>
           </div>
           <Button variant="outline" onClick={() => navigate('/employees')}>

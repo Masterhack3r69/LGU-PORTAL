@@ -35,7 +35,8 @@ import {
 import { employeeService } from '@/services/employeeService';
 import { documentService } from '@/services/documentService';
 import type { Employee, EmployeeFilters, Document } from '@/types/employee';
-import { Plus, Search, Eye, Edit, Trash2, FileText, MoreHorizontal, RefreshCw } from 'lucide-react';
+import { Plus, Search, Eye, Edit, Trash2, FileText, MoreHorizontal, RefreshCw, Filter, ChevronDown } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { toast } from 'sonner';
 
 interface EmployeeViewDialogProps {
@@ -49,7 +50,7 @@ function EmployeeViewDialog({ employee, open, onOpenChange }: EmployeeViewDialog
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-auto">
         <DialogHeader>
           <DialogTitle>Employee Details</DialogTitle>
           <DialogDescription>
@@ -57,45 +58,50 @@ function EmployeeViewDialog({ employee, open, onOpenChange }: EmployeeViewDialog
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
+          {/* Container for Employee ID and Status in a single row */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium">Employee ID</label>
+              <label className="text-sm md:text-base font-medium">Employee ID</label>
               <p className="text-sm text-muted-foreground">{employee.employee_number}</p>
             </div>
             <div>
-              <label className="text-sm font-medium">Status</label>
+              <label className="text-sm md:text-base font-medium">Status</label>
               <p className="text-sm text-muted-foreground">
                 <Badge className={employee.employment_status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
                   {employee.employment_status}
                 </Badge>
               </p>
             </div>
+          </div>
+
+          {/* The rest of the details in a two-column grid on larger screens */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium">Full Name</label>
+              <label className="text-sm md:text-base font-medium">Full Name</label>
               <p className="text-sm text-muted-foreground">
                 {employee.first_name} {employee.middle_name} {employee.last_name} {employee.suffix}
               </p>
             </div>
             <div>
-              <label className="text-sm font-medium">Email</label>
+              <label className="text-sm md:text-base font-medium">Email</label>
               <p className="text-sm text-muted-foreground">{employee.email_address || 'N/A'}</p>
             </div>
             <div>
-              <label className="text-sm font-medium">Position</label>
+              <label className="text-sm md:text-base font-medium">Position</label>
               <p className="text-sm text-muted-foreground">{employee.plantilla_position || 'N/A'}</p>
             </div>
             <div>
-              <label className="text-sm font-medium">Contact Number</label>
+              <label className="text-sm md:text-base font-medium">Contact Number</label>
               <p className="text-sm text-muted-foreground">{employee.contact_number || 'N/A'}</p>
             </div>
             <div>
-              <label className="text-sm font-medium">Appointment Date</label>
+              <label className="text-sm md:text-base font-medium">Appointment Date</label>
               <p className="text-sm text-muted-foreground">
                 {employee.appointment_date ? new Date(employee.appointment_date).toLocaleDateString() : 'N/A'}
               </p>
             </div>
             <div>
-              <label className="text-sm font-medium">Monthly Salary</label>
+              <label className="text-sm md:text-base font-medium">Monthly Salary</label>
               <p className="text-sm text-muted-foreground">
                 {employee.current_monthly_salary ? `₱${employee.current_monthly_salary.toLocaleString()}` : 'N/A'}
               </p>
@@ -103,9 +109,6 @@ function EmployeeViewDialog({ employee, open, onOpenChange }: EmployeeViewDialog
           </div>
         </div>
         <DialogFooter>
-          {/* <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Close
-          </Button> */}
           <Button asChild>
             <Link to={`/employees/${employee.id}/edit`}>Edit Employee</Link>
           </Button>
@@ -241,40 +244,39 @@ function DocumentsDialog({ employee, open, onOpenChange }: DocumentsDialogProps)
   if (!employee) return null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="min-w-5xl max-h-[80vh] overflow-auto">
+   <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="w-[95vw] max-w-5xl max-h-[80vh] overflow-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>Employee Documents</DialogTitle>
           <DialogDescription>
             Documents for {employee.first_name} {employee.last_name} (ID: {employee.employee_number})
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="py-4">
           {/* Upload Section */}
           <div className="mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Document Management</h3>
-              <Button 
+            <div className="flex flex-col sm:flex-row items-end justify-end gap-4 sm:gap-0 mb-4">
+              <Button
                 onClick={() => setShowUploadForm(!showUploadForm)}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 w-full sm:w-auto"
               >
                 <Plus className="h-4 w-4" />
                 Upload Document
               </Button>
             </div>
-            
+
             {showUploadForm && (
               <Card className="p-4 mb-4">
                 <div className="grid gap-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
+                    <div className='grid gap-2'>
                       <Label htmlFor="document-type">Document Type *</Label>
-                      <Select 
-                        value={uploadData.document_type_id} 
+                      <Select
+                        value={uploadData.document_type_id}
                         onValueChange={(value) => setUploadData(prev => ({ ...prev, document_type_id: value }))}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className='w-full'>
                           <SelectValue placeholder="Select document type" />
                         </SelectTrigger>
                         <SelectContent>
@@ -287,22 +289,21 @@ function DocumentsDialog({ employee, open, onOpenChange }: DocumentsDialogProps)
                         </SelectContent>
                       </Select>
                     </div>
-                    
-                    <div>
+                    <div className='grid gap-2'>
                       <Label htmlFor="file-input">File *</Label>
                       <Input
                         id="file-input"
                         type="file"
                         onChange={handleFileChange}
-                        accept={uploadData.document_type_id ? 
-                          documentTypes.find(dt => dt.id.toString() === uploadData.document_type_id)?.allowed_extensions.map(ext => `.${ext}`).join(',') 
+                        accept={uploadData.document_type_id ?
+                          documentTypes.find(dt => dt.id.toString() === uploadData.document_type_id)?.allowed_extensions.map(ext => `.${ext}`).join(',')
                           : undefined
                         }
                       />
                     </div>
                   </div>
-                  
-                  <div>
+
+                  <div className='grid gap-2'>
                     <Label htmlFor="description">Description</Label>
                     <Input
                       id="description"
@@ -311,8 +312,7 @@ function DocumentsDialog({ employee, open, onOpenChange }: DocumentsDialogProps)
                       onChange={(e) => setUploadData(prev => ({ ...prev, description: e.target.value }))}
                     />
                   </div>
-                  
-                  {/* File info and validation */}
+
                   {uploadData.file && uploadData.document_type_id && (
                     <div className="text-sm text-muted-foreground">
                       <p>File: {uploadData.file.name}</p>
@@ -328,23 +328,25 @@ function DocumentsDialog({ employee, open, onOpenChange }: DocumentsDialogProps)
                           );
                         }
                         return null;
-                      })()} 
+                      })()}
                     </div>
                   )}
-                  
-                  <div className="flex gap-2">
-                    <Button 
+
+                  <div className="flex gap-2 w-full">
+                    <Button
                       onClick={handleUpload}
                       disabled={!uploadData.file || !uploadData.document_type_id || isUploading}
+                      className="flex-1"
                     >
                       {isUploading ? 'Uploading...' : 'Upload Document'}
                     </Button>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       onClick={() => {
                         setShowUploadForm(false);
                         setUploadData({ document_type_id: '', description: '', file: null });
                       }}
+                      className="flex-1"
                     >
                       Cancel
                     </Button>
@@ -353,71 +355,137 @@ function DocumentsDialog({ employee, open, onOpenChange }: DocumentsDialogProps)
               </Card>
             )}
           </div>
-          
-          {/* Documents List */}
+
+          {/* Responsive Documents List */}
           {isLoading ? (
             <div className="text-center py-8">Loading documents...</div>
           ) : documents.length > 0 ? (
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Document Name</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Upload Date</TableHead>
-                    <TableHead>Size</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {documents.map((document) => (
-                    <TableRow key={document.id}>
-                      <TableCell className="font-medium">{document.file_name}</TableCell>
-                      <TableCell>{document.document_type_name || 'N/A'}</TableCell>
-                      <TableCell>
+            <>
+              {/* Table for larger screens */}
+              <div className="hidden md:block rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Document Name</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Upload Date</TableHead>
+                      <TableHead>Size</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {documents.map((document) => (
+                      <TableRow key={document.id}>
+                        <TableCell className="font-medium max-w-0">
+                          <div className="truncate" title={document.file_name}>
+                            {document.file_name}
+                          </div>
+                        </TableCell>
+                        <TableCell>{document.document_type_name || 'N/A'}</TableCell>
+                        <TableCell>
+                          {document.upload_date ? new Date(document.upload_date).toLocaleDateString() : 'N/A'}
+                        </TableCell>
+                        <TableCell>
+                          {document.file_size ? `${(document.file_size / (1024 * 1024)).toFixed(2)} MB` : 'N/A'}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            className={
+                              document.status === 'Approved' ? 'bg-green-100 text-green-800' :
+                                document.status === 'Rejected' ? 'bg-red-100 text-red-800' :
+                                  'bg-yellow-100 text-yellow-800'
+                            }
+                          >
+                            {document.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleDownload(document)}
+                              title="Download"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleDeleteDocument(document.id)}
+                              className="text-red-600 hover:text-red-700"
+                              title="Delete"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Cards for mobile screens */}
+              <div className="md:hidden space-y-4">
+                {documents.map((document) => (
+                  <Card key={document.id} className="p-4">
+                    {/* Container for the document details */}
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div className="font-medium">Document Name</div>
+                      <div className="truncate" title={document.file_name}>
+                        {document.file_name}
+                      </div>
+                      <div className="font-medium">Type</div>
+                      <div>{document.document_type_name || 'N/A'}</div>
+                      <div className="font-medium">Upload Date</div>
+                      <div>
                         {document.upload_date ? new Date(document.upload_date).toLocaleDateString() : 'N/A'}
-                      </TableCell>
-                      <TableCell>
+                      </div>
+                      <div className="font-medium">Size</div>
+                      <div>
                         {document.file_size ? `${(document.file_size / (1024 * 1024)).toFixed(2)} MB` : 'N/A'}
-                      </TableCell>
-                      <TableCell>
-                        <Badge 
+                      </div>
+                      <div className="font-medium">Status</div>
+                      <div>
+                        <Badge
                           className={
                             document.status === 'Approved' ? 'bg-green-100 text-green-800' :
-                            document.status === 'Rejected' ? 'bg-red-100 text-red-800' :
-                            'bg-yellow-100 text-yellow-800'
+                              document.status === 'Rejected' ? 'bg-red-100 text-red-800' :
+                                'bg-yellow-100 text-yellow-800'
                           }
                         >
                           {document.status}
                         </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => handleDownload(document)}
-                            title="Download"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => handleDeleteDocument(document.id)}
-                            className="text-red-600 hover:text-red-700"
-                            title="Delete"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                      </div>
+                    </div>
+
+                    {/* Container for the action buttons */}
+                    <div className="flex gap-2 mt-4">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleDownload(document)}
+                        title="Download"
+                        className="flex-1"
+                      >
+                        <Eye className="h-4 w-4 mr-2" /> View
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleDeleteDocument(document.id)}
+                        className="text-red-600 hover:text-red-700 flex-1"
+                        title="Delete"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" /> Delete
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </>
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -426,12 +494,6 @@ function DocumentsDialog({ employee, open, onOpenChange }: DocumentsDialogProps)
             </div>
           )}
         </div>
-        
-        {/* <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Close
-          </Button>
-        </DialogFooter> */}
       </DialogContent>
     </Dialog>
   );
@@ -444,6 +506,7 @@ export function EmployeeListPage() {
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [documentsDialogOpen, setDocumentsDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState(''); // Local search state
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false); // Collapsible state for filters
   const [filters, setFilters] = useState<EmployeeFilters>({
     name: '',
     department: '',
@@ -622,10 +685,10 @@ export function EmployeeListPage() {
   return (
     <div className="space-y-6">
       <div className="sticky top-0 z-10 bg-background pb-4 pt-2 border-b border-border">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Employees</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-xl font-semibold tracking-tight">Employees</h1>
+            <p className="text-muted-foreground text-sm sm:text-base">
               Manage your organization's employees
             </p>
           </div>
@@ -647,40 +710,95 @@ export function EmployeeListPage() {
         </CardHeader>
         <CardContent>
           {/* Filters */}
-          <div className="flex gap-4 mb-6">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by name..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8"
-                />
-              </div>
+          <div className="mb-6">
+            {/* Mobile Filter Toggle */}
+            <div className="md:hidden mb-4">
+              <Collapsible open={isFiltersOpen} onOpenChange={setIsFiltersOpen}>
+                <CollapsibleTrigger asChild>
+                  <Button variant="outline" className="w-full justify-between">
+                    <div className="flex items-center gap-2">
+                      <Filter className="h-4 w-4" />
+                      Filters & Search
+                    </div>
+                    <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${
+                      isFiltersOpen ? 'rotate-180' : ''
+                    }`} />
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-4 mt-4">
+                  <div className="flex flex-col gap-4">
+                    <div className="relative">
+                      <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search by name..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-8 w-full"
+                      />
+                    </div>
+                    <Input
+                      placeholder="Position"
+                      value={filters.position}
+                      onChange={(e) => handleFilterChange('position', e.target.value)}
+                      className="w-full"
+                    />
+                    <Select value={filters.status || 'all'} onValueChange={(value) => handleFilterChange('status', value === 'all' ? '' : value)}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Filter by status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Status</SelectItem>
+                        <SelectItem value="Active">Active</SelectItem>
+                        <SelectItem value="Resigned">Resigned</SelectItem>
+                        <SelectItem value="Retired">Retired</SelectItem>
+                        <SelectItem value="Terminated">Terminated</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button variant="outline" onClick={fetchEmployees} className="w-full">
+                      <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                      Refresh
+                    </Button>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
             </div>
-            <Input
-              placeholder="Position"
-              value={filters.position}
-              onChange={(e) => handleFilterChange('position', e.target.value)}
-              className="w-[180px]"
-            />
-            <Select value={filters.status || 'all'} onValueChange={(value) => handleFilterChange('status', value === 'all' ? '' : value)}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="Active">Active</SelectItem>
-                <SelectItem value="Resigned">Resigned</SelectItem>
-                <SelectItem value="Retired">Retired</SelectItem>
-                <SelectItem value="Terminated">Terminated</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button variant="outline" onClick={fetchEmployees}>
-              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
+
+            {/* Desktop Filters */}
+            <div className="hidden md:flex flex-row gap-4">
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search by name..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-8 w-full"
+                  />
+                </div>
+              </div>
+              <Input
+                placeholder="Position"
+                value={filters.position}
+                onChange={(e) => handleFilterChange('position', e.target.value)}
+                className="w-[180px]"
+              />
+              <Select value={filters.status || 'all'} onValueChange={(value) => handleFilterChange('status', value === 'all' ? '' : value)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="Active">Active</SelectItem>
+                  <SelectItem value="Resigned">Resigned</SelectItem>
+                  <SelectItem value="Retired">Retired</SelectItem>
+                  <SelectItem value="Terminated">Terminated</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button variant="outline" onClick={fetchEmployees}>
+                <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
+            </div>
           </div>
 
           {/* Employee Table */}

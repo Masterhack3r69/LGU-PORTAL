@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,7 +10,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileText, Download, CheckCircle, X, Clock, AlertCircle, Eye, Search, RefreshCw } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { FileText, Download, CheckCircle, X, Clock, AlertCircle, Eye, Search, RefreshCw, Filter, ChevronDown } from 'lucide-react';
 import { documentService } from '@/services/documentService';
 import type { Document, DocumentType, DocumentStatistics } from '@/types/employee';
 
@@ -22,6 +23,7 @@ export function DocumentManagementPage() {
   const [reviewNotes, setReviewNotes] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isReviewing, setIsReviewing] = useState(false);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false); // Collapsible state for filters
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [filters, setFilters] = useState({
     status: 'all',
@@ -144,8 +146,8 @@ export function DocumentManagementPage() {
       <div className="sticky top-0 z-10 bg-background pb-4 pt-2 border-b border-border w-full">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Document Management</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-xl font-semibold tracking-tight">Document Management</h1>
+            <p className="text-muted-foreground text-sm sm:text-base">
               Review and manage employee document submissions
             </p>
           </div>
@@ -167,48 +169,64 @@ export function DocumentManagementPage() {
 
       {/* Statistics Cards */}
       {statistics && (
-       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {/* Total Documents Card */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Documents</CardTitle>
-              <FileText className="h-5 w-5 text-muted-foreground" />
-            </CardHeader>
+          <Card className="transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
             <CardContent>
-              <div className="text-4xl font-bold">{statistics.total}</div>
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground">Total Documents</p>
+                  <p className="text-2xl font-bold text-foreground">{statistics.total}</p>
+                </div>
+                <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
+                  <FileText className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                </div>
+              </div>
             </CardContent>
           </Card>
 
           {/* Pending Review Card */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pending Review</CardTitle>
-              <Clock className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
-            </CardHeader>
+          <Card className="transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
             <CardContent>
-              <div className="text-4xl font-bold text-yellow-600 dark:text-yellow-400">{statistics.pending}</div>
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground">Pending Review</p>
+                  <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{statistics.pending}</p>
+                </div>
+                <div className="p-2 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg">
+                  <Clock className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                </div>
+              </div>
             </CardContent>
           </Card>
 
           {/* Approved Card */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Approved</CardTitle>
-              <CheckCircle className="h-5w-5 text-green-600 dark:text-green-400" />
-            </CardHeader>
+          <Card className="transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
             <CardContent>
-              <div className="text-4xl font-bold text-green-600 dark:text-green-400">{statistics.approved}</div>
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground">Approved</p>
+                  <p className="text-2xl font-bold text-green-600 dark:text-green-400">{statistics.approved}</p>
+                </div>
+                <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
+                  <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+                </div>
+              </div>
             </CardContent>
           </Card>
 
           {/* Rejected Card */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Rejected</CardTitle>
-              <X className="h-5 w-5 text-red-600 dark:text-red-400" />
-            </CardHeader>
+          <Card className="transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
             <CardContent>
-              <div className="text-4xl font-bold text-red-600 dark:text-red-400">{statistics.rejected}</div>
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground">Rejected</p>
+                  <p className="text-2xl font-bold text-red-600 dark:text-red-400">{statistics.rejected}</p>
+                </div>
+                <div className="p-2 bg-red-100 dark:bg-red-900/20 rounded-lg">
+                  <X className="h-5 w-5 text-red-600 dark:text-red-400" />
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -216,29 +234,86 @@ export function DocumentManagementPage() {
 
       {/* Filters */}
       <Card>
-        {/* <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Filters
-          </CardTitle>
-        </CardHeader> */}
-        <CardContent>
-          <div className="flex gap-4">
-            <div className="space-y-2 flex-1">
-              <div className="relative ">
-                <Search className=" absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <CardContent className="p-4">
+          {/* Mobile Filter Toggle */}
+          <div className="lg:hidden mb-4">
+            <Collapsible open={isFiltersOpen} onOpenChange={setIsFiltersOpen}>
+              <CollapsibleTrigger asChild>
+                <Button variant="outline" className="w-full justify-between hover:bg-slate-50 transition-colors duration-200">
+                  <div className="flex items-center gap-2">
+                    <Filter className="h-4 w-4" />
+                    Filters & Search
+                  </div>
+                  <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${
+                    isFiltersOpen ? 'rotate-180' : ''
+                  }`} />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-4 mt-4">
+                <div className="flex flex-col gap-4">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search by name or employee number..."
+                      value={filters.employee_search}
+                      onChange={(e) => setFilters({...filters, employee_search: e.target.value})}
+                      className="pl-10 w-full transition-all duration-200 focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <Select value={filters.document_type_id} onValueChange={(value) => setFilters({...filters, document_type_id: value})}>
+                    <SelectTrigger className="w-full transition-all duration-200 hover:border-slate-400">
+                      <SelectValue placeholder="All types" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All types</SelectItem>
+                      {documentTypes.map((type) => (
+                        <SelectItem key={type.id} value={type.id.toString()}>
+                          {type.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={filters.status} onValueChange={(value) => setFilters({...filters, status: value})}>
+                    <SelectTrigger className="w-full transition-all duration-200 hover:border-slate-400">
+                      <SelectValue placeholder="All statuses" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All statuses</SelectItem>
+                      <SelectItem value="Pending">Pending</SelectItem>
+                      <SelectItem value="Approved">Approved</SelectItem>
+                      <SelectItem value="Rejected">Rejected</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    variant="outline"
+                    onClick={loadData}
+                    disabled={isLoading}
+                    className="w-full transition-all duration-200 hover:bg-slate-50 hover:shadow-md"
+                  >
+                    <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                    {isLoading ? 'Refreshing...' : 'Refresh'}
+                  </Button>
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          </div>
+
+          {/* Desktop Filters */}
+          <div className="hidden lg:flex gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  id="employee-search"
                   placeholder="Search by name or employee number..."
                   value={filters.employee_search}
                   onChange={(e) => setFilters({...filters, employee_search: e.target.value})}
-                  className="pl-10"
+                  className="pl-10 w-full transition-all duration-200 focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
-            <div className="space-y-2">
+            <div className="w-[200px]">
               <Select value={filters.document_type_id} onValueChange={(value) => setFilters({...filters, document_type_id: value})}>
-                <SelectTrigger className="w-[200px]">
+                <SelectTrigger className="transition-all duration-200 hover:border-slate-400">
                   <SelectValue placeholder="All types" />
                 </SelectTrigger>
                 <SelectContent>
@@ -251,10 +326,9 @@ export function DocumentManagementPage() {
                 </SelectContent>
               </Select>
             </div>
-            
-             <div className="space-y-2 ">
-                <Select value={filters.status} onValueChange={(value) => setFilters({...filters, status: value})}>
-                <SelectTrigger >
+            <div className="w-[140px]">
+              <Select value={filters.status} onValueChange={(value) => setFilters({...filters, status: value})}>
+                <SelectTrigger className="transition-all duration-200 hover:border-slate-400">
                   <SelectValue placeholder="All statuses" />
                 </SelectTrigger>
                 <SelectContent>
@@ -265,14 +339,13 @@ export function DocumentManagementPage() {
                 </SelectContent>
               </Select>
             </div>
-            {/* Refresh Button */}
             <Button
               variant="outline"
               onClick={loadData}
               disabled={isLoading}
-              className="w-[100px]"
+              className="w-[140px] transition-all duration-200 hover:bg-slate-50 hover:shadow-md"
             >
-              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
               {isLoading ? 'Refreshing...' : 'Refresh'}
             </Button>
           </div>

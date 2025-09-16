@@ -5,9 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:intranet": "vite --host 10.0.0.73 --port 5173",
     "build": "tsc -b && vite build",
+    "build:intranet": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "preview:intranet": "vite preview --host 10.0.0.73 --port 4173"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",

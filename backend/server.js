@@ -99,8 +99,8 @@ app.use(compression({
 // CORS configuration
 app.use(cors({
     origin: process.env.NODE_ENV === 'production' 
-        ? ['http://localhost:3000'] // Add your production domains
-        : ['http://localhost:5173', 'http://127.0.0.1:5173'],
+        ? (process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : ['http://10.0.0.73:5173', 'http://10.0.0.73:3000', 'http://localhost:5173', 'http://localhost:3000'])
+        : ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://10.0.0.73:5173'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
@@ -130,10 +130,10 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+        secure: false, // Set to false for HTTP intranet applications
         httpOnly: true,
         maxAge: 8 * 60 * 60 * 1000, // 8 hours
-        sameSite: 'strict'
+        sameSite: 'lax' // Changed from 'strict' to 'lax' for better compatibility
     },
     rolling: true // Reset expiration on activity
 }));
@@ -243,15 +243,16 @@ const startServer = async () => {
         monthlyAccrualJob.startScheduledJob(); // Add this line
 
         // Start server
-        const server = app.listen(PORT, () => {
+        const server = app.listen(PORT, '10.0.0.73', () => {
             console.log(`
 🚀 Employee Management System Server Started
 🌐 Environment: ${process.env.NODE_ENV || 'development'}
-🔌 Port: ${PORT}
+🔌 Host: 10.0.0.73:${PORT}
 📊 Database: Connected
 🔒 Security: Enabled
 📁 Upload Path: ${process.env.UPLOAD_PATH || './uploads'}
 ⏰ Started at: ${new Date().toISOString()}
+🌍 Intranet Access: http://10.0.0.73:${PORT}
             `);
         });
 

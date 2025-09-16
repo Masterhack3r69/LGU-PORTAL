@@ -186,7 +186,7 @@ const EmployeeMyTrainingsPage: React.FC = () => {
       {/* Filters */}
       <TrainingFilters
         filters={filters}
-        onFiltersChange={handleFiltersChange}
+        onFiltersChange={handleFiltersChange}   
       />
 
       {/* Loading State */}
