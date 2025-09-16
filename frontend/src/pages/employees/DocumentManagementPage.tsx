@@ -356,7 +356,7 @@ export function DocumentManagementPage() {
       <Tabs defaultValue="pending" className="space-y-4">
         <TabsList>
           <TabsTrigger value="pending" className="relative">
-            Pending Review
+            Pending
             {getPendingDocuments().length > 0 && (
               <Badge variant="destructive" className="ml-2 h-5 w-5 rounded-full p-0 text-xs">
                 {getPendingDocuments().length}
@@ -365,7 +365,7 @@ export function DocumentManagementPage() {
           </TabsTrigger>
           <TabsTrigger value="approved">Approved</TabsTrigger>
           <TabsTrigger value="rejected">Rejected</TabsTrigger>
-          <TabsTrigger value="all">All Documents</TabsTrigger>
+          <TabsTrigger value="all">Documents</TabsTrigger>
         </TabsList>
 
         <TabsContent value="pending">

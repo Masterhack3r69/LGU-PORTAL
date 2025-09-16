@@ -200,7 +200,7 @@ export function EmployeeCreatePage() {
           </div>
           <Button variant="outline" onClick={() => navigate('/employees')}>
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Employees
+            <span>Back</span><span className='hidden sm:inline'>to Employees</span>
           </Button>
         </div>
       </div>

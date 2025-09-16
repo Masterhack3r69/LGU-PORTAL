@@ -77,31 +77,31 @@ function EmployeeViewDialog({ employee, open, onOpenChange }: EmployeeViewDialog
           {/* The rest of the details in a two-column grid on larger screens */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="text-sm md:text-base font-medium">Full Name</label>
+              <label className="text-sm sm:text-base md:text-base font-medium">Full Name</label>
               <p className="text-sm text-muted-foreground">
                 {employee.first_name} {employee.middle_name} {employee.last_name} {employee.suffix}
               </p>
             </div>
             <div>
-              <label className="text-sm md:text-base font-medium">Email</label>
+              <label className="text-sm sm:text-base md:text-base font-medium">Email</label>
               <p className="text-sm text-muted-foreground">{employee.email_address || 'N/A'}</p>
             </div>
             <div>
-              <label className="text-sm md:text-base font-medium">Position</label>
+              <label className="text-sm sm:text-base md:text-base font-medium">Position</label>
               <p className="text-sm text-muted-foreground">{employee.plantilla_position || 'N/A'}</p>
             </div>
             <div>
-              <label className="text-sm md:text-base font-medium">Contact Number</label>
+              <label className="text-sm sm:text-base md:text-base font-medium">Contact Number</label>
               <p className="text-sm text-muted-foreground">{employee.contact_number || 'N/A'}</p>
             </div>
             <div>
-              <label className="text-sm md:text-base font-medium">Appointment Date</label>
+              <label className="text-sm sm:text-base md:text-base font-medium">Appointment Date</label>
               <p className="text-sm text-muted-foreground">
                 {employee.appointment_date ? new Date(employee.appointment_date).toLocaleDateString() : 'N/A'}
               </p>
             </div>
             <div>
-              <label className="text-sm md:text-base font-medium">Monthly Salary</label>
+              <label className="text-sm sm:text-base md:text-base font-medium">Monthly Salary</label>
               <p className="text-sm text-muted-foreground">
                 {employee.current_monthly_salary ? `₱${employee.current_monthly_salary.toLocaleString()}` : 'N/A'}
               </p>
