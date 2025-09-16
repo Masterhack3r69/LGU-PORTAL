@@ -15,14 +15,6 @@ const AdminTrainingManagement: React.FC = () => {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
-      {/* <div className="sticky top-0 z-10 bg-background pb-4 border-b border-border">
-        <h1 className="text-3xl font-bold">Training Management</h1>
-        <p className="text-muted-foreground">
-          Manage employee training programs, records, and analyze training effectiveness
-        </p>
-      </div> */}
-
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">

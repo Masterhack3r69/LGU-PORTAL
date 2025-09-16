@@ -171,7 +171,7 @@ export function DocumentManagementPage() {
       {statistics && (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {/* Total Documents Card */}
-          <Card className="transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
+          <Card className="transition-all duration-300 hover:shadow-lg hover:scale-105 border-l-4 border-l-blue-500 bg-gradient-to-r from-blue-50 to-white">
             <CardContent>
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
@@ -186,11 +186,11 @@ export function DocumentManagementPage() {
           </Card>
 
           {/* Pending Review Card */}
-          <Card className="transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
+          <Card className="transition-all duration-300 hover:shadow-lg hover:scale-105 border-l-4 border-l-amber-500 bg-gradient-to-r from-amber-50 to-white">
             <CardContent>
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                  <p className="text-sm font-medium text-muted-foreground">Pending Review</p>
+                  <p className="text-sm font-medium text-muted-foreground">Pending</p>
                   <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{statistics.pending}</p>
                 </div>
                 <div className="p-2 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg">
@@ -201,7 +201,7 @@ export function DocumentManagementPage() {
           </Card>
 
           {/* Approved Card */}
-          <Card className="transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
+          <Card className="transition-all duration-300 hover:shadow-lg hover:scale-105 border-l-4 border-l-green-500 bg-gradient-to-r from-green-50 to-white">
             <CardContent>
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
@@ -216,7 +216,7 @@ export function DocumentManagementPage() {
           </Card>
 
           {/* Rejected Card */}
-          <Card className="transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
+          <Card className="transition-all duration-300 hover:shadow-lg hover:scale-105 border-l-4 border-l-red-500 bg-gradient-to-r from-red-50 to-white">
             <CardContent>
               <div className="flex items-center justify-between">
                 <div className="space-y-1">

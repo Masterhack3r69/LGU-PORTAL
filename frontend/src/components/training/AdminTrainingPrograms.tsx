@@ -148,62 +148,61 @@ const AdminTrainingPrograms: React.FC = () => {
 
   if (error) {
     return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="text-center text-red-600">
-            <p>Failed to load training programs</p>
-            <Button onClick={() => refetch()} className="mt-2">
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Retry
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex flex-col items-center justify-center p-8 text-center">
+        <div className="text-red-600 space-y-3">
+          <p className="text-base font-medium">Failed to load training programs</p>
+          <p className="text-sm text-muted-foreground">Please check your connection and try again</p>
+          <Button onClick={() => refetch()} variant="outline" size="sm">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Retry
+          </Button>
+        </div>
+      </div>
     );
   }
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between sticky top-0 z-10 bg-background pb-4 pt-2 border-b border-border">
-        <div>
-          <h2 className="text-3xl font-bold">Training Programs</h2>
-          <p className="text-muted-foreground">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sticky top-0 z-10 bg-background pb-4 pt-2 border-b border-border">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-lg sm:text-xl font-semibold tracking-tight truncate">Training Programs</h1>
+          <p className="text-muted-foreground text-sm">
             Manage training program templates and definitions
           </p>
         </div>
-        <Button onClick={openCreateForm} size="sm">
-          <Plus className="h-4 w-4 mr-2" />
-          Create Program
-        </Button>
+        <div className="flex gap-2 flex-shrink-0">
+          <Button onClick={openCreateForm} size="sm" className="flex-1 sm:flex-initial">
+            <Plus className="h-4 w-4 mr-2" />
+            <span className="hidden sm:inline">Create Program</span>
+            <span className="sm:hidden">Create</span>
+          </Button>
+        </div>
       </div>
 
-      {/* Search */}
-      <div className="flex items-center space-x-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search programs..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        <div className="text-sm text-muted-foreground">
-          {filteredPrograms.length} of {programs.length} programs
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Search and Statistics */}
+        <div className="space-y-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search programs..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
         </div>
       </div>
 
       {/* Loading State */}
       {isLoading && (
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-center">
-              <RefreshCw className="h-6 w-6 animate-spin mr-2" />
-              <span>Loading training programs...</span>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex items-center justify-center p-12">
+          <div className="flex items-center space-x-3">
+            <RefreshCw className="h-6 w-6 animate-spin text-primary" />
+            <span className="text-base text-muted-foreground">Loading training programs...</span>
+          </div>
+        </div>
       )}
 
       {/* Training Programs */}
@@ -308,9 +307,9 @@ const AdminTrainingPrograms: React.FC = () => {
 
       {/* Training Program Form Dialog */}
       <Dialog open={isFormOpen} onOpenChange={closeForm}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
+        <DialogContent className="w-[95vw] max-w-2xl max-h-[95vh] overflow-hidden flex flex-col p-0">
+          <DialogHeader className="px-6 py-4 border-b bg-muted/20">
+            <DialogTitle className="text-lg sm:text-xl font-semibold">
               {isViewMode 
                 ? 'Training Program Details' 
                 : selectedProgram 
@@ -318,7 +317,7 @@ const AdminTrainingPrograms: React.FC = () => {
                   : 'New Training Program'
               }
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-sm text-muted-foreground mt-1">
               {isViewMode 
                 ? 'View detailed information about this training program template.' 
                 : selectedProgram 
@@ -327,13 +326,15 @@ const AdminTrainingPrograms: React.FC = () => {
               }
             </DialogDescription>
           </DialogHeader>
-          <TrainingProgramForm
-            program={selectedProgram || undefined}
-            onSubmit={handleSubmit}
-            onCancel={closeForm}
-            isLoading={createMutation.isPending || updateMutation.isPending}
-            readOnly={isViewMode}
-          />
+          <div className="flex-1 overflow-y-auto px-6 py-4">
+            <TrainingProgramForm
+              program={selectedProgram || undefined}
+              onSubmit={handleSubmit}
+              onCancel={closeForm}
+              isLoading={createMutation.isPending || updateMutation.isPending}
+              readOnly={isViewMode}
+            />
+          </div>
         </DialogContent>
       </Dialog>
     </div>

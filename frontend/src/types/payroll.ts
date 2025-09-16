@@ -330,6 +330,7 @@ export interface EmployeeBenefitsResponse {
     bonuses: EmployeeBenefit[];
     allowances: EmployeeBenefit[];
     awards: EmployeeBenefit[];
+    monetization: EmployeeBenefit[];
   };
   eligibility: {
     thirteenth_month: boolean;
@@ -347,7 +348,7 @@ export interface EmployeeBenefitsResponse {
 
 export interface BenefitCalculationRequest {
   employee_id: number;
-  benefit_type: 'thirteenth_month' | 'fourteenth_month' | 'pbb' | 'loyalty_award';
+  benefit_type: 'thirteenth_month' | 'fourteenth_month' | 'pbb' | 'loyalty_award' | 'leave_monetization';
   year: number;
 }
 
@@ -366,6 +367,27 @@ export interface BenefitCalculationResponse {
 export interface LoyaltyAwardRequest {
   employee_id: number;
   year: number;
+}
+
+export interface LeaveMonetizationRequest {
+  employee_id: number;
+  leave_type_id: number;
+  year: number;
+  days_to_monetize: number;
+}
+
+export interface LeaveMonetizationResponse {
+  success: boolean;
+  data: {
+    employee_id: number;
+    leave_type_id: number;
+    year: number;
+    monetized_days: number;
+    monetization_amount: number;
+    daily_rate: number;
+    remaining_balance: number;
+  };
+  message: string;
 }
 
 export interface BenefitsSummaryResponse {

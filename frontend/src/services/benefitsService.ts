@@ -4,6 +4,7 @@ import type {
   BenefitCalculationRequest,
   BenefitCalculationResponse,
   LoyaltyAwardRequest,
+  LeaveMonetizationResponse,
   BenefitsSummaryResponse,
   CreateBenefitForm,
   BenefitsFilters,
@@ -96,6 +97,26 @@ class BenefitsService {
     });
   }
 
+  // Calculate leave monetization potential
+  async calculateLeaveMonetization(employeeId: number, year: number): Promise<BenefitCalculationResponse> {
+    return this.calculateBenefit({
+      employee_id: employeeId,
+      benefit_type: 'leave_monetization',
+      year
+    });
+  }
+
+  // Process actual leave monetization
+  async processLeaveMonetization(request: {
+    employee_id: number;
+    leave_type_id: number;
+    year: number;
+    days_to_monetize: number;
+  }): Promise<LeaveMonetizationResponse> {
+    const response = await apiService.post<LeaveMonetizationResponse>('/leaves/monetize', request);
+    return response;
+  }
+
   // Format currency for display
   formatCurrency(amount: number): string {
     return new Intl.NumberFormat('en-PH', {
@@ -117,14 +138,16 @@ class BenefitsService {
   }
 
   // Get benefit category
-  getBenefitCategory(benefitCode: string): 'bonus' | 'allowance' | 'award' | 'other' {
+  getBenefitCategory(benefitCode: string): 'bonus' | 'allowance' | 'award' | 'monetization' | 'other' {
     const bonuses = ['PBB', 'MYB', 'YEB']; // Performance-based bonuses
     const allowances = ['RATA', 'CA', 'MA', 'HA', 'SL']; // Various allowances
     const awards = ['LA']; // Loyalty awards
+    const monetization = ['VLM', 'SLM']; // Leave monetization
 
     if (bonuses.includes(benefitCode)) return 'bonus';
     if (allowances.includes(benefitCode)) return 'allowance';
     if (awards.includes(benefitCode)) return 'award';
+    if (monetization.includes(benefitCode)) return 'monetization';
     return 'other';
   }
 

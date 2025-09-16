@@ -50,22 +50,22 @@ function EmployeeViewDialog({ employee, open, onOpenChange }: EmployeeViewDialog
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-auto">
+      <DialogContent className="w-[95vw] max-w-2xl max-h-[95vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Employee Details</DialogTitle>
+          <DialogTitle className="text-lg sm:text-xl">Employee Details</DialogTitle>
           <DialogDescription>
             Complete information for {employee.first_name} {employee.last_name}
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
+        <div className="grid gap-3 sm:gap-4 py-4">
           {/* Container for Employee ID and Status in a single row */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
-              <label className="text-sm md:text-base font-medium">Employee ID</label>
+              <label className="text-sm font-medium">Employee ID</label>
               <p className="text-sm text-muted-foreground">{employee.employee_number}</p>
             </div>
             <div>
-              <label className="text-sm md:text-base font-medium">Status</label>
+              <label className="text-sm font-medium">Status</label>
               <p className="text-sm text-muted-foreground">
                 <Badge className={employee.employment_status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
                   {employee.employment_status}
@@ -75,41 +75,41 @@ function EmployeeViewDialog({ employee, open, onOpenChange }: EmployeeViewDialog
           </div>
 
           {/* The rest of the details in a two-column grid on larger screens */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
-              <label className="text-sm sm:text-base md:text-base font-medium">Full Name</label>
-              <p className="text-sm text-muted-foreground">
+              <label className="text-sm font-medium">Full Name</label>
+              <p className="text-sm text-muted-foreground break-words">
                 {employee.first_name} {employee.middle_name} {employee.last_name} {employee.suffix}
               </p>
             </div>
             <div>
-              <label className="text-sm sm:text-base md:text-base font-medium">Email</label>
-              <p className="text-sm text-muted-foreground">{employee.email_address || 'N/A'}</p>
+              <label className="text-sm font-medium">Email</label>
+              <p className="text-sm text-muted-foreground break-all">{employee.email_address || 'N/A'}</p>
             </div>
             <div>
-              <label className="text-sm sm:text-base md:text-base font-medium">Position</label>
-              <p className="text-sm text-muted-foreground">{employee.plantilla_position || 'N/A'}</p>
+              <label className="text-sm font-medium">Position</label>
+              <p className="text-sm text-muted-foreground break-words">{employee.plantilla_position || 'N/A'}</p>
             </div>
             <div>
-              <label className="text-sm sm:text-base md:text-base font-medium">Contact Number</label>
+              <label className="text-sm font-medium">Contact Number</label>
               <p className="text-sm text-muted-foreground">{employee.contact_number || 'N/A'}</p>
             </div>
             <div>
-              <label className="text-sm sm:text-base md:text-base font-medium">Appointment Date</label>
+              <label className="text-sm font-medium">Appointment Date</label>
               <p className="text-sm text-muted-foreground">
                 {employee.appointment_date ? new Date(employee.appointment_date).toLocaleDateString() : 'N/A'}
               </p>
             </div>
             <div>
-              <label className="text-sm sm:text-base md:text-base font-medium">Monthly Salary</label>
+              <label className="text-sm font-medium">Monthly Salary</label>
               <p className="text-sm text-muted-foreground">
                 {employee.current_monthly_salary ? `₱${employee.current_monthly_salary.toLocaleString()}` : 'N/A'}
               </p>
             </div>
           </div>
         </div>
-        <DialogFooter>
-          <Button asChild>
+        <DialogFooter className="flex-col sm:flex-row gap-2">
+          <Button asChild className="w-full sm:w-auto">
             <Link to={`/employees/${employee.id}/edit`}>Edit Employee</Link>
           </Button>
         </DialogFooter>

@@ -3,8 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Search,CheckCircle, XCircle, RefreshCw } from 'lucide-react';
+import { Search, CheckCircle, XCircle, RefreshCw, FileText, Clock, CheckSquare, AlertCircle } from 'lucide-react';
 import leaveService from '@/services/leaveService';
 import LeaveCard from './LeaveCard';
 import { toast } from 'sonner';
@@ -99,42 +98,51 @@ const AdminLeaveApplications: React.FC = () => {
     <div className="space-y-6">
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Applications</CardTitle>
+        <Card className="transition-all duration-300 hover:shadow-lg hover:scale-105 border-l-4 border-l-blue-500 bg-gradient-to-r from-blue-50 to-white">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium text-gray-700">Total Applications</CardTitle>
+              <FileText className="h-6 w-6 text-blue-500" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
+          <CardContent className="pt-0">
+            <div className="text-3xl font-bold text-blue-700">{stats.total}</div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Pending</CardTitle>
+        <Card className="transition-all duration-300 hover:shadow-lg hover:scale-105 border-l-4 border-l-amber-500 bg-gradient-to-r from-amber-50 to-white">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium text-gray-700">Pending</CardTitle>
+              <Clock className="h-6 w-6 text-amber-500" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{stats.pending}</div>
-            <Badge variant={stats.pending > 0 ? "default" : "secondary"}>
-              {stats.pending > 0 ? "Needs Review" : "All Clear"}
-            </Badge>
+          <CardContent className="pt-0">
+            <div className="text-3xl font-bold text-amber-600">{stats.pending}</div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Approved</CardTitle>
+        <Card className="transition-all duration-300 hover:shadow-lg hover:scale-105 border-l-4 border-l-green-500 bg-gradient-to-r from-green-50 to-white">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium text-gray-700">Approved</CardTitle>
+              <CheckSquare className="h-6 w-6 text-green-500" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.approved}</div>
+          <CardContent className="pt-0">
+            <div className="text-3xl font-bold text-green-600">{stats.approved}</div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Rejected</CardTitle>
+        <Card className="transition-all duration-300 hover:shadow-lg hover:scale-105 border-l-4 border-l-red-500 bg-gradient-to-r from-red-50 to-white">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium text-gray-700">Rejected</CardTitle>
+              <AlertCircle className="h-6 w-6 text-red-500" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{stats.rejected}</div>
+          <CardContent className="pt-0">
+            <div className="text-3xl font-bold text-red-600">{stats.rejected}</div>
           </CardContent>
         </Card>
       </div>

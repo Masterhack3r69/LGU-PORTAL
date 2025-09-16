@@ -153,49 +153,50 @@ const AdminTrainingRecords: React.FC<AdminTrainingRecordsProps> = ({
 
   if (error) {
     return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="text-center text-red-600">
-            <p>Failed to load training records</p>
-            <Button onClick={() => refetch()} className="mt-2">
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Retry
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex flex-col items-center justify-center p-8 text-center">
+        <div className="text-red-600 space-y-3">
+          <p className="text-base font-medium">Failed to load training records</p>
+          <p className="text-sm text-muted-foreground">Please check your connection and try again</p>
+          <Button onClick={() => refetch()} variant="outline" size="sm">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Retry
+          </Button>
+        </div>
+      </div>
     );
   }
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between sticky top-0 z-10 bg-background pb-4 pt-2 border-b border-border">
-        <div>
-          <h2 className="text-3xl font-bold">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sticky top-0 z-10 bg-background pb-4 pt-2 border-b border-border">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-lg sm:text-xl font-semibold tracking-tight truncate">
             {showEmployeeView ? 'Training Overview' : 'Training Records'}
-          </h2>
-          <p className="text-muted-foreground">
+          </h1>
+          <p className="text-muted-foreground text-sm">
             {showEmployeeView 
               ? 'View training records by employee and track progress'
               : 'Manage all employee training records'
             }
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button onClick={handleExport} variant="outline" size="sm">
+        <div className="flex gap-2 flex-shrink-0">
+          <Button onClick={handleExport} variant="outline" size="sm" className="flex-1 sm:flex-initial">
             <Download className="h-4 w-4 mr-2" />
-            Export
+            <span className="hidden sm:inline">Export</span>
+            <span className="sm:hidden">Export</span>
           </Button>
-          <Button onClick={openCreateForm} size="sm">
+          <Button onClick={openCreateForm} size="sm" className="flex-1 sm:flex-initial">
             <Plus className="h-4 w-4 mr-2" />
-            Add Training
+            <span className="hidden sm:inline">Add Training</span>
+            <span className="sm:hidden">Add</span>
           </Button>
         </div>
       </div>
        
 
-      <div className='grid grid-cols-2 gap-4'>
+      <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
          {/* Filters */}
         <TrainingFilters
           filters={filters}
@@ -204,23 +205,23 @@ const AdminTrainingRecords: React.FC<AdminTrainingRecordsProps> = ({
 
           {/* Statistics Bar */}
           {pagination && (
-            <Card>
-              <CardContent>
-                <div className="flex m-2 justify-between text-sm text-muted-foreground">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-4 w-4 " />
-                      <span>Total: {pagination.totalCount}</span>
+            <Card >
+              <CardContent className="p-3">
+                <div className="flex flex-col sm:flex-row sm:justify-between gap-2 text-sm">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex items-center gap-1 text-muted-foreground">
+                      <Calendar className="h-4 w-4 flex-shrink-0" />
+                      <span className="truncate">Total: <span className="font-semibold text-blue-600">{pagination.totalCount}</span></span>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Award className="h-4 w-4" />
-                      <span>
-                        Certified: {trainings.filter(t => t.certificate_issued).length}
+                    <div className="col-end-7 flex items-center gap-1 text-muted-foreground">
+                      <Award className="h-4 w-4 flex-shrink-0" />
+                      <span className="truncate">
+                        Certified: <span className="font-semibold text-green-600">{trainings.filter(t => t.certificate_issued).length}</span>
                       </span>
                     </div>
                   </div>
-                  <div>
-                    Page {pagination.currentPage} of {pagination.totalPages}
+                  <div className="text-muted-foreground text-center sm:text-right">
+                    <span className="font-medium">Page {pagination.currentPage} of {pagination.totalPages}</span>
                   </div>
                 </div>
               </CardContent>
@@ -230,14 +231,12 @@ const AdminTrainingRecords: React.FC<AdminTrainingRecordsProps> = ({
       
       {/* Loading State */}
       {isLoading && (
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-center">
-              <RefreshCw className="h-6 w-6 animate-spin mr-2" />
-              <span>Loading training records...</span>
-            </div>
-          </CardContent>
-        </Card> 
+        <div className="flex items-center justify-center p-12">
+          <div className="flex items-center space-x-3">
+            <RefreshCw className="h-6 w-6 animate-spin text-primary" />
+            <span className="text-base text-muted-foreground">Loading training records...</span>
+          </div>
+        </div>
       )}
 
       {/* Training Records */}
@@ -246,7 +245,7 @@ const AdminTrainingRecords: React.FC<AdminTrainingRecordsProps> = ({
 
           {/* Training Grid */}
           {trainings.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
               {trainings.map((training) => (
                 <TrainingCard
                   key={training.id}
@@ -259,56 +258,59 @@ const AdminTrainingRecords: React.FC<AdminTrainingRecordsProps> = ({
               ))}
             </div>
           ) : (
-            <Card>
-              <CardContent className="p-12 text-center">
-                <Search className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-lg font-medium mb-2">No training records found</h3>
-                <p className="text-muted-foreground mb-4">
-                  {Object.keys(filters).some(key => key !== 'page' && key !== 'limit' && filters[key as keyof TrainingFiltersType])
-                    ? 'Try adjusting your filters or search criteria'
-                    : 'Get started by adding your first training record'
-                  }
-                </p>
-                <Button onClick={openCreateForm}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Training Record
-                </Button>
-              </CardContent>
-            </Card>
+            <div className="flex flex-col items-center justify-center p-12 text-center bg-muted/30 rounded-lg border-2 border-dashed border-muted-foreground/25">
+              <Search className="h-12 w-12 mx-auto mb-4 text-muted-foreground/60" />
+              <h3 className="text-lg font-medium mb-2 text-foreground">No training records found</h3>
+              <p className="text-muted-foreground mb-6 max-w-md">
+                {Object.keys(filters).some(key => key !== 'page' && key !== 'limit' && filters[key as keyof TrainingFiltersType])
+                  ? 'Try adjusting your filters or search criteria to find relevant training records'
+                  : 'Get started by adding your first training record to begin tracking employee development'
+                }
+              </p>
+              <Button onClick={openCreateForm} size="lg" className="px-6">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Training Record
+              </Button>
+            </div>
           )}
 
           {/* Pagination */}
           {pagination && pagination.totalPages > 1 && (
-            <div className="flex justify-center space-x-2">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => handlePageChange(pagination.currentPage - 1)}
                 disabled={!pagination.hasPrevPage}
+                className="w-full sm:w-auto"
               >
                 Previous
               </Button>
-              {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
-                const page = Math.max(1, pagination.currentPage - 2) + i;
-                if (page <= pagination.totalPages) {
-                  return (
-                    <Button
-                      key={page}
-                      variant={page === pagination.currentPage ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => handlePageChange(page)}
-                    >
-                      {page}
-                    </Button>
-                  );
-                }
-                return null;
-              })}
+              <div className="flex flex-wrap justify-center gap-1">
+                {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                  const page = Math.max(1, pagination.currentPage - 2) + i;
+                  if (page <= pagination.totalPages) {
+                    return (
+                      <Button
+                        key={page}
+                        variant={page === pagination.currentPage ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handlePageChange(page)}
+                        className="min-w-[40px]"
+                      >
+                        {page}
+                      </Button>
+                    );
+                  }
+                  return null;
+                })}
+              </div>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => handlePageChange(pagination.currentPage + 1)}
                 disabled={!pagination.hasNextPage}
+                className="w-full sm:w-auto"
               >
                 Next
               </Button>
@@ -319,9 +321,9 @@ const AdminTrainingRecords: React.FC<AdminTrainingRecordsProps> = ({
 
       {/* Training Form Dialog */}
       <Dialog open={isFormOpen} onOpenChange={closeForm}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
+        <DialogContent className="w-[95vw] max-w-4xl max-h-[95vh] overflow-hidden flex flex-col p-0">
+          <DialogHeader className="px-6 py-4 border-b bg-muted/20">
+            <DialogTitle className="text-lg sm:text-xl font-semibold">
               {isViewMode 
                 ? 'Training Record Details' 
                 : selectedTraining 
@@ -329,7 +331,7 @@ const AdminTrainingRecords: React.FC<AdminTrainingRecordsProps> = ({
                   : 'New Training Record'
               }
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-sm text-muted-foreground mt-1">
               {isViewMode 
                 ? 'View detailed information about this training record.' 
                 : selectedTraining 
@@ -338,13 +340,15 @@ const AdminTrainingRecords: React.FC<AdminTrainingRecordsProps> = ({
               }
             </DialogDescription>
           </DialogHeader>
-          <TrainingForm
-            training={selectedTraining || undefined}
-            onSubmit={handleSubmit}
-            onCancel={closeForm}
-            isLoading={createMutation.isPending || updateMutation.isPending}
-            readOnly={isViewMode}
-          />
+          <div className="flex-1 overflow-y-auto px-6 py-4">
+            <TrainingForm
+              training={selectedTraining || undefined}
+              onSubmit={handleSubmit}
+              onCancel={closeForm}
+              isLoading={createMutation.isPending || updateMutation.isPending}
+              readOnly={isViewMode}
+            />
+          </div>
         </DialogContent>
       </Dialog>
     </div>

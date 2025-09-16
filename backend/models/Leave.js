@@ -1020,6 +1020,51 @@ class LeaveBalance {
                 [daysToMonetize, daysToMonetize, employeeId, leaveTypeId, year]
             );
 
+            // Get employee information for compensation calculation
+            const [employeeResult] = await connection.execute(
+                'SELECT current_daily_rate, current_monthly_salary FROM employees WHERE id = ?',
+                [employeeId]
+            );
+
+            if (employeeResult.length === 0) {
+                throw new Error('Employee not found for compensation calculation');
+            }
+
+            const employee = employeeResult[0];
+            const dailyRate = employee.current_daily_rate || (employee.current_monthly_salary / 22);
+            const monetizationAmount = daysToMonetize * dailyRate;
+
+            // Determine compensation type based on leave type
+            let compensationCode = 'VLM'; // Default to Vacation Leave Monetization
+            if (balance.code === 'SL') {
+                compensationCode = 'SLM'; // Sick Leave Monetization
+            }
+
+            // Get compensation type ID
+            const [compensationTypeResult] = await connection.execute(
+                'SELECT id FROM compensation_types WHERE code = ?',
+                [compensationCode]
+            );
+
+            if (compensationTypeResult.length > 0) {
+                const compensationTypeId = compensationTypeResult[0].id;
+                
+                // Create compensation record
+                await connection.execute(
+                    `INSERT INTO employee_compensation 
+                     (employee_id, compensation_type_id, amount, year, date_paid, notes)
+                     VALUES (?, ?, ?, ?, ?, ?)`,
+                    [
+                        employeeId,
+                        compensationTypeId,
+                        monetizationAmount,
+                        year,
+                        new Date(),
+                        `Monetization of ${daysToMonetize} ${balance.name} days at ₱${dailyRate.toFixed(2)} per day`
+                    ]
+                );
+            }
+
             // Log monetization in compensation table (if exists)
             // This would integrate with the compensation module
             
@@ -1031,6 +1076,8 @@ class LeaveBalance {
                     leave_type_id: leaveTypeId,
                     year: year,
                     monetized_days: daysToMonetize,
+                    monetization_amount: monetizationAmount,
+                    daily_rate: dailyRate,
                     remaining_balance: balance.current_balance - daysToMonetize
                 }
             };

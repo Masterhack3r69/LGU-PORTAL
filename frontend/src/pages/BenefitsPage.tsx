@@ -7,6 +7,12 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { 
   Gift, 
   Users, 
@@ -15,7 +21,8 @@ import {
   Calculator,
   Award,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  BarChart3
 } from 'lucide-react';
 import benefitsService from '@/services/benefitsService';
 import employeeService from '@/services/employeeService';
@@ -96,7 +103,7 @@ export const BenefitsPage: React.FC = () => {
   }, [selectedEmployeeId, selectedYear]);
 
   // Handle benefit calculation
-  const handleCalculateBenefit = async (benefitType: 'thirteenth_month' | 'pbb' | 'loyalty_award') => {
+  const handleCalculateBenefit = async (benefitType: 'thirteenth_month' | 'pbb' | 'loyalty_award' | 'leave_monetization') => {
     if (!selectedEmployeeId) {
       setError('Please select an employee first');
       return;
@@ -133,6 +140,7 @@ export const BenefitsPage: React.FC = () => {
       case 'bonus': return 'bg-green-100 text-green-800';
       case 'allowance': return 'bg-blue-100 text-blue-800';
       case 'award': return 'bg-purple-100 text-purple-800';
+      case 'monetization': return 'bg-orange-100 text-orange-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -455,18 +463,50 @@ export const BenefitsPage: React.FC = () => {
               )}
             </CardContent>
           </Card>
+
+          {/* Leave Monetization */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Calculator className="h-5 w-5 mr-2 text-orange-600" />
+                Leave Monetization
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {benefits.benefits.monetization && benefits.benefits.monetization.length > 0 ? (
+                <div className="space-y-2">
+                  {benefits.benefits.monetization.map((monetization) => (
+                    <div key={monetization.id} className="flex items-center justify-between p-3 border rounded">
+                      <div>
+                        <span className="font-medium">{monetization.benefit_name}</span>
+                        {monetization.date_paid && (
+                          <p className="text-sm text-gray-500">Paid: {new Date(monetization.date_paid).toLocaleDateString()}</p>
+                        )}
+                      </div>
+                      <span className="font-bold">{benefitsService.formatCurrency(monetization.amount)}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500">No leave monetization for {selectedYear}</p>
+              )}
+            </CardContent>
+          </Card>
         </div>
       )}
     </div>
   );
 
   return (
-    <div className="max-w-7xl">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Benefits Administration</h1>
-        <p className="text-gray-600 mt-2">
-          Manage employee benefits, calculate awards, and track benefit distributions
-        </p>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sticky top-0 z-10 bg-background pb-4 pt-2 border-b border-border">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-lg sm:text-xl font-semibold tracking-tight truncate">Benefits Administration</h1>
+          <p className="text-muted-foreground text-sm">
+            Manage employee benefits, calculate awards, and track benefit distributions
+          </p>
+        </div>
       </div>
 
       {/* Messages */}
@@ -504,13 +544,47 @@ export const BenefitsPage: React.FC = () => {
         </Alert>
       )}
 
-      {/* Main Tabs */}
+      {/* Enhanced Main Tabs with Icons and Tooltips */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="employee-benefits">Employee Benefits</TabsTrigger>
-          <TabsTrigger value="calculator">Benefit Calculator</TabsTrigger>
-        </TabsList>
+        <TooltipProvider>
+          <TabsList className="grid w-full grid-cols-3">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <TabsTrigger value="overview" className="flex items-center justify-center space-x-2 transition-all duration-200 hover:scale-105">
+                  <BarChart3 className="h-5 w-5 md:h-4 md:w-4" />
+                  <span className="hidden sm:inline">Overview</span>
+                </TabsTrigger>
+              </TooltipTrigger>
+              <TooltipContent className="sm:hidden">
+                <p>Benefits Overview</p>
+              </TooltipContent>
+            </Tooltip>
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <TabsTrigger value="employee-benefits" className="flex items-center justify-center space-x-2 transition-all duration-200 hover:scale-105">
+                  <Users className="h-5 w-5 md:h-4 md:w-4" />
+                  <span className="hidden sm:inline">Employee Benefits</span>
+                </TabsTrigger>
+              </TooltipTrigger>
+              <TooltipContent className="sm:hidden">
+                <p>Employee Benefits</p>
+              </TooltipContent>
+            </Tooltip>
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <TabsTrigger value="calculator" className="flex items-center justify-center space-x-2 transition-all duration-200 hover:scale-105">
+                  <Calculator className="h-5 w-5 md:h-4 md:w-4" />
+                  <span className="hidden sm:inline">Calculator</span>
+                </TabsTrigger>
+              </TooltipTrigger>
+              <TooltipContent className="sm:hidden">
+                <p>Benefit Calculator</p>
+              </TooltipContent>
+            </Tooltip>
+          </TabsList>
+        </TooltipProvider>
 
         <TabsContent value="overview">
           {renderOverview()}
@@ -524,13 +598,13 @@ export const BenefitsPage: React.FC = () => {
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Benefit Calculator</CardTitle>
+                <CardTitle className="text-lg font-semibold">Benefit Calculator</CardTitle>
                 <CardDescription>
                   Calculate various types of benefits for employees
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div className="space-y-4">
                     <div>
                       <Label htmlFor="calc-employee">Select Employee</Label>
@@ -572,12 +646,12 @@ export const BenefitsPage: React.FC = () => {
                   </div>
                   
                   <div className="space-y-4">
-                    <div className="grid grid-cols-1 gap-2">
+                    <div className="grid grid-cols-1 gap-3">
                       <Button
                         onClick={() => handleCalculateBenefit('thirteenth_month')}
                         disabled={!selectedEmployeeId || loading}
                         variant="outline"
-                        className="justify-start"
+                        className="justify-start h-12"
                       >
                         <Calculator className="h-4 w-4 mr-2" />
                         Calculate 13th Month Pay
@@ -587,7 +661,7 @@ export const BenefitsPage: React.FC = () => {
                         onClick={() => handleCalculateBenefit('pbb')}
                         disabled={!selectedEmployeeId || loading}
                         variant="outline"
-                        className="justify-start"
+                        className="justify-start h-12"
                       >
                         <Gift className="h-4 w-4 mr-2" />
                         Calculate PBB
@@ -597,10 +671,20 @@ export const BenefitsPage: React.FC = () => {
                         onClick={() => handleCalculateBenefit('loyalty_award')}
                         disabled={!selectedEmployeeId || loading}
                         variant="outline"
-                        className="justify-start"
+                        className="justify-start h-12"
                       >
                         <Award className="h-4 w-4 mr-2" />
                         Calculate Loyalty Award
+                      </Button>
+                      
+                      <Button
+                        onClick={() => handleCalculateBenefit('leave_monetization')}
+                        disabled={!selectedEmployeeId || loading}
+                        variant="outline"
+                        className="justify-start h-12"
+                      >
+                        <Calculator className="h-4 w-4 mr-2" />
+                        Calculate Leave Monetization
                       </Button>
                     </div>
                   </div>

@@ -36,54 +36,60 @@ const LeaveCard: React.FC<LeaveCardProps> = ({
 
   return (
     <Card className="hover:shadow-md transition-shadow">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <CardTitle className="text-lg">{leave.leave_type_name}</CardTitle>
+      <CardHeader className="pb-2">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+            <CardTitle className="text-base sm:text-lg">{leave.leave_type_name}</CardTitle>
             <Badge className={statusColors[leave.status]}>
               {leave.status}
             </Badge>
           </div>
-          {actions}
+          {actions && (
+            <div className="flex-shrink-0">
+              {actions}
+            </div>
+          )}
         </div>
         {showEmployee && leave.employee_name && (
-          <CardDescription className="flex items-center space-x-1">
-            <User className="h-4 w-4" />
-            <span>{leave.employee_name} ({leave.employee_number})</span>
+          <CardDescription className="flex items-center space-x-1 mt-2">
+            <User className="h-4 w-4 flex-shrink-0" />
+            <span className="truncate">{leave.employee_name} ({leave.employee_number})</span>
           </CardDescription>
         )}
       </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+      <CardContent className="space-y-2 pt-0">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground">
           <div className="flex items-center space-x-1">
-            <CalendarIcon className="h-4 w-4" />
-            <span>{formatDate(leave.start_date)} - {formatDate(leave.end_date)}</span>
+            <CalendarIcon className="h-4 w-4 flex-shrink-0" />
+            <span className="text-xs sm:text-sm">{formatDate(leave.start_date)} - {formatDate(leave.end_date)}</span>
           </div>
           <div className="flex items-center space-x-1">
-            <Clock className="h-4 w-4" />
-            <span>{leave.days_requested} day(s)</span>
+            <Clock className="h-4 w-4 flex-shrink-0" />
+            <span className="text-xs sm:text-sm">{leave.days_requested} day(s)</span>
           </div>
         </div>
         
         {leave.reason && (
-          <div>
-            <p className="text-sm font-medium text-muted-foreground mb-1">Reason:</p>
-            <p className="text-sm">{leave.reason}</p>
+          <div className="space-y-1">
+            <p className="text-xs sm:text-sm font-medium text-muted-foreground">Reason:</p>
+            <p className="text-xs sm:text-sm leading-relaxed">{leave.reason}</p>
           </div>
         )}
 
         {leave.review_notes && (
-          <div>
-            <p className="text-sm font-medium text-muted-foreground mb-1">Review Notes:</p>
-            <p className="text-sm">{leave.review_notes}</p>
+          <div className="space-y-1">
+            <p className="text-xs sm:text-sm font-medium text-muted-foreground">Review Notes:</p>
+            <p className="text-xs sm:text-sm leading-relaxed">{leave.review_notes}</p>
           </div>
         )}
 
-        <div className="text-xs text-muted-foreground">
-          Applied on: {formatDate(leave.applied_at)}
-          {leave.reviewed_at && (
-            <span> • Reviewed on: {formatDate(leave.reviewed_at)}</span>
-          )}
+        <div className="text-xs text-muted-foreground pt-1 border-t border-gray-100">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1">
+            <span>Applied: {formatDate(leave.applied_at)}</span>
+            {leave.reviewed_at && (
+              <span className="sm:before:content-['•'] sm:before:mx-2">Reviewed: {formatDate(leave.reviewed_at)}</span>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>

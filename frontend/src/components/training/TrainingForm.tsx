@@ -3,7 +3,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -168,29 +167,17 @@ const TrainingForm: React.FC<TrainingFormProps> = ({
 
   if (isLoadingData) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>{isEditing ? 'Edit Training Record' : 'New Training Record'}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center p-8">
-            <div className="text-center">
-              <Clock className="h-8 w-8 animate-spin mx-auto mb-2" />
-              <p>Loading...</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex items-center justify-center p-8">
+        <div className="text-center space-y-2">
+          <Clock className="h-8 w-8 animate-spin mx-auto text-primary" />
+          <p className="text-muted-foreground">Loading form data...</p>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{isEditing ? 'Edit Training Record' : 'New Training Record'}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+    <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
           {/* Employee Selection (Admin only) */}
           {!isEmployee && (
             <div className="space-y-2">
@@ -403,27 +390,25 @@ const TrainingForm: React.FC<TrainingFormProps> = ({
             )}
           </div>
 
-          {/* Form Actions */}
-          {!readOnly && (
-            <div className="flex justify-end space-x-4 pt-6">
-              <Button type="button" variant="outline" onClick={onCancel}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <Clock className="mr-2 h-4 w-4 animate-spin" />
-                    {isEditing ? 'Updating...' : 'Creating...'}
-                  </>
-                ) : (
-                  <>{isEditing ? 'Update Training' : 'Create Training'}</>
-                )}
-              </Button>
-            </div>
-          )}
-        </form>
-      </CardContent>
-    </Card>
+        {/* Form Actions */}
+        {!readOnly && (
+          <div className="flex flex-col sm:flex-row justify-end gap-2 pt-6 border-t">
+            <Button type="button" variant="outline" onClick={onCancel} className="w-full sm:w-auto">
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">
+              {isLoading ? (
+                <>
+                  <Clock className="mr-2 h-4 w-4 animate-spin" />
+                  {isEditing ? 'Updating...' : 'Creating...'}
+                </>
+              ) : (
+                <>{isEditing ? 'Update Training' : 'Create Training'}</>
+              )}
+            </Button>
+          </div>
+        )}
+      </form>
   );
 };
 

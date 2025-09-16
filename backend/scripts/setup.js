@@ -88,6 +88,39 @@ const setupDatabase = async () => {
         }
         console.log('✅ System settings configured');
 
+        // Setup compensation types for leave monetization
+        console.log('💰 Setting up compensation types...');
+        const compensationTypes = [
+            ['PBB', 'Performance-Based Bonus', 'Annual performance-based bonus for eligible employees', 1, 'Fixed'],
+            ['MYB', '13th Month Pay', 'Mid-year bonus equivalent to one month salary', 1, 'Formula'],
+            ['YEB', '14th Month Pay', 'Year-end bonus equivalent to one month salary', 1, 'Formula'],
+            ['LA', 'Loyalty Award', 'Award for long-term service milestones', 0, 'Formula'],
+            ['RATA', 'Representation Allowance', 'Representation and Transportation Allowance', 0, 'Fixed'],
+            ['CA', 'Clothing Allowance', 'Annual clothing allowance', 0, 'Fixed'],
+            ['MA', 'Medical Allowance', 'Medical/Health allowance', 0, 'Fixed'],
+            ['HA', 'Hazard Allowance', 'Hazard pay for risky work conditions', 1, 'Fixed'],
+            ['SL', 'Subsistence & Laundry', 'Subsistence and laundry allowance', 0, 'Fixed'],
+            ['VLM', 'Vacation Leave Monetization', 'Monetization of unused vacation leave credits', 1, 'Formula'],
+            ['SLM', 'Sick Leave Monetization', 'Monetization of unused sick leave credits', 1, 'Formula']
+        ];
+
+        for (const [code, name, description, is_taxable, calculation_method] of compensationTypes) {
+            const [existingType] = await connection.execute(
+                'SELECT id FROM compensation_types WHERE code = ?',
+                [code]
+            );
+
+            if (existingType.length === 0) {
+                await connection.execute(
+                    'INSERT INTO compensation_types (code, name, description, is_taxable, calculation_method) VALUES (?, ?, ?, ?, ?)',
+                    [code, name, description, is_taxable, calculation_method]
+                );
+                console.log(`   ✅ Created compensation type: ${name} (${code})`);
+            } else {
+                console.log(`   ℹ️  Compensation type ${code} already exists`);
+            }
+        }
+
         // Create upload directories
         console.log('📁 Creating upload directories...');
         const uploadDirs = [

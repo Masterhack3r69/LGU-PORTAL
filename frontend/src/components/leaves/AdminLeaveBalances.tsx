@@ -157,47 +157,51 @@ const AdminLeaveBalances: React.FC = () => {
     <div className="space-y-6">
       {/* Header */}
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center space-x-2">
-              <BarChart3 className="h-5 w-5" />
-              <span>Employee Leave Balances</span>
+        <CardHeader className="pb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <CardTitle className="flex items-center space-x-2 text-lg sm:text-xl">
+              <BarChart3 className="h-5 w-5 flex-shrink-0" />
+              <span className="truncate">Employee Leave Balances</span>
             </CardTitle>
             <Dialog open={showAddDialog} onOpenChange={handleDialogOpenChange}>
               <DialogTrigger asChild>
-                <Button>
+                <Button className="w-full sm:w-auto">
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Balance
+                  <span className="hidden sm:inline">Add Balance</span>
+                  <span className="sm:hidden">Add</span>
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-md">
+              <DialogContent className="w-[95vw] max-w-2xl max-h-[95vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Add Leave Balance</DialogTitle>
+                  <DialogDescription>
+                    Create a new leave balance entry for an employee
+                  </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 p-4">
                   {/* Employee Selection */}
-                  <div className="grid grid-cols-2 gap-4"> 
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4"> 
                     <div className="space-y-2">
-                    <Label htmlFor="employee">Employee *</Label>
-                    <Select 
-                      value={addBalanceForm.employee_id.toString()} 
-                      onValueChange={(value) => setAddBalanceForm(prev => ({ ...prev, employee_id: parseInt(value) }))}
-                    >
-                      <SelectTrigger  className="w-full">
-                        <SelectValue placeholder="Select employee" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {employees.map((employee) => (
-                          <SelectItem key={employee.id} value={employee.id.toString()}>
-                            <div className="flex items-center space-x-2">
-                              <User className="h-4 w-4" />
-                              <span>{employee.first_name} {employee.last_name}</span>
-                              <span className="text-muted-foreground">({employee.employee_number})</span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      <Label htmlFor="employee">Employee *</Label>
+                      <Select 
+                        value={addBalanceForm.employee_id.toString()} 
+                        onValueChange={(value) => setAddBalanceForm(prev => ({ ...prev, employee_id: parseInt(value) }))}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select employee" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {employees.map((employee) => (
+                            <SelectItem key={employee.id} value={employee.id.toString()}>
+                              <div className="flex items-center space-x-2">
+                                <User className="h-4 w-4 flex-shrink-0" />
+                                <span className="truncate">{employee.first_name} {employee.last_name}</span>
+                                <span className="text-muted-foreground text-xs">({employee.employee_number})</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
 
                     {/* Leave Type Selection */}
@@ -213,22 +217,22 @@ const AdminLeaveBalances: React.FC = () => {
                         <SelectContent>
                           {leaveTypes.map((type) => (
                             <SelectItem key={type.id} value={type.id.toString()}>
-                              {type.name} ({type.code})
+                              <span className="truncate">{type.name} ({type.code})</span>
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-2">
-                     {/* Year Selection */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {/* Year Selection */}
                     <div className="space-y-2">
                       <Label htmlFor="year">Year *</Label>
                       <Select 
                         value={addBalanceForm.year.toString()} 
                         onValueChange={(value) => setAddBalanceForm(prev => ({ ...prev, year: parseInt(value) }))}
                       >
-                        <SelectTrigger className='w-full'>
+                        <SelectTrigger className="w-full">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -241,7 +245,7 @@ const AdminLeaveBalances: React.FC = () => {
                       </Select>
                     </div>
 
-                     {/* Earned Days */}
+                    {/* Earned Days */}
                     <div className="space-y-2">
                       <Label htmlFor="earnedDays">Earned Days *</Label>
                       <Input
@@ -255,7 +259,7 @@ const AdminLeaveBalances: React.FC = () => {
                       />
                     </div>
 
-                     {/* Carried Forward */}
+                    {/* Carried Forward */}
                     <div className="space-y-2">
                       <Label htmlFor="carriedForward">Carried Forward</Label>
                       <Input
@@ -289,11 +293,20 @@ const AdminLeaveBalances: React.FC = () => {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex justify-end space-x-2 pt-4">
-                    <Button variant="outline" onClick={() => setShowAddDialog(false)} disabled={isCreating}>
+                  <div className="flex flex-col sm:flex-row justify-end gap-2 pt-4">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setShowAddDialog(false)} 
+                      disabled={isCreating}
+                      className="w-full sm:w-auto"
+                    >
                       Cancel
                     </Button>
-                    <Button onClick={handleCreateBalance} disabled={isCreating}>
+                    <Button 
+                      onClick={handleCreateBalance} 
+                      disabled={isCreating}
+                      className="w-full sm:w-auto"
+                    >
                       {isCreating ? (
                         <>
                           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -324,14 +337,14 @@ const AdminLeaveBalances: React.FC = () => {
                     />
                   </div>
                 </DialogTrigger>
-                <DialogContent className="max-w-md">
+                <DialogContent className="w-[95vw] max-w-md max-h-[95vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Search Employees</DialogTitle>
                     <DialogDescription>
                       Search and select an employee to view their leave balances
                     </DialogDescription>
                   </DialogHeader>
-                  <div className="space-y-4 p-6">
+                  <div className="space-y-4 p-4">
                     {/* Search Input */}
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />

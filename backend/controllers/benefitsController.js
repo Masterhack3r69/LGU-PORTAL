@@ -63,7 +63,8 @@ const getEmployeeBenefits = asyncHandler(async (req, res) => {
     const benefitsSummary = {
         bonuses: benefits.filter(b => ['PBB', 'MYB', 'YEB'].includes(b.benefit_code)),
         allowances: benefits.filter(b => ['RATA', 'CA', 'MA', 'HA', 'SL'].includes(b.benefit_code)),
-        awards: benefits.filter(b => b.benefit_code === 'LA')
+        awards: benefits.filter(b => b.benefit_code === 'LA'),
+        monetization: benefits.filter(b => ['VLM', 'SLM'].includes(b.benefit_code))
     };
 
     // Calculate totals
@@ -144,6 +145,12 @@ const calculateBenefits = asyncHandler(async (req, res) => {
             const loyaltyCalc = await calculateLoyaltyAward(employee);
             calculatedAmount = loyaltyCalc.amount;
             eligibilityCheck = loyaltyCalc.eligibility;
+            break;
+
+        case 'leave_monetization':
+            const leaveMonetizationCalc = await calculateLeaveMonetization(employee_id, year);
+            calculatedAmount = leaveMonetizationCalc.amount;
+            eligibilityCheck = leaveMonetizationCalc.eligibility;
             break;
 
         default:
@@ -413,7 +420,7 @@ const getBenefitsSummary = asyncHandler(async (req, res) => {
         JOIN compensation_types ct ON ec.compensation_type_id = ct.id
         JOIN employees e ON ec.employee_id = e.id
         WHERE ${whereClause}
-            AND ct.code IN ('PBB', 'MYB', 'YEB', 'LA', 'RATA', 'CA', 'MA', 'HA', 'SL')
+            AND ct.code IN ('PBB', 'MYB', 'YEB', 'LA', 'RATA', 'CA', 'MA', 'HA', 'SL', 'VLM', 'SLM')
         GROUP BY ct.id, ct.name, ct.code
         ORDER BY total_amount DESC
     `;
@@ -431,7 +438,7 @@ const getBenefitsSummary = asyncHandler(async (req, res) => {
         JOIN compensation_types ct ON ec.compensation_type_id = ct.id
         JOIN employees e ON ec.employee_id = e.id
         WHERE ${whereClause}
-            AND ct.code IN ('PBB', 'MYB', 'YEB', 'LA', 'RATA', 'CA', 'MA', 'HA', 'SL')
+            AND ct.code IN ('PBB', 'MYB', 'YEB', 'LA', 'RATA', 'CA', 'MA', 'HA', 'SL', 'VLM', 'SLM')
         ORDER BY e.employee_number, ct.name
     `;
 
@@ -461,6 +468,80 @@ const getBenefitsSummary = asyncHandler(async (req, res) => {
         }
     });
 });
+
+// Helper function to calculate leave monetization potential
+const calculateLeaveMonetization = async (employeeId, year) => {
+    // Get employee information
+    const employeeResult = await executeQuery(
+        'SELECT current_daily_rate, current_monthly_salary FROM employees WHERE id = ?',
+        [employeeId]
+    );
+
+    if (!employeeResult.success || employeeResult.data.length === 0) {
+        return { amount: 0, eligibility: { eligible: false, reason: 'Employee not found' } };
+    }
+
+    const employee = employeeResult.data[0];
+    const dailyRate = employee.current_daily_rate || (employee.current_monthly_salary / 22);
+
+    // Get monetizable leave balances
+    const balancesQuery = `
+        SELECT 
+            elb.current_balance, 
+            elb.monetized_days,
+            lt.name as leave_type_name,
+            lt.code as leave_type_code,
+            lt.is_monetizable
+        FROM employee_leave_balances elb
+        JOIN leave_types lt ON elb.leave_type_id = lt.id
+        WHERE elb.employee_id = ? AND elb.year = ? AND lt.is_monetizable = 1
+          AND elb.current_balance > 0
+    `;
+
+    const balancesResult = await executeQuery(balancesQuery, [employeeId, year]);
+    
+    if (!balancesResult.success) {
+        return { amount: 0, eligibility: { eligible: false, reason: 'Cannot fetch leave balances' } };
+    }
+
+    const monetizableBalances = balancesResult.data;
+    
+    if (monetizableBalances.length === 0) {
+        return { 
+            amount: 0, 
+            eligibility: { 
+                eligible: false, 
+                reason: 'No monetizable leave balances available' 
+            } 
+        };
+    }
+
+    // Calculate total potential monetization amount
+    const totalMonetizableDays = monetizableBalances.reduce((total, balance) => {
+        // Apply monetization limits (29 days per leave type without clearance)
+        const maxMonetizable = Math.min(balance.current_balance, 29);
+        return total + maxMonetizable;
+    }, 0);
+
+    const totalMonetizationAmount = totalMonetizableDays * dailyRate;
+
+    return {
+        amount: parseFloat(totalMonetizationAmount.toFixed(2)),
+        eligibility: { 
+            eligible: totalMonetizableDays > 0, 
+            reason: totalMonetizableDays === 0 ? 'No leave days available for monetization' : null 
+        },
+        details: {
+            daily_rate: dailyRate,
+            monetizable_days: totalMonetizableDays,
+            balances: monetizableBalances.map(balance => ({
+                leave_type: balance.leave_type_name,
+                current_balance: balance.current_balance,
+                max_monetizable: Math.min(balance.current_balance, 29)
+            }))
+        }
+    };
+};
 
 module.exports = {
     getEmployeeBenefits,
