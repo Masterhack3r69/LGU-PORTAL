@@ -177,8 +177,18 @@ const getPayrollPeriods = asyncHandler(async (req, res) => {
 
 // POST /api/payroll/period - Create new payroll period
 const createPayrollPeriod = asyncHandler(async (req, res) => {
+    // Add detailed logging for debugging
+    payrollLogger.info('Creating payroll period request received', {
+        body: req.body,
+        user: req.user?.id
+    });
+
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+        payrollLogger.error('Validation failed for payroll period creation', {
+            errors: errors.array(),
+            body: req.body
+        });
         throw new ValidationError('Validation failed', errors.array());
     }
 

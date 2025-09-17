@@ -11,6 +11,7 @@ import {
   Home,
   Calculator,
   GraduationCap,
+  Gift,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -122,12 +123,20 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     });
   }
 
-  // Unified Payroll & Compensation System - Show for all users
+  // Payroll System - Show for all users
   navMain.push({
-    title: user?.role === 'admin' ? "Payroll & Compensation System" : "My Payroll & Benefits",
+    title: user?.role === 'admin' ? "Payroll System" : "My Payroll",
     url: "/payroll-system",
     icon: Calculator,
-    items: [], // Tabs handle the sub-navigation
+    items: [],
+  });
+
+  // Compensation & Benefits - Show for all users
+  navMain.push({
+    title: user?.role === 'admin' ? "Compensation & Benefits" : "My Benefits",
+    url: "/compensation-benefits",
+    icon: Gift,
+    items: [],
   });
 
   // Terminal Leave Benefits - Admin only

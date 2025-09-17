@@ -121,7 +121,7 @@ export class PayrollSystemService {
    * Create a new payroll period
    */
   async createPayrollPeriod(form: CreatePayrollPeriodForm): Promise<PayrollSystemApiResponse<PayrollPeriod>> {
-    const response = await apiService.post<PayrollSystemApiResponse<PayrollPeriod>>('/payroll-system/periods', form);
+    const response = await apiService.post<PayrollSystemApiResponse<PayrollPeriod>>('/payroll/period', form);
     return response;
   }
 

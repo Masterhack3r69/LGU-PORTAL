@@ -20,6 +20,7 @@ import { LeaveApprovalsPage } from '@/pages/leaves/LeaveApprovalsPage';
 import { LeaveTypesPage } from '@/pages/leaves/LeaveTypesPage';
 import { PayrollPage } from '@/pages/PayrollPage';
 import { PayrollSystemPage } from '@/pages/PayrollSystemPage';
+import { CompensationBenefitsPage } from '@/pages/CompensationBenefitsPage';
 import { EmployeePayrollPage } from '@/pages/EmployeePayrollPage';
 import { BenefitsPage } from '@/pages/BenefitsPage';
 import { CompensationPage } from '@/pages/CompensationPage';
@@ -207,12 +208,22 @@ function App() {
           />
         </Route>
         
-        {/* Unified Payroll & Compensation System - All users */}
+        {/* Payroll System - All users */}
         <Route 
           path="payroll-system" 
           element={
             <ProtectedRoute allowedRoles={['admin', 'employee']}>
               <PayrollSystemPage />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Compensation & Benefits - All users */}
+        <Route 
+          path="compensation-benefits" 
+          element={
+            <ProtectedRoute allowedRoles={['admin', 'employee']}>
+              <CompensationBenefitsPage />
             </ProtectedRoute>
           } 
         />
