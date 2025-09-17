@@ -1,5 +1,5 @@
 // components/tlb/TLBReports.tsx - TLB Reports and Statistics Component
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -21,12 +21,7 @@ export function TLBReports() {
   const currentYear = new Date().getFullYear();
   const yearOptions = Array.from({ length: 5 }, (_, i) => currentYear - i);
 
-  useEffect(() => {
-    fetchStatistics();
-    fetchSummaryReport();
-  }, [selectedYear, selectedStatus]);
-
-  const fetchStatistics = async () => {
+  const fetchStatistics = useCallback(async () => {
     try {
       setLoading(true);
       const stats = await tlbService.getStatistics(selectedYear);
@@ -35,9 +30,9 @@ export function TLBReports() {
       console.error('Error fetching TLB statistics:', error);
       toast.error('Failed to fetch statistics');
     }
-  };
+  }, [selectedYear]);
 
-  const fetchSummaryReport = async () => {
+  const fetchSummaryReport = useCallback(async () => {
     try {
       const statusFilter = selectedStatus === 'all' ? undefined : selectedStatus;
       const report = await tlbService.getSummaryReport(selectedYear, statusFilter);
@@ -48,7 +43,12 @@ export function TLBReports() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedYear, selectedStatus]);
+
+  useEffect(() => {
+    fetchStatistics();
+    fetchSummaryReport();
+  }, [fetchStatistics, fetchSummaryReport]);
 
   const getStatusBadgeColor = (status: TLBStatus) => {
     const colors = {

@@ -57,6 +57,14 @@ const requireAdminOrOwner = (req, res, next) => {
     const requestedEmployeeId = parseInt(req.params.employeeId || req.params.id);
     const currentUser = req.session.user;
 
+    // Check if user exists first
+    if (!currentUser) {
+        return res.status(401).json({
+            error: 'Authentication required',
+            message: 'Please log in to access this resource'
+        });
+    }
+
     // Admin can access any data
     if (currentUser.role === 'admin') {
         return next();
@@ -287,12 +295,46 @@ const createUser = async (userData) => {
     }
 };
 
+// Token-based authentication (alias for requireAuth for new routes)
+const authenticateToken = (req, res, next) => {
+    if (!req.session.user) {
+        return res.status(401).json({
+            error: 'Authentication required',
+            message: 'Please log in to access this resource'
+        });
+    }
+    next();
+};
+
+// Role-based authorization middleware
+const authorizeRoles = (roles) => {
+    return (req, res, next) => {
+        if (!req.session.user) {
+            return res.status(401).json({
+                error: 'Authentication required',
+                message: 'Please log in to access this resource'
+            });
+        }
+
+        if (!roles.includes(req.session.user.role)) {
+            return res.status(403).json({
+                error: 'Access denied',
+                message: `This action requires one of the following roles: ${roles.join(', ')}`
+            });
+        }
+
+        next();
+    };
+};
+
 module.exports = {
     requireAuth,
     requireAdmin,
     requireEmployeeAccess,
     requireAdminOrOwner,
     authenticate,
+    authenticateToken,
+    authorizeRoles,
     login,
     changePassword,
     createUser

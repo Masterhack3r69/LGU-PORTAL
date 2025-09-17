@@ -122,25 +122,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     });
   }
 
-  // Benefits - Direct link since main interface uses tabs
-   if (user?.role === 'admin') {
-    navMain.push({
-      title: "Benefits Management",
-      url: "/benefits",
-      icon: Award,
-      items: [], // No dropdown items since everything is in tabs
-    });
-  }
-
-  // Compensation - Admin only
-  if (user?.role === 'admin') {
-    navMain.push({
-      title: "Compensation Management",
-      url: "/compensation",
-      icon: DollarSign,
-      items: [],
-    });
-  }
+  // Unified Payroll & Compensation System - Show for all users
+  navMain.push({
+    title: user?.role === 'admin' ? "Payroll & Compensation System" : "My Payroll & Benefits",
+    url: "/payroll-system",
+    icon: Calculator,
+    items: [], // Tabs handle the sub-navigation
+  });
 
   // Terminal Leave Benefits - Admin only
   if (user?.role === 'admin') {
@@ -181,15 +169,23 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   // Add admin-only sections
   if (user?.role === 'admin') {
-    // Add Payroll Management for admins only
+    // Keep legacy Payroll Management for backward compatibility if needed
     navMain.push({
-      title: "Payroll Management",
+      title: "Legacy Payroll (Old)",
       url: "/payroll",
       icon: DollarSign,
       items: [],
     });
 
-    // Add System Administration for admins only
+    // Benefits Management (Legacy)
+    navMain.push({
+      title: "Legacy Benefits (Old)",
+      url: "/benefits",
+      icon: Award,
+      items: [],
+    });
+
+    // Keep System Administration
     navMain.push({
       title: "System Administration",
       url: "/admin",

@@ -1,0 +1,25 @@
+{
+  "name": "ems-system-test",
+  "version": "1.0.0",
+  "description": "Live test script for EMS Payroll and Compensation Benefits restructuring",
+  "main": "test-payroll-cb-restructure.js",
+  "scripts": {
+    "test:restructure": "node test-payroll-cb-restructure.js",
+    "test:quick": "node test-payroll-cb-restructure.js --quick",
+    "setup:db": "node -e \"console.log('Please run the restructure_database_schema.sql script manually on your database')\"",
+    "install:deps": "npm install axios moment"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "moment": "^2.29.4"
+  },
+  "keywords": [
+    "ems",
+    "payroll",
+    "compensation",
+    "benefits",
+    "testing"
+  ],
+  "author": "EMS Development Team",
+  "license": "ISC"
+}

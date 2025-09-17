@@ -70,12 +70,38 @@ class Employee {
         return parseFloat((salary / 22).toFixed(2));
     }
 
-    // Update daily rate when monthly salary changes
-    updateDailyRateFromMonthlySalary() {
-        if (this.current_monthly_salary) {
+    // Calculate monthly salary from daily rate
+    calculateMonthlySalary(dailyRate = null) {
+        const rate = dailyRate || this.current_daily_rate;
+        if (!rate) return null;
+        
+        // Standard calculation: Daily rate * 22 working days per month
+        return parseFloat((rate * 22).toFixed(2));
+    }
+
+    // Update salary rates to maintain consistency (22-day rule)
+    updateSalaryRates() {
+        // If we have monthly salary but no daily rate, calculate daily
+        if (this.current_monthly_salary && !this.current_daily_rate) {
             this.current_daily_rate = this.calculateDailyRate(this.current_monthly_salary);
         }
-        if (this.highest_monthly_salary) {
+        // If we have daily rate but no monthly salary, calculate monthly
+        else if (this.current_daily_rate && !this.current_monthly_salary) {
+            this.current_monthly_salary = this.calculateMonthlySalary(this.current_daily_rate);
+        }
+        // If we have both, ensure they're consistent (monthly takes precedence)
+        else if (this.current_monthly_salary && this.current_daily_rate) {
+            this.current_daily_rate = this.calculateDailyRate(this.current_monthly_salary);
+        }
+        
+        // Same for highest salary
+        if (this.highest_monthly_salary && !this.highest_daily_rate) {
+            this.highest_daily_rate = this.calculateDailyRate(this.highest_monthly_salary);
+        }
+        else if (this.highest_daily_rate && !this.highest_monthly_salary) {
+            this.highest_monthly_salary = this.calculateMonthlySalary(this.highest_daily_rate);
+        }
+        else if (this.highest_monthly_salary && this.highest_daily_rate) {
             this.highest_daily_rate = this.calculateDailyRate(this.highest_monthly_salary);
         }
     }
@@ -206,8 +232,8 @@ class Employee {
 
     // Create new employee
     async create() {
-        // Update daily rates before saving
-        this.updateDailyRateFromMonthlySalary();
+        // Update salary rates to ensure consistency before saving
+        this.updateSalaryRates();
         
         const query = `
             INSERT INTO employees (
@@ -246,8 +272,8 @@ class Employee {
 
     // Update existing employee
     async update() {
-        // Update daily rates before saving
-        this.updateDailyRateFromMonthlySalary();
+        // Update salary rates to ensure consistency before saving
+        this.updateSalaryRates();
         
         const query = `
             UPDATE employees SET
@@ -285,6 +311,40 @@ class Employee {
         }
 
         return result;
+    }
+
+    // Static utility methods for salary calculations
+    static calculateDailyFromMonthly(monthlySalary) {
+        if (!monthlySalary || monthlySalary <= 0) return 0;
+        return parseFloat((monthlySalary / 22).toFixed(2));
+    }
+    
+    static calculateMonthlyFromDaily(dailyRate) {
+        if (!dailyRate || dailyRate <= 0) return 0;
+        return parseFloat((dailyRate * 22).toFixed(2));
+    }
+    
+    // Get consistent salary values following the 22-day rule
+    static getConsistentSalaryValues(employee) {
+        let monthlySalary = parseFloat(employee.current_monthly_salary) || 0;
+        let dailyRate = parseFloat(employee.current_daily_rate) || 0;
+        
+        // Calculate missing values based on the 22-day work month rule
+        if (monthlySalary > 0 && dailyRate <= 0) {
+            // Have monthly, calculate daily
+            dailyRate = this.calculateDailyFromMonthly(monthlySalary);
+        } else if (dailyRate > 0 && monthlySalary <= 0) {
+            // Have daily, calculate monthly
+            monthlySalary = this.calculateMonthlyFromDaily(dailyRate);
+        } else if (monthlySalary <= 0 && dailyRate <= 0) {
+            // Neither value is available, return zeros
+            return { monthlySalary: 0, dailyRate: 0 };
+        }
+        
+        return {
+            monthlySalary: parseFloat(monthlySalary.toFixed(2)),
+            dailyRate: parseFloat(dailyRate.toFixed(2))
+        };
     }
 
     // Static methods

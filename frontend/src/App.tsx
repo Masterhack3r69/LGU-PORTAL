@@ -19,6 +19,7 @@ import { LeaveBalancesPage } from '@/pages/leaves/LeaveBalancesPage';
 import { LeaveApprovalsPage } from '@/pages/leaves/LeaveApprovalsPage';
 import { LeaveTypesPage } from '@/pages/leaves/LeaveTypesPage';
 import { PayrollPage } from '@/pages/PayrollPage';
+import { PayrollSystemPage } from '@/pages/PayrollSystemPage';
 import { EmployeePayrollPage } from '@/pages/EmployeePayrollPage';
 import { BenefitsPage } from '@/pages/BenefitsPage';
 import { CompensationPage } from '@/pages/CompensationPage';
@@ -206,7 +207,17 @@ function App() {
           />
         </Route>
         
-        {/* Payroll Management - Admin only */}
+        {/* Unified Payroll & Compensation System - All users */}
+        <Route 
+          path="payroll-system" 
+          element={
+            <ProtectedRoute allowedRoles={['admin', 'employee']}>
+              <PayrollSystemPage />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Legacy Payroll Management - Admin only */}
         <Route 
           path="payroll" 
           element={
