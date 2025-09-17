@@ -141,6 +141,7 @@ export interface UpdateEmployeeAllowancesForm {
     allowance_type_id: number;
     amount: number;
     effective_date: string;
+    is_active?: boolean;
   }>;
 }
 

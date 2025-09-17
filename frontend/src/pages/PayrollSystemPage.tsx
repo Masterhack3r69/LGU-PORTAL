@@ -2,34 +2,32 @@ import React, { useState, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-
-
 import { Calendar } from '@/components/ui/calendar';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-
-import { 
-  RefreshCw, AlertCircle, Eye, MoreHorizontal, ChevronDownIcon,
-  Cog, User, DollarSign, FileText, Settings, Plus, ChevronDown,
-  CheckCircle, XCircle
-} from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { 
+  RefreshCw, AlertCircle, Eye, ChevronDownIcon,
+  Cog, User, DollarSign, Settings, Plus, ChevronDown,
+  CheckCircle, XCircle, Play, Calendar as CalendarIcon, History, Save
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { payrollSystemService } from '@/services/payrollSystemService';
-import type { PayrollPeriod, CreatePayrollPeriodForm } from '@/types/payrollSystem';
+import { payrollService } from '@/services/payrollService';
+import type { PayrollPeriod, CreatePayrollPeriodForm, PayrollSystemDetails, PayrollAllowanceType, EmployeeAllowance } from '@/types/payrollSystem';
 import { formatDateRange } from 'little-date';
 import { type DateRange } from 'react-day-picker';
 
@@ -228,11 +226,29 @@ export const PayrollSystemPage: React.FC = () => {
   const [payrollPeriods, setPayrollPeriods] = useState<PayrollPeriod[]>([]);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [selectedPeriod, setSelectedPeriod] = useState<PayrollSystemDetails | null>(null);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [activeTab, setActiveTab] = useState('active');
+  
+  // Employee allowance selection state
+  const [availableAllowanceTypes, setAvailableAllowanceTypes] = useState<PayrollAllowanceType[]>([]);
+  const [employeeAllowances, setEmployeeAllowances] = useState<EmployeeAllowance[]>([]);
+  const [selectedAllowances, setSelectedAllowances] = useState<{[key: number]: { selected: boolean; amount: number }}>({});
+  const [allowanceLoading, setAllowanceLoading] = useState(false);
+  const [showAllowanceDialog, setShowAllowanceDialog] = useState(false);
 
 
   // Utility functions
   const formatPeriodName = (period: PayrollPeriod) => 
     `${period.year}-${String(period.month).padStart(2, '0')} Period ${period.period_number}`;
+
+  // Filter periods by status
+  const activePeriods = payrollPeriods.filter(period => 
+    period.status === 'Draft' || period.status === 'Processing'
+  );
+  const completedPeriods = payrollPeriods.filter(period => 
+    period.status === 'Completed' || period.status === 'Cancelled'
+  );
 
   // Event handlers
 
@@ -353,6 +369,55 @@ export const PayrollSystemPage: React.FC = () => {
     }
   }, [isAdmin, user]);
 
+  // Load allowance types for employee selection
+  const loadAllowanceTypes = useCallback(async () => {
+    if (!user) return;
+    
+    try {
+      setAllowanceLoading(true);
+      const response = await payrollSystemService.getAllowanceTypes();
+      if (response.success) {
+        setAvailableAllowanceTypes(response.data || []);
+      }
+    } catch (error) {
+      console.error('Failed to load allowance types:', error);
+      toast.error('Failed to load allowance types.');
+    } finally {
+      setAllowanceLoading(false);
+    }
+  }, [user]);
+
+  // Load employee's current allowances
+  const loadEmployeeAllowances = useCallback(async () => {
+    if (!user?.employee_id && !isEmployee) return;
+    
+    try {
+      setAllowanceLoading(true);
+      const employeeId = user?.employee_id;
+      if (!employeeId) return;
+      
+      const response = await payrollSystemService.getEmployeeAllowances(employeeId);
+      if (response.success) {
+        setEmployeeAllowances(response.data || []);
+        
+        // Initialize selected allowances state
+        const initialSelections: {[key: number]: { selected: boolean; amount: number }} = {};
+        response.data?.forEach(allowance => {
+          initialSelections[allowance.allowance_type_id] = {
+            selected: allowance.is_active,
+            amount: allowance.amount
+          };
+        });
+        setSelectedAllowances(initialSelections);
+      }
+    } catch (error) {
+      console.error('Failed to load employee allowances:', error);
+      toast.error('Failed to load your allowances.');
+    } finally {
+      setAllowanceLoading(false);
+    }
+  }, [user, isEmployee]);
+
   const handleGenerateAutomatedPayroll = async (periodId: number) => {
     try {
       setActionLoading(`generate-${periodId}`);
@@ -372,10 +437,134 @@ export const PayrollSystemPage: React.FC = () => {
     }
   };
 
+  const handleViewDetails = async (period: PayrollPeriod) => {
+    try {
+      setActionLoading(`details-${period.id}`);
+      const response = await payrollSystemService.getPayrollComputation(period.id);
+      if (response.success) {
+        setSelectedPeriod(response.data);
+        setShowDetailsDialog(true);
+      }
+    } catch (error) {
+      console.error('Failed to load period details:', error);
+      toast.error('Failed to load period details');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleMarkCompleted = async (periodId: number) => {
+    try {
+      setActionLoading(`complete-${periodId}`);
+      const response = await payrollService.finalizePayrollPeriod(periodId);
+      if (response.success) {
+        toast.success(`Period marked as completed! ${response.data.payroll_items_processed} payroll items processed.`);
+        loadPayrollPeriods();
+        // Switch to history tab to show the completed period
+        setActiveTab('history');
+      } else {
+        throw new Error(response.message || 'Failed to mark as completed');
+      }
+    } catch (error) {
+      console.error('Failed to mark as completed:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to mark as completed';
+      toast.error(errorMessage);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleCancelPeriod = async (periodId: number) => {
+    try {
+      setActionLoading(`cancel-${periodId}`);
+      // TODO: Implement cancel API endpoint when available
+      // For now, show a message that this feature is coming soon
+      toast.warning('Cancel functionality is not yet implemented. Please contact your administrator.');
+      // Uncomment when backend endpoint is available:
+      // const response = await payrollService.cancelPayrollPeriod(periodId);
+      // if (response.success) {
+      //   toast.success('Period cancelled successfully');
+      //   loadPayrollPeriods();
+      // }
+    } catch (error) {
+      console.error('Failed to cancel period:', error);
+      toast.error('Failed to cancel period');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleConfigurePeriod = (_periodId: number) => {
+    // TODO: Implement configuration navigation or dialog
+    toast.info('Configuration panel coming soon. This will allow you to adjust period settings.');
+  };
+
+  // Handle allowance selection
+  const handleAllowanceToggle = (allowanceTypeId: number, checked: boolean) => {
+    setSelectedAllowances(prev => ({
+      ...prev,
+      [allowanceTypeId]: {
+        selected: checked,
+        amount: prev[allowanceTypeId]?.amount || 0
+      }
+    }));
+  };
+
+  const handleAllowanceAmountChange = (allowanceTypeId: number, amount: number) => {
+    setSelectedAllowances(prev => ({
+      ...prev,
+      [allowanceTypeId]: {
+        ...prev[allowanceTypeId],
+        amount: amount
+      }
+    }));
+  };
+
+  const handleSaveAllowances = async () => {
+    if (!user?.employee_id) return;
+    
+    try {
+      setActionLoading('save-allowances');
+      const employeeId = user.employee_id;
+      
+      const allowancesToUpdate = Object.entries(selectedAllowances)
+        .filter(([, config]) => config.selected && config.amount > 0)
+        .map(([allowanceTypeId, config]) => ({
+          allowance_type_id: parseInt(allowanceTypeId),
+          amount: config.amount,
+          effective_date: new Date().toISOString().split('T')[0],
+          is_active: true
+        }));
+      
+      const response = await payrollSystemService.updateEmployeeAllowances(employeeId, {
+        allowances: allowancesToUpdate
+      });
+      
+      if (response.success) {
+        toast.success('Allowances updated successfully!');
+        loadEmployeeAllowances();
+        setShowAllowanceDialog(false);
+      } else {
+        throw new Error(response.message || 'Failed to update allowances');
+      }
+    } catch (error) {
+      console.error('Failed to save allowances:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to save allowances';
+      toast.error(errorMessage);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   // Auto-load data when component mounts
   React.useEffect(() => {
     loadPayrollPeriods();
-  }, [loadPayrollPeriods]);
+    if (isEmployee) {
+      loadAllowanceTypes();
+      loadEmployeeAllowances();
+    }
+  }, [loadPayrollPeriods, loadAllowanceTypes, loadEmployeeAllowances, isEmployee]);
 
   // Access control
   if (!isAdmin && !isEmployee) {
@@ -436,7 +625,7 @@ export const PayrollSystemPage: React.FC = () => {
               </CardContent>
             </Card>
 
-            {/* Payroll Periods Table */}
+            {/* Payroll Periods with Tabs */}
             <Card>
               <CardHeader>
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
@@ -448,158 +637,524 @@ export const PayrollSystemPage: React.FC = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                {loading ? (
-                  <div className="flex justify-center items-center py-8">
-                    <RefreshCw className="h-6 w-6 animate-spin" />
-                    <span className="ml-2">Loading payroll periods...</span>
-                  </div>
-                ) : payrollPeriods.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No payroll periods found. Create a new period to get started.
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Period</TableHead>
-                          <TableHead className="hidden sm:table-cell">Date Range</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead className="hidden md:table-cell text-right">Total Net Pay</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {payrollPeriods.map((period) => (
-                          <TableRow key={period.id}>
-                            <TableCell className="font-medium">
-                              <div>
-                                <div>{formatPeriodName(period)}</div>
-                                <div className="text-sm text-muted-foreground sm:hidden">
-                                  {new Date(period.start_date).toLocaleDateString()} - {new Date(period.end_date).toLocaleDateString()}
+                <Tabs value={activeTab} onValueChange={setActiveTab}>
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="active" className="flex items-center gap-2">
+                      <Play className="h-4 w-4" />
+                      Active ({activePeriods.length})
+                    </TabsTrigger>
+                    <TabsTrigger value="history" className="flex items-center gap-2">
+                      <History className="h-4 w-4" />
+                      History ({completedPeriods.length})
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="active" className="mt-6">
+                    {loading ? (
+                      <div className="flex justify-center items-center py-8">
+                        <RefreshCw className="h-6 w-6 animate-spin" />
+                        <span className="ml-2">Loading payroll periods...</span>
+                      </div>
+                    ) : activePeriods.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        No active payroll periods found. Create a new period to get started.
+                      </div>
+                    ) : (
+                      <div className="grid gap-4">
+                        {activePeriods.map((period) => (
+                          <Card key={period.id} className="hover:shadow-md transition-shadow">
+                            <CardHeader className="pb-3">
+                              <div className="flex items-start justify-between">
+                                <div className="space-y-1">
+                                  <CardTitle className="text-lg">
+                                    {formatPeriodName(period)}
+                                  </CardTitle>
+                                  <div className="flex items-center gap-2">
+                                    <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                                    <span className="text-sm text-muted-foreground">
+                                      {new Date(period.start_date).toLocaleDateString()} - {new Date(period.end_date).toLocaleDateString()}
+                                    </span>
+                                  </div>
                                 </div>
-                                <div className="text-sm text-muted-foreground md:hidden">
-                                  Net: ₱{(period.total_net_pay || 0).toLocaleString()}
+                                <Badge className={getStatusColor(period.status)}>
+                                  {period.status}
+                                </Badge>
+                              </div>
+                            </CardHeader>
+                            <CardContent className="pt-0">
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                <div className="text-center">
+                                  <div className="text-sm text-muted-foreground">Employees</div>
+                                  <div className="text-xl font-semibold">{period.employee_count || 0}</div>
+                                </div>
+                                <div className="text-center">
+                                  <div className="text-sm text-muted-foreground">Total Net Pay</div>
+                                  <div className="text-xl font-semibold text-green-600">
+                                    ₱{(period.total_net_pay || 0).toLocaleString()}
+                                  </div>
+                                </div>
+                                <div className="text-center">
+                                  <div className="text-sm text-muted-foreground">Pay Date</div>
+                                  <div className="text-sm font-medium">
+                                    {new Date(period.pay_date).toLocaleDateString()}
+                                  </div>
                                 </div>
                               </div>
-                            </TableCell>
-                            <TableCell className="hidden sm:table-cell">
-                              {new Date(period.start_date).toLocaleDateString()} - {new Date(period.end_date).toLocaleDateString()}
-                            </TableCell>
-                            <TableCell>
-                              <Badge className={getStatusColor(period.status)}>
-                                {period.status}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="hidden md:table-cell text-right">
-                              <div className="font-medium">
-                                ₱{(period.total_net_pay || 0).toLocaleString()}
-                              </div>
-                              <div className="text-xs text-muted-foreground">
-                                {period.employee_count || 0} employees
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="sm">
-                                    <MoreHorizontal className="h-4 w-4" />
+                              
+                              <div className="flex flex-wrap gap-2 justify-end">
+                                {/* View Details Button */}
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleViewDetails(period)}
+                                  disabled={actionLoading === `details-${period.id}`}
+                                >
+                                  {actionLoading === `details-${period.id}` ? (
+                                    <RefreshCw className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <Eye className="h-4 w-4" />
+                                  )}
+                                  <span className="ml-1">View Details</span>
+                                </Button>
+                                
+                                {/* Process Button - only for Draft status */}
+                                {period.status === 'Draft' && (
+                                  <Button
+                                    variant="default"
+                                    size="sm"
+                                    onClick={() => handleGenerateAutomatedPayroll(period.id)}
+                                    disabled={actionLoading === `generate-${period.id}`}
+                                  >
+                                    {actionLoading === `generate-${period.id}` ? (
+                                      <RefreshCw className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <Play className="h-4 w-4" />
+                                    )}
+                                    <span className="ml-1">Process</span>
                                   </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                  
-                                  {/* Process Period - only for Draft status */}
-                                  {period.status === 'Draft' && (
-                                    <>
-                                      <DropdownMenuItem
-                                        onClick={() => handleGenerateAutomatedPayroll(period.id)}
-                                        disabled={actionLoading === `generate-${period.id}`}
-                                      >
-                                        {actionLoading === `generate-${period.id}` ? (
-                                          <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                                        ) : (
-                                          <Cog className="mr-2 h-4 w-4" />
-                                        )}
-                                        Process Period
-                                      </DropdownMenuItem>
-                                      <DropdownMenuSeparator />
-                                    </>
-                                  )}
-                                  
-                                  {/* View Details */}
-                                  <DropdownMenuItem>
-                                    <Eye className="mr-2 h-4 w-4" />
-                                    View Details
-                                  </DropdownMenuItem>
-                                  
-                                  {/* Reports - only for non-Draft status */}
-                                  {period.status !== 'Draft' && (
-                                    <DropdownMenuItem>
-                                      <FileText className="mr-2 h-4 w-4" />
-                                      View Report
-                                    </DropdownMenuItem>
-                                  )}
-                                  
-                                  <DropdownMenuSeparator />
-                                  
-                                  {/* Status Change Actions */}
-                                  {period.status === 'Processing' && (
-                                    <>
-                                      <DropdownMenuItem className="text-green-600">
-                                        <CheckCircle className="mr-2 h-4 w-4" />
-                                        Mark as Completed
-                                      </DropdownMenuItem>
-                                      <DropdownMenuItem className="text-red-600">
-                                        <XCircle className="mr-2 h-4 w-4" />
-                                        Cancel Period
-                                      </DropdownMenuItem>
-                                    </>
-                                  )}
-                                  
-                                  {/* Configure - for Draft and Processing */}
-                                  {(period.status === 'Draft' || period.status === 'Processing') && (
-                                    <>
-                                      <DropdownMenuSeparator />
-                                      <DropdownMenuItem>
-                                        <Settings className="mr-2 h-4 w-4" />
-                                        Configure
-                                      </DropdownMenuItem>
-                                    </>
-                                  )}
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </TableCell>
-                          </TableRow>
+                                )}
+                                
+                                {/* Configure Button - for Draft and Processing */}
+                                {(period.status === 'Draft' || period.status === 'Processing') && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleConfigurePeriod(period.id)}
+                                    disabled={actionLoading?.includes(period.id.toString())}
+                                  >
+                                    <Settings className="h-4 w-4" />
+                                    <span className="ml-1">Configure</span>
+                                  </Button>
+                                )}
+                                
+                                {/* Complete Button - for Processing status */}
+                                {period.status === 'Processing' && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-green-600 border-green-200 hover:bg-green-50"
+                                    onClick={() => handleMarkCompleted(period.id)}
+                                    disabled={actionLoading === `complete-${period.id}`}
+                                  >
+                                    {actionLoading === `complete-${period.id}` ? (
+                                      <RefreshCw className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <CheckCircle className="h-4 w-4" />
+                                    )}
+                                    <span className="ml-1">Complete</span>
+                                  </Button>
+                                )}
+                                
+                                {/* Cancel Button - for Processing status */}
+                                {period.status === 'Processing' && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-red-600 border-red-200 hover:bg-red-50"
+                                    onClick={() => handleCancelPeriod(period.id)}
+                                    disabled={actionLoading === `cancel-${period.id}`}
+                                  >
+                                    {actionLoading === `cancel-${period.id}` ? (
+                                      <RefreshCw className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <XCircle className="h-4 w-4" />
+                                    )}
+                                    <span className="ml-1">Cancel</span>
+                                  </Button>
+                                )}
+                              </div>
+                            </CardContent>
+                          </Card>
                         ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="history" className="mt-6">
+                    {loading ? (
+                      <div className="flex justify-center items-center py-8">
+                        <RefreshCw className="h-6 w-6 animate-spin" />
+                        <span className="ml-2">Loading payroll history...</span>
+                      </div>
+                    ) : completedPeriods.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        No completed payroll periods found.
+                      </div>
+                    ) : (
+                      <div className="grid gap-4">
+                        {completedPeriods.map((period) => (
+                          <Card key={period.id} className="hover:shadow-md transition-shadow opacity-90">
+                            <CardHeader className="pb-3">
+                              <div className="flex items-start justify-between">
+                                <div className="space-y-1">
+                                  <CardTitle className="text-lg">
+                                    {formatPeriodName(period)}
+                                  </CardTitle>
+                                  <div className="flex items-center gap-2">
+                                    <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                                    <span className="text-sm text-muted-foreground">
+                                      {new Date(period.start_date).toLocaleDateString()} - {new Date(period.end_date).toLocaleDateString()}
+                                    </span>
+                                  </div>
+                                </div>
+                                <Badge className={getStatusColor(period.status)}>
+                                  {period.status}
+                                </Badge>
+                              </div>
+                            </CardHeader>
+                            <CardContent className="pt-0">
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                <div className="text-center">
+                                  <div className="text-sm text-muted-foreground">Employees</div>
+                                  <div className="text-xl font-semibold">{period.employee_count || 0}</div>
+                                </div>
+                                <div className="text-center">
+                                  <div className="text-sm text-muted-foreground">Total Net Pay</div>
+                                  <div className="text-xl font-semibold text-green-600">
+                                    ₱{(period.total_net_pay || 0).toLocaleString()}
+                                  </div>
+                                </div>
+                                <div className="text-center">
+                                  <div className="text-sm text-muted-foreground">Pay Date</div>
+                                  <div className="text-sm font-medium">
+                                    {new Date(period.pay_date).toLocaleDateString()}
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              <div className="flex flex-wrap gap-2 justify-end">
+                                {/* View Details Button - always available for history */}
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleViewDetails(period)}
+                                  disabled={actionLoading === `details-${period.id}`}
+                                >
+                                  {actionLoading === `details-${period.id}` ? (
+                                    <RefreshCw className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <Eye className="h-4 w-4" />
+                                  )}
+                                  <span className="ml-1">View Details</span>
+                                </Button>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
+                  </TabsContent>
+
+                </Tabs>
               </CardContent>
             </Card>
           </div>
         ) : (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center text-lg">
-                <User className="mr-2 h-5 w-5" />
-                My Automated Payroll Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Employee Automated Payroll View</AlertTitle>
-                <AlertDescription>
-                  Your automated payroll information and history will be displayed here. This feature processes your regular salary, allowances, and deductions automatically.
-                </AlertDescription>
-              </Alert>
-            </CardContent>
-          </Card>
+          <div className="space-y-4">
+            {/* Employee Allowance Management */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center text-lg">
+                  <User className="mr-2 h-5 w-5" />
+                  My Payroll Allowances
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Manage Your Allowances</AlertTitle>
+                  <AlertDescription>
+                    Select and configure the allowance types you want to include in your payroll processing. These will be applied to your salary calculations.
+                  </AlertDescription>
+                </Alert>
+                
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-sm text-muted-foreground">
+                      Current allowances: {employeeAllowances.filter(a => a.is_active).length} active
+                    </p>
+                  </div>
+                  <Button 
+                    onClick={() => setShowAllowanceDialog(true)}
+                    className="flex items-center gap-2"
+                  >
+                    <Settings className="h-4 w-4" />
+                    Manage Allowances
+                  </Button>
+                </div>
+                
+                {/* Current Allowances Display */}
+                {employeeAllowances.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium">Active Allowances:</h4>
+                    <div className="grid gap-2">
+                      {employeeAllowances
+                        .filter(allowance => allowance.is_active)
+                        .map((allowance) => (
+                          <div key={allowance.id} className="flex justify-between items-center p-3 bg-muted rounded-lg">
+                            <div>
+                              <div className="font-medium">{allowance.allowance_name}</div>
+                              <div className="text-sm text-muted-foreground">{allowance.allowance_code}</div>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-semibold">₱{allowance.amount.toLocaleString()}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {allowance.is_monthly ? 'Monthly' : 'Fixed'}
+                                {allowance.is_prorated && ' • Prorated'}
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      }
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            
+            {/* Employee Payroll Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center text-lg">
+                  <DollarSign className="mr-2 h-5 w-5" />
+                  My Payroll Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Payroll Processing</AlertTitle>
+                  <AlertDescription>
+                    Your payroll will be processed using your selected allowances and standard deductions. View your payroll history and current period information here.
+                  </AlertDescription>
+                </Alert>
+              </CardContent>
+            </Card>
+          </div>
         )}
       </div>
 
+      {/* Employee Allowance Selection Dialog */}
+      <Dialog open={showAllowanceDialog} onOpenChange={setShowAllowanceDialog}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Manage Your Payroll Allowances</DialogTitle>
+            <DialogDescription>
+              Select the allowance types you want to include in your payroll and set their amounts. These will be applied during payroll processing.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {allowanceLoading ? (
+            <div className="flex justify-center items-center py-8">
+              <RefreshCw className="h-6 w-6 animate-spin" />
+              <span className="ml-2">Loading allowance types...</span>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {availableAllowanceTypes.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No allowance types available.
+                </div>
+              ) : (
+                <div className="grid gap-4">
+                  {availableAllowanceTypes.map((allowanceType) => {
+                    const isSelected = selectedAllowances[allowanceType.id]?.selected || false;
+                    const amount = selectedAllowances[allowanceType.id]?.amount || 0;
+                    
+                    return (
+                      <Card key={allowanceType.id} className={`transition-all ${
+                        isSelected ? 'ring-2 ring-primary' : ''
+                      }`}>
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex items-start gap-3 flex-1">
+                              <Checkbox
+                                checked={isSelected}
+                                onCheckedChange={(checked) => 
+                                  handleAllowanceToggle(allowanceType.id, checked as boolean)
+                                }
+                                className="mt-1"
+                              />
+                              <div className="flex-1">
+                                <div className="font-medium">{allowanceType.name}</div>
+                                <div className="text-sm text-muted-foreground">
+                                  Code: {allowanceType.code}
+                                </div>
+                                {allowanceType.description && (
+                                  <div className="text-sm text-muted-foreground mt-1">
+                                    {allowanceType.description}
+                                  </div>
+                                )}
+                                <div className="flex gap-2 mt-2">
+                                  <Badge variant="outline" className="text-xs">
+                                    {allowanceType.is_monthly ? 'Monthly' : 'Fixed'}
+                                  </Badge>
+                                  {allowanceType.is_prorated && (
+                                    <Badge variant="outline" className="text-xs">
+                                      Prorated
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {isSelected && (
+                              <div className="w-32">
+                                <Label htmlFor={`amount-${allowanceType.id}`} className="text-sm">
+                                  Amount (₱)
+                                </Label>
+                                <Input
+                                  id={`amount-${allowanceType.id}`}
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  value={amount}
+                                  onChange={(e) => 
+                                    handleAllowanceAmountChange(
+                                      allowanceType.id, 
+                                      parseFloat(e.target.value) || 0
+                                    )
+                                  }
+                                  placeholder="0.00"
+                                  className="mt-1"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+              
+              <div className="flex justify-end gap-2 pt-4 border-t">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowAllowanceDialog(false)}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleSaveAllowances}
+                  disabled={actionLoading === 'save-allowances'}
+                  className="flex items-center gap-2"
+                >
+                  {actionLoading === 'save-allowances' ? (
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                  Save Allowances
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Period Details Dialog */}
+      <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {selectedPeriod && formatPeriodName(selectedPeriod.period)}
+            </DialogTitle>
+            <DialogDescription>
+              Detailed payroll information for this period
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedPeriod && (
+            <div className="space-y-4">
+              {/* Summary Cards */}
+              <div className="grid grid-cols-3 gap-4">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm text-gray-600">Employees</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{selectedPeriod.summary.employee_count}</div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm text-gray-600">Gross Pay</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      ₱{selectedPeriod.summary.total_gross_pay.toLocaleString()}
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm text-gray-600">Net Pay</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      ₱{selectedPeriod.summary.total_net_pay.toLocaleString()}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Employee List */}
+              <div>
+                <h3 className="text-base font-semibold mb-4">Payroll Items</h3>
+                {selectedPeriod.items && selectedPeriod.items.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    No payroll items found for this period.
+                  </div>
+                ) : (
+                  <div className="grid gap-3">
+                    {selectedPeriod.items?.map((item, index) => (
+                      <Card key={index} className="p-4">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <div className="font-medium">
+                              {item.first_name} {item.last_name}
+                            </div>
+                            <div className="text-sm text-gray-500">{item.employee_number}</div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-lg font-semibold text-green-600">
+                              ₱{item.net_pay.toLocaleString()}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {item.days_worked} days worked
+                            </div>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
     </div>
   );

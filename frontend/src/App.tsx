@@ -20,7 +20,7 @@ import { LeaveApprovalsPage } from '@/pages/leaves/LeaveApprovalsPage';
 import { LeaveTypesPage } from '@/pages/leaves/LeaveTypesPage';
 import { PayrollPage } from '@/pages/PayrollPage';
 import { PayrollSystemPage } from '@/pages/PayrollSystemPage';
-import { ManualPayrollPage } from '@/pages/ManualPayrollPage';
+import ManualPayrollPage from '@/pages/ManualPayrollPage';
 import { PayrollItemsPage } from '@/pages/PayrollItemsPage';
 import { CompensationBenefitsPage } from '@/pages/CompensationBenefitsPage';
 import { EmployeePayrollPage } from '@/pages/EmployeePayrollPage';

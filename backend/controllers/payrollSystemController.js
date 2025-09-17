@@ -141,44 +141,141 @@ const generateAutomatedPayroll = asyncHandler(async (req, res) => {
         let successCount = 0;
         let errorCount = 0;
 
-        // Process each employee with simplified logic
+        // Process each employee with database-driven allowances and deductions
         for (const employee of employees) {
             try {
-                // Simplified calculation to avoid complex transactions
+                // Basic calculation parameters
                 const workingDaysInMonth = 22;
-                const dailyRate = parseFloat(employee.current_daily_rate) || (parseFloat(employee.current_monthly_salary) / 22) || 500; // Default minimum
+                const dailyRate = parseFloat(employee.current_daily_rate) || (parseFloat(employee.current_monthly_salary) / 22) || 500;
                 
-                // Basic salary calculation (can be enhanced later)
+                // Basic salary calculation
                 const basicSalary = dailyRate * workingDaysInMonth;
                 
-                // Simplified allowances (can be enhanced with actual allowance data)
-                const rata = 2000; // Standard RATA
-                const totalAllowances = rata;
+                // Get employee-specific allowances from database
+                const allowancesQuery = `
+                    SELECT epa.amount, pat.code, pat.name, pat.is_monthly, pat.is_prorated
+                    FROM employee_payroll_allowances epa
+                    JOIN payroll_allowance_types pat ON epa.allowance_type_id = pat.id
+                    WHERE epa.employee_id = ? AND epa.is_active = 1
+                    ORDER BY pat.name ASC
+                `;
+                
+                const allowancesResult = await executeQuery(allowancesQuery, [employee.id]);
+                let totalAllowances = 0;
+                
+                if (allowancesResult.success && allowancesResult.data.length > 0) {
+                    // Calculate total allowances from employee-specific configuration
+                    totalAllowances = allowancesResult.data.reduce((sum, allowance) => {
+                        let allowanceAmount = parseFloat(allowance.amount) || 0;
+                        
+                        // Apply proration if needed (for partial months)
+                        if (allowance.is_prorated && workingDaysInMonth < 22) {
+                            allowanceAmount = (allowanceAmount * workingDaysInMonth) / 22;
+                        }
+                        
+                        return sum + allowanceAmount;
+                    }, 0);
+                } else {
+                    // Fallback: Get default allowances from allowance types
+                    const defaultAllowancesQuery = `
+                        SELECT amount, code, name, is_monthly, is_prorated
+                        FROM payroll_allowance_types 
+                        WHERE is_active = 1 AND code != 'SALARY'
+                        ORDER BY name ASC
+                    `;
+                    
+                    const defaultAllowancesResult = await executeQuery(defaultAllowancesQuery, []);
+                    if (defaultAllowancesResult.success && defaultAllowancesResult.data.length > 0) {
+                        totalAllowances = defaultAllowancesResult.data.reduce((sum, allowance) => {
+                            let allowanceAmount = parseFloat(allowance.amount) || 0;
+                            
+                            if (allowance.is_prorated && workingDaysInMonth < 22) {
+                                allowanceAmount = (allowanceAmount * workingDaysInMonth) / 22;
+                            }
+                            
+                            return sum + allowanceAmount;
+                        }, 0);
+                    } else {
+                        // Final fallback to standard RATA
+                        totalAllowances = 2000;
+                    }
+                }
                 
                 // Calculate gross pay
                 const grossPay = basicSalary + totalAllowances;
                 
-                // Simplified deductions (can be enhanced with actual calculation)
-                const gsis = grossPay * 0.09;
-                const pagibig = Math.min(grossPay * 0.02, 100);
-                const philhealth = Math.min(grossPay * 0.0275, 1800);
-                const tax = grossPay > 20833 ? (grossPay - 20833) * 0.15 : 0;
-                const totalDeductions = gsis + pagibig + philhealth + tax;
+                // Get all active deductions from database and calculate them
+                const deductionsQuery = `
+                    SELECT code, name, deduction_type, amount, percentage, max_amount, is_government, is_mandatory
+                    FROM payroll_deduction_types 
+                    WHERE is_active = 1
+                    ORDER BY is_government DESC, is_mandatory DESC, name ASC
+                `;
+                
+                const deductionsResult = await executeQuery(deductionsQuery, []);
+                let gsis = 0, pagibig = 0, philhealth = 0, tax = 0, otherDeductions = 0;
+                
+                if (deductionsResult.success && deductionsResult.data.length > 0) {
+                    // Calculate deductions based on database configuration
+                    deductionsResult.data.forEach(deduction => {
+                        let deductionAmount = 0;
+                        
+                        if (deduction.deduction_type === 'fixed') {
+                            deductionAmount = parseFloat(deduction.amount || 0);
+                        } else if (deduction.deduction_type === 'percentage') {
+                            deductionAmount = grossPay * (parseFloat(deduction.percentage || 0) / 100);
+                            
+                            // Apply maximum amount if specified
+                            if (deduction.max_amount && deductionAmount > parseFloat(deduction.max_amount)) {
+                                deductionAmount = parseFloat(deduction.max_amount);
+                            }
+                        }
+                        
+                        // Categorize deductions
+                        switch (deduction.code) {
+                            case 'GSIS':
+                                gsis = deductionAmount;
+                                break;
+                            case 'PAGIBIG':
+                                pagibig = deductionAmount;
+                                break;
+                            case 'PHILHEALTH':
+                                philhealth = deductionAmount;
+                                break;
+                            case 'WITHHOLDING_TAX':
+                                tax = deductionAmount;
+                                break;
+                            default:
+                                if (!deduction.is_government) {
+                                    otherDeductions += deductionAmount;
+                                }
+                                break;
+                        }
+                    });
+                } else {
+                    // Fallback to fixed government deduction calculations
+                    gsis = grossPay * 0.09;
+                    pagibig = Math.min(grossPay * 0.02, 100);
+                    philhealth = Math.min(grossPay * 0.0275, 1800);
+                    tax = grossPay > 20833 ? (grossPay - 20833) * 0.15 : 0;
+                }
+                
+                const totalDeductions = gsis + pagibig + philhealth + tax + otherDeductions;
                 
                 // Calculate net pay
                 const netPay = grossPay - totalDeductions;
 
-                // Insert basic payroll item using standard columns
+                // Insert payroll item using actual database columns
                 const insertResult = await executeQuery(`
                     INSERT INTO payroll_items 
                     (employee_id, payroll_period_id, basic_salary, 
-                     rata, gsis_contribution, pagibig_contribution, philhealth_contribution, 
+                     total_allowances, gsis_contribution, pagibig_contribution, philhealth_contribution, 
                      tax_withheld, other_deductions, gross_pay, total_deductions, net_pay)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 `, [
                     employee.id, period_id, parseFloat(basicSalary.toFixed(2)),
-                    parseFloat(rata.toFixed(2)), parseFloat(gsis.toFixed(2)), parseFloat(pagibig.toFixed(2)), 
-                    parseFloat(philhealth.toFixed(2)), parseFloat(tax.toFixed(2)), 0, 
+                    parseFloat(totalAllowances.toFixed(2)), parseFloat(gsis.toFixed(2)), parseFloat(pagibig.toFixed(2)), 
+                    parseFloat(philhealth.toFixed(2)), parseFloat(tax.toFixed(2)), parseFloat(otherDeductions.toFixed(2)), 
                     parseFloat(grossPay.toFixed(2)), parseFloat(totalDeductions.toFixed(2)), parseFloat(netPay.toFixed(2))
                 ]);
 

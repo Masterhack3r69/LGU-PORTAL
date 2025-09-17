@@ -13,7 +13,13 @@ const {
     processStepIncrements,
     finalizePayrollPeriod,
     getGovernmentContributionRates,
-    payrollPeriodValidationRules
+    payrollPeriodValidationRules,
+    // Manual payroll processing
+    getEmployeeManualPayrollDetails,
+    calculateManualPayroll,
+    processManualPayroll,
+    deleteManualPayrollItem,
+    getManualPayrollHistory
 } = require('../controllers/payrollController');
 
 const router = express.Router();
@@ -101,6 +107,42 @@ router.post('/process-step-increments',
 router.get('/government-rates',
     authMiddleware.requireAdmin,
     getGovernmentContributionRates
+);
+
+// ===================================================================
+// MANUAL PAYROLL PROCESSING ROUTES
+// ===================================================================
+
+// GET /api/payroll/manual/:employee_id - Get employee manual payroll details (Admin only)
+router.get('/manual/:employee_id',
+    authMiddleware.requireAdmin,
+    getEmployeeManualPayrollDetails
+);
+
+// POST /api/payroll/manual/calculate - Calculate manual payroll for employee (Admin only)
+router.post('/manual/calculate',
+    authMiddleware.requireAdmin,
+    calculateManualPayroll
+);
+
+// POST /api/payroll/manual/process - Process manual payroll entry (Admin only)
+router.post('/manual/process',
+    authMiddleware.requireAdmin,
+    auditLogger.auditLogger,
+    processManualPayroll
+);
+
+// DELETE /api/payroll/manual/:item_id - Delete manual payroll item (Admin only)
+router.delete('/manual/:item_id',
+    authMiddleware.requireAdmin,
+    auditLogger.auditLogger,
+    deleteManualPayrollItem
+);
+
+// GET /api/payroll/manual/history/:employee_id - Get manual payroll history for employee (Admin only)
+router.get('/manual/history/:employee_id',
+    authMiddleware.requireAdmin,
+    getManualPayrollHistory
 );
 
 module.exports = router;

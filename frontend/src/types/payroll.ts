@@ -51,6 +51,17 @@ export interface PayrollItem {
   employee_number?: string;
   current_daily_rate?: number;
   current_monthly_salary?: number;
+  
+  // Period details (when joined with payroll_periods)
+  year?: number;
+  month?: number;
+  period_number?: number;
+  start_date?: string;
+  end_date?: string;
+  pay_date?: string;
+  period_status?: string;
+  processed_date?: string;
+  processed_by_name?: string;
 }
 
 export interface PayrollPeriodDetails {
@@ -431,4 +442,142 @@ export interface BenefitsFilters {
   benefit_type?: string;
   page?: number;
   limit?: number;
+}
+
+// ===================================================================
+// MANUAL PAYROLL PROCESSING TYPES
+// ===================================================================
+
+export interface EmployeePayrollAllowance {
+  id: number;
+  allowance_type_id: number;
+  amount: number;
+  effective_date: string;
+  end_date?: string;
+  is_active: boolean;
+  allowance_code: string;
+  allowance_name: string;
+  description?: string;
+  is_monthly: boolean;
+  is_prorated: boolean;
+}
+
+export interface PayrollAllowanceType {
+  id: number;
+  code: string;
+  name: string;
+  description?: string;
+  is_monthly: boolean;
+  is_prorated: boolean;
+  is_active: boolean;
+}
+
+export interface StandardDeductions {
+  gsis: number;
+  pagibig: number;
+  philhealth: number;
+  tax: number;
+  other: number;
+  total: number;
+}
+
+export interface ManualPayrollEmployee {
+  id: number;
+  employee_number: string;
+  first_name: string;
+  middle_name?: string;
+  last_name: string;
+  current_monthly_salary: number;
+  current_daily_rate: number;
+  appointment_date: string;
+  salary_grade?: number;
+  step_increment?: number;
+  plantilla_position?: string;
+  employment_status: string;
+}
+
+export interface ManualPayrollDetails {
+  employee: ManualPayrollEmployee;
+  current_allowances: EmployeePayrollAllowance[];
+  standard_deductions: StandardDeductions;
+  payroll_history: PayrollItem[];
+  available_allowance_types: PayrollAllowanceType[];
+  calculation_defaults: {
+    working_days_per_month: number;
+    overtime_rate_multiplier: number;
+    holiday_rate_multiplier: number;
+  };
+}
+
+export interface AdditionalAllowance {
+  name: string;
+  amount: number;
+  description?: string;
+}
+
+export interface AdditionalDeduction {
+  name: string;
+  amount: number;
+  description?: string;
+}
+
+export interface ManualPayrollCalculationRequest {
+  employee_id: number;
+  period_id?: number;
+  days_worked?: number;
+  overtime_hours?: number;
+  holiday_hours?: number;
+  additional_allowances?: AdditionalAllowance[];
+  additional_deductions?: AdditionalDeduction[];
+  notes?: string;
+}
+
+export interface AllowanceBreakdown {
+  name: string;
+  base_amount: number;
+  prorated_amount: number;
+  is_prorated: boolean;
+}
+
+export interface ManualPayrollCalculation {
+  employee_id: number;
+  calculation_date: string;
+  calculation: {
+    basic_salary: number;
+    overtime_pay: number;
+    holiday_pay: number;
+    total_allowances: number;
+    gross_pay: number;
+    total_deductions: number;
+    net_pay: number;
+    days_worked: number;
+    overtime_hours: number;
+    holiday_hours: number;
+  };
+  breakdown: {
+    allowances: AllowanceBreakdown[];
+    additional_allowances: AdditionalAllowance[];
+    standard_deductions: StandardDeductions;
+    additional_deductions: AdditionalDeduction[];
+  };
+  notes?: string;
+}
+
+export interface ProcessManualPayrollRequest {
+  employee_id: number;
+  period_id: number;
+  calculation_data: ManualPayrollCalculation['calculation'] & {
+    standard_deductions?: StandardDeductions;
+    additional_deductions_total?: number;
+  };
+  notes?: string;
+  override_existing?: boolean;
+}
+
+export interface ProcessManualPayrollResponse {
+  item_id: number;
+  action: 'created' | 'updated';
+  employee_id: number;
+  period_id: number;
+  calculation_data: Record<string, unknown>;
 }

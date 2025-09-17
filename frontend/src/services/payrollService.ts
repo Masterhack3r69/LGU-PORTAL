@@ -14,7 +14,12 @@ import type {
   ProratedSalaryCalculation,
   CalculateProratedForm,
   StepIncrementResult,
-  LeaveSummary
+  LeaveSummary,
+  ManualPayrollDetails,
+  ManualPayrollCalculationRequest,
+  ManualPayrollCalculation,
+  ProcessManualPayrollRequest,
+  ProcessManualPayrollResponse
 } from '../types/payroll';
 
 class PayrollService {
@@ -172,6 +177,52 @@ class PayrollService {
       end: new Date(period.end_date),
       payDate: new Date(period.pay_date)
     };
+  }
+
+  // ===================================================================
+  // MANUAL PAYROLL PROCESSING
+  // ===================================================================
+
+  // Get employee manual payroll details
+  async getEmployeeManualPayrollDetails(employeeId: number, periodId?: number): Promise<PayrollApiResponse<ManualPayrollDetails>> {
+    const params = periodId ? { period_id: periodId } : {};
+    return apiService.get<PayrollApiResponse<ManualPayrollDetails>>(
+      `${this.baseUrl}/manual/${employeeId}`, 
+      params
+    );
+  }
+
+  // Calculate manual payroll for employee
+  async calculateManualPayroll(data: ManualPayrollCalculationRequest): Promise<PayrollApiResponse<ManualPayrollCalculation>> {
+    return apiService.post<PayrollApiResponse<ManualPayrollCalculation>>(`${this.baseUrl}/manual/calculate`, data);
+  }
+
+  // Process manual payroll entry
+  async processManualPayroll(data: ProcessManualPayrollRequest): Promise<PayrollApiResponse<ProcessManualPayrollResponse>> {
+    return apiService.post<PayrollApiResponse<ProcessManualPayrollResponse>>(`${this.baseUrl}/manual/process`, data);
+  }
+
+  // Delete manual payroll item
+  async deleteManualPayrollItem(itemId: number): Promise<PayrollApiResponse<void>> {
+    return apiService.delete<PayrollApiResponse<void>>(`${this.baseUrl}/manual/${itemId}`);
+  }
+
+  // Get manual payroll history for employee
+  async getManualPayrollHistory(
+    employeeId: number, 
+    filters?: { year?: number; limit?: number }
+  ): Promise<PayrollApiResponse<PayrollItem[]>> {
+    const params = new URLSearchParams();
+    
+    if (filters?.year) params.append('year', filters.year.toString());
+    if (filters?.limit) params.append('limit', filters.limit.toString());
+
+    const queryString = params.toString();
+    const url = queryString 
+      ? `${this.baseUrl}/manual/history/${employeeId}?${queryString}` 
+      : `${this.baseUrl}/manual/history/${employeeId}`;
+    
+    return apiService.get<PayrollApiResponse<PayrollItem[]>>(url);
   }
 }
 

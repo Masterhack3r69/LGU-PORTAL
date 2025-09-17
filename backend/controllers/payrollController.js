@@ -1016,6 +1016,608 @@ const getGovernmentContributionRates = asyncHandler(async (req, res) => {
     });
 });
 
+// ===================================================================
+// MANUAL PAYROLL PROCESSING
+// ===================================================================
+
+// Enhanced helper function to calculate all deductions from database
+const calculateAllDeductions = async (employee, grossPay = null) => {
+    // Use gross pay if provided, otherwise use monthly salary
+    const salaryBase = grossPay || employee.current_monthly_salary;
+    
+    // Get all active deduction types from database
+    const deductionTypesQuery = `
+        SELECT id, code, name, deduction_type, amount, percentage, max_amount, is_government, is_mandatory
+        FROM payroll_deduction_types 
+        WHERE is_active = 1
+        ORDER BY is_government DESC, is_mandatory DESC, name ASC
+    `;
+    
+    const deductionTypesResult = await executeQuery(deductionTypesQuery, []);
+    const deductionTypes = deductionTypesResult.success ? deductionTypesResult.data : [];
+    
+    let totalDeductions = 0;
+    const deductionBreakdown = [];
+    
+    // Calculate each deduction based on its configuration
+    for (const deductionType of deductionTypes) {
+        let deductionAmount = 0;
+        
+        if (deductionType.deduction_type === 'fixed') {
+            deductionAmount = parseFloat(deductionType.amount || 0);
+        } else if (deductionType.deduction_type === 'percentage') {
+            deductionAmount = salaryBase * (parseFloat(deductionType.percentage || 0) / 100);
+            
+            // Apply maximum amount if specified
+            if (deductionType.max_amount && deductionAmount > parseFloat(deductionType.max_amount)) {
+                deductionAmount = parseFloat(deductionType.max_amount);
+            }
+        }
+        
+        totalDeductions += deductionAmount;
+        deductionBreakdown.push({
+            code: deductionType.code,
+            name: deductionType.name,
+            type: deductionType.deduction_type,
+            amount: parseFloat(deductionAmount.toFixed(2)),
+            is_government: deductionType.is_government,
+            is_mandatory: deductionType.is_mandatory
+        });
+    }
+    
+    // Fallback to government calculator if no deductions found in database
+    if (deductionTypes.length === 0) {
+        const governmentDeductions = GovernmentDeductionsCalculator.calculateAllDeductions(
+            salaryBase,
+            employee.salary_grade,
+            employee.step_increment
+        );
+        
+        return {
+            gsis: governmentDeductions.gsis,
+            pagibig: governmentDeductions.pagibig,
+            philhealth: governmentDeductions.philhealth,
+            tax: governmentDeductions.tax,
+            other: 0,
+            total: governmentDeductions.totalDeductions,
+            breakdown: [
+                { code: 'GSIS', name: 'GSIS Contribution', amount: governmentDeductions.gsis, is_government: true },
+                { code: 'PAGIBIG', name: 'Pag-IBIG Contribution', amount: governmentDeductions.pagibig, is_government: true },
+                { code: 'PHILHEALTH', name: 'PhilHealth Contribution', amount: governmentDeductions.philhealth, is_government: true },
+                { code: 'WITHHOLDING_TAX', name: 'Withholding Tax', amount: governmentDeductions.tax, is_government: true }
+            ]
+        };
+    }
+    
+    // Return structured deduction data
+    const gsis = deductionBreakdown.find(d => d.code === 'GSIS')?.amount || 0;
+    const pagibig = deductionBreakdown.find(d => d.code === 'PAGIBIG')?.amount || 0;
+    const philhealth = deductionBreakdown.find(d => d.code === 'PHILHEALTH')?.amount || 0;
+    const tax = deductionBreakdown.find(d => d.code === 'WITHHOLDING_TAX')?.amount || 0;
+    const other = deductionBreakdown.filter(d => !d.is_government).reduce((sum, d) => sum + d.amount, 0);
+    
+    return {
+        gsis,
+        pagibig,
+        philhealth,
+        tax,
+        other,
+        total: totalDeductions,
+        breakdown: deductionBreakdown
+    };
+};
+
+// Legacy function for backward compatibility
+const calculateStandardDeductions = async (employee, grossPay = null) => {
+    return await calculateAllDeductions(employee, grossPay);
+};
+
+// GET /api/payroll/manual/:employee_id - Get employee manual payroll details
+const getEmployeeManualPayrollDetails = asyncHandler(async (req, res) => {
+    const { employee_id } = req.params;
+    const { period_id } = req.query;
+
+    // Validate employee ID
+    const employeeIdNum = parseInt(employee_id);
+    if (isNaN(employeeIdNum) || employeeIdNum <= 0) {
+        throw new ValidationError('Invalid employee ID. Must be a positive number.');
+    }
+
+    // Get employee details
+    const employeeQuery = `
+        SELECT 
+            e.*,
+            u.username,
+            u.role
+        FROM employees e
+        LEFT JOIN users u ON e.user_id = u.id
+        WHERE e.id = ? AND e.deleted_at IS NULL
+    `;
+
+    const employeeResult = await executeQuery(employeeQuery, [employeeIdNum]);
+
+    if (!employeeResult.success || employeeResult.data.length === 0) {
+        throw new NotFoundError('Employee not found');
+    }
+
+    const employee = employeeResult.data[0];
+
+    // Get current payroll allowances
+    const allowancesQuery = `
+        SELECT 
+            epa.id,
+            epa.allowance_type_id,
+            epa.amount,
+            epa.effective_date,
+            epa.end_date,
+            epa.is_active,
+            pat.code as allowance_code,
+            pat.name as allowance_name,
+            pat.description,
+            pat.is_monthly,
+            pat.is_prorated
+        FROM employee_payroll_allowances epa
+        JOIN payroll_allowance_types pat ON epa.allowance_type_id = pat.id
+        WHERE epa.employee_id = ? AND epa.is_active = 1
+        ORDER BY pat.name ASC
+    `;
+
+    const allowancesResult = await executeQuery(allowancesQuery, [employeeIdNum]);
+    const allowances = allowancesResult.success ? allowancesResult.data : [];
+
+    // Get recent payroll history (last 6 months)
+    const historyQuery = `
+        SELECT 
+            pi.*,
+            pp.year,
+            pp.month,
+            pp.period_number,
+            pp.start_date,
+            pp.end_date,
+            pp.pay_date,
+            pp.status as period_status
+        FROM payroll_items pi
+        JOIN payroll_periods pp ON pi.payroll_period_id = pp.id
+        WHERE pi.employee_id = ?
+        ORDER BY pp.year DESC, pp.month DESC, pp.period_number DESC
+        LIMIT 6
+    `;
+
+    const historyResult = await executeQuery(historyQuery, [employeeIdNum]);
+    const payrollHistory = historyResult.success ? historyResult.data : [];
+
+    // Calculate standard deductions
+    const standardDeductions = await calculateStandardDeductions(employee);
+
+    // Get available allowance types for manual addition
+    const allowanceTypesQuery = `
+        SELECT * FROM payroll_allowance_types 
+        WHERE is_active = 1 
+        ORDER BY name ASC
+    `;
+
+    const allowanceTypesResult = await executeQuery(allowanceTypesQuery);
+    const availableAllowanceTypes = allowanceTypesResult.success ? allowanceTypesResult.data : [];
+
+    res.json({
+        success: true,
+        data: {
+            employee: {
+                id: employee.id,
+                employee_number: employee.employee_number,
+                first_name: employee.first_name,
+                middle_name: employee.middle_name,
+                last_name: employee.last_name,
+                current_monthly_salary: employee.current_monthly_salary,
+                current_daily_rate: employee.current_daily_rate,
+                appointment_date: employee.appointment_date,
+                salary_grade: employee.salary_grade,
+                step_increment: employee.step_increment,
+                plantilla_position: employee.plantilla_position,
+                employment_status: employee.employment_status
+            },
+            current_allowances: allowances,
+            standard_deductions: standardDeductions,
+            payroll_history: payrollHistory,
+            available_allowance_types: availableAllowanceTypes,
+            calculation_defaults: {
+                working_days_per_month: 22,
+                overtime_rate_multiplier: 1.25,
+                holiday_rate_multiplier: 2.0
+            }
+        }
+    });
+});
+
+// POST /api/payroll/manual/calculate - Calculate manual payroll for employee
+const calculateManualPayroll = asyncHandler(async (req, res) => {
+    const {
+        employee_id,
+        period_id,
+        days_worked = 22,
+        overtime_hours = 0,
+        holiday_hours = 0,
+        notes
+    } = req.body;
+
+    // Validate inputs
+    if (!employee_id) {
+        throw new ValidationError('Employee ID is required');
+    }
+
+    const employeeIdNum = parseInt(employee_id);
+    if (isNaN(employeeIdNum) || employeeIdNum <= 0) {
+        throw new ValidationError('Invalid employee ID');
+    }
+
+    // Get employee details
+    const employeeQuery = `
+        SELECT * FROM employees 
+        WHERE id = ? AND deleted_at IS NULL
+    `;
+
+    const employeeResult = await executeQuery(employeeQuery, [employeeIdNum]);
+
+    if (!employeeResult.success || employeeResult.data.length === 0) {
+        throw new NotFoundError('Employee not found');
+    }
+
+    const employee = employeeResult.data[0];
+
+    // Calculate basic salary based on days worked
+    const basicSalary = parseFloat((employee.current_monthly_salary * days_worked) / 22);
+
+    // Calculate overtime pay
+    const hourlyRate = parseFloat(employee.current_daily_rate) / 8;
+    const overtimePay = parseFloat(overtime_hours * hourlyRate * 1.25);
+    const holidayPay = parseFloat(holiday_hours * hourlyRate * 2.0);
+
+    // Get current allowances from employee_payroll_allowances table
+    const allowancesQuery = `
+        SELECT epa.*, pat.name as allowance_name, pat.code as allowance_code, pat.is_prorated
+        FROM employee_payroll_allowances epa
+        JOIN payroll_allowance_types pat ON epa.allowance_type_id = pat.id
+        WHERE epa.employee_id = ? AND epa.is_active = 1
+        ORDER BY pat.name ASC
+    `;
+
+    const allowancesResult = await executeQuery(allowancesQuery, [employeeIdNum]);
+    const currentAllowances = allowancesResult.success ? allowancesResult.data : [];
+
+    // Calculate allowances (prorated based on days worked)
+    let totalAllowances = 0;
+    const allowanceBreakdown = [];
+
+    currentAllowances.forEach(allowance => {
+        let allowanceAmount = parseFloat(allowance.amount || 0);
+        if (allowance.is_prorated && days_worked < 22) {
+            allowanceAmount = (allowanceAmount * days_worked) / 22;
+        }
+        totalAllowances += allowanceAmount;
+        allowanceBreakdown.push({
+            code: allowance.allowance_code,
+            name: allowance.allowance_name,
+            base_amount: parseFloat(allowance.amount || 0),
+            prorated_amount: allowanceAmount,
+            is_prorated: allowance.is_prorated && days_worked < 22
+        });
+    });
+
+    // Calculate gross pay
+    const grossPay = parseFloat(basicSalary + overtimePay + holidayPay + totalAllowances);
+
+    // Calculate all deductions using the new database-driven system
+    const deductionsData = await calculateAllDeductions(employee, grossPay);
+    const totalDeductions = parseFloat(deductionsData.total);
+
+    // Calculate net pay
+    const netPay = parseFloat(grossPay - totalDeductions);
+
+    res.json({
+        success: true,
+        data: {
+            employee_id: employeeIdNum,
+            calculation_date: new Date().toISOString(),
+            calculation: {
+                basic_salary: parseFloat(basicSalary.toFixed(2)),
+                overtime_pay: parseFloat(overtimePay.toFixed(2)),
+                holiday_pay: parseFloat(holidayPay.toFixed(2)),
+                total_allowances: parseFloat(totalAllowances.toFixed(2)),
+                gross_pay: parseFloat(grossPay.toFixed(2)),
+                total_deductions: parseFloat(totalDeductions.toFixed(2)),
+                net_pay: parseFloat(netPay.toFixed(2)),
+                days_worked: parseInt(days_worked),
+                overtime_hours: parseFloat(overtime_hours),
+                holiday_hours: parseFloat(holiday_hours)
+            },
+            breakdown: {
+                allowances: allowanceBreakdown,
+                deductions: deductionsData.breakdown
+            },
+            notes: notes,
+            auto_calculated: {
+                allowances_from_database: true,
+                deductions_from_database: true,
+                message: 'Allowances and deductions automatically loaded from system configuration'
+            }
+        }
+    });
+});
+
+// POST /api/payroll/manual/process - Process manual payroll entry
+const processManualPayroll = asyncHandler(async (req, res) => {
+    const {
+        employee_id,
+        period_id,
+        calculation_data,
+        notes,
+        override_existing = false
+    } = req.body;
+
+    // Validate inputs
+    if (!employee_id || !period_id || !calculation_data) {
+        throw new ValidationError('Employee ID, period ID, and calculation data are required');
+    }
+
+    // Check if payroll period exists
+    const periodQuery = `
+        SELECT * FROM payroll_periods 
+        WHERE id = ? AND status IN ('Draft', 'Processing')
+    `;
+
+    const periodResult = await executeQuery(periodQuery, [period_id]);
+
+    if (!periodResult.success || periodResult.data.length === 0) {
+        throw new ValidationError('Invalid payroll period or period is already finalized');
+    }
+
+    // Check if payroll item already exists
+    const existingItemQuery = `
+        SELECT id FROM payroll_items 
+        WHERE employee_id = ? AND payroll_period_id = ?
+    `;
+
+    const existingResult = await executeQuery(existingItemQuery, [employee_id, period_id]);
+
+    if (existingResult.success && existingResult.data.length > 0 && !override_existing) {
+        throw new ValidationError('Payroll item already exists for this employee and period. Set override_existing to true to update.');
+    }
+
+    const isUpdate = existingResult.success && existingResult.data.length > 0;
+    const existingItemId = isUpdate ? existingResult.data[0].id : null;
+
+    // Prepare payroll item data - ensure all numeric values are properly converted
+    const payrollItemData = {
+        employee_id: parseInt(employee_id),
+        payroll_period_id: parseInt(period_id),
+        basic_salary: parseFloat(calculation_data.basic_salary || 0),
+        days_worked: parseInt(calculation_data.days_worked || 22),
+        leave_days_deducted: 22 - parseInt(calculation_data.days_worked || 22),
+        working_days_in_month: 22,
+        salary_adjustment: parseFloat(calculation_data.overtime_pay || 0) + parseFloat(calculation_data.holiday_pay || 0),
+        total_allowances: parseFloat(calculation_data.total_allowances || 0),
+        gsis_contribution: parseFloat(calculation_data.standard_deductions?.gsis || 0),
+        pagibig_contribution: parseFloat(calculation_data.standard_deductions?.pagibig || 0),
+        philhealth_contribution: parseFloat(calculation_data.standard_deductions?.philhealth || 0),
+        tax_withheld: parseFloat(calculation_data.standard_deductions?.tax || 0),
+        other_deductions: parseFloat(calculation_data.additional_deductions_total || 0),
+        gross_pay: parseFloat(calculation_data.gross_pay || 0),
+        total_deductions: parseFloat(calculation_data.total_deductions || 0),
+        net_pay: parseFloat(calculation_data.net_pay || 0)
+    };
+
+    let result;
+
+    if (isUpdate) {
+        // Update existing payroll item
+        const updateQuery = `
+            UPDATE payroll_items SET
+                basic_salary = ?, days_worked = ?, leave_days_deducted = ?,
+                working_days_in_month = ?, salary_adjustment = ?, total_allowances = ?,
+                gsis_contribution = ?, pagibig_contribution = ?, philhealth_contribution = ?,
+                tax_withheld = ?, other_deductions = ?, gross_pay = ?, total_deductions = ?, net_pay = ?
+            WHERE id = ?
+        `;
+
+        result = await executeQuery(updateQuery, [
+            payrollItemData.basic_salary, payrollItemData.days_worked, payrollItemData.leave_days_deducted,
+            payrollItemData.working_days_in_month, payrollItemData.salary_adjustment, payrollItemData.total_allowances,
+            payrollItemData.gsis_contribution, payrollItemData.pagibig_contribution, payrollItemData.philhealth_contribution,
+            payrollItemData.tax_withheld, payrollItemData.other_deductions, payrollItemData.gross_pay,
+            payrollItemData.total_deductions, payrollItemData.net_pay, existingItemId
+        ]);
+    } else {
+        // Create new payroll item
+        const insertQuery = `
+            INSERT INTO payroll_items (
+                employee_id, payroll_period_id, basic_salary, days_worked, leave_days_deducted,
+                working_days_in_month, salary_adjustment, total_allowances, gsis_contribution,
+                pagibig_contribution, philhealth_contribution, tax_withheld, other_deductions,
+                gross_pay, total_deductions, net_pay
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+
+        result = await executeQuery(insertQuery, [
+            payrollItemData.employee_id, payrollItemData.payroll_period_id, payrollItemData.basic_salary,
+            payrollItemData.days_worked, payrollItemData.leave_days_deducted, payrollItemData.working_days_in_month,
+            payrollItemData.salary_adjustment, payrollItemData.total_allowances, payrollItemData.gsis_contribution,
+            payrollItemData.pagibig_contribution, payrollItemData.philhealth_contribution, payrollItemData.tax_withheld,
+            payrollItemData.other_deductions, payrollItemData.gross_pay, payrollItemData.total_deductions, payrollItemData.net_pay
+        ]);
+    }
+
+    if (!result.success) {
+        throw new Error(`Failed to ${isUpdate ? 'update' : 'create'} manual payroll item`);
+    }
+
+    // Log the manual payroll processing
+    payrollLogger.info(`Manual payroll ${isUpdate ? 'updated' : 'created'}`, {
+        employee_id: employee_id,
+        period_id: period_id,
+        processed_by: req.user.id,
+        net_pay: calculation_data.net_pay,
+        notes: notes
+    });
+
+    res.json({
+        success: true,
+        data: {
+            item_id: isUpdate ? existingItemId : result.insertId,
+            action: isUpdate ? 'updated' : 'created',
+            employee_id: employee_id,
+            period_id: period_id,
+            calculation_data: calculation_data
+        },
+        message: `Manual payroll ${isUpdate ? 'updated' : 'processed'} successfully`
+    });
+});
+
+// DELETE /api/payroll/manual/:item_id - Delete manual payroll item
+const deleteManualPayrollItem = asyncHandler(async (req, res) => {
+    const { item_id } = req.params;
+
+    // Validate item ID
+    const itemIdNum = parseInt(item_id);
+    if (isNaN(itemIdNum) || itemIdNum <= 0) {
+        throw new ValidationError('Invalid payroll item ID');
+    }
+
+    // Check if item exists and get period status
+    const itemQuery = `
+        SELECT pi.*, pp.status as period_status 
+        FROM payroll_items pi
+        JOIN payroll_periods pp ON pi.payroll_period_id = pp.id
+        WHERE pi.id = ?
+    `;
+
+    const itemResult = await executeQuery(itemQuery, [itemIdNum]);
+
+    if (!itemResult.success || itemResult.data.length === 0) {
+        throw new NotFoundError('Payroll item not found');
+    }
+
+    const item = itemResult.data[0];
+
+    if (item.period_status === 'Completed') {
+        throw new ValidationError('Cannot delete payroll item from a completed period');
+    }
+
+    // Delete the payroll item
+    const deleteQuery = 'DELETE FROM payroll_items WHERE id = ?';
+    const deleteResult = await executeQuery(deleteQuery, [itemIdNum]);
+
+    if (!deleteResult.success) {
+        throw new Error('Failed to delete payroll item');
+    }
+
+    payrollLogger.info('Manual payroll item deleted', {
+        item_id: itemIdNum,
+        employee_id: item.employee_id,
+        period_id: item.payroll_period_id,
+        deleted_by: req.user.id
+    });
+
+    res.json({
+        success: true,
+        message: 'Payroll item deleted successfully'
+    });
+});
+
+// GET /api/payroll/manual/history/:employee_id - Get manual payroll history for employee
+const getManualPayrollHistory = asyncHandler(async (req, res) => {
+    const { employee_id } = req.params;
+    const { year, limit = 12 } = req.query;
+
+    // Validate employee ID
+    const employeeIdNum = parseInt(employee_id);
+    if (isNaN(employeeIdNum) || employeeIdNum <= 0) {
+        throw new ValidationError('Invalid employee ID');
+    }
+
+    // Validate limit parameter
+    const limitNum = parseInt(limit);
+    const finalLimit = isNaN(limitNum) || limitNum <= 0 ? 12 : Math.min(limitNum, 50);
+
+    // Check if employee exists
+    const employeeCheck = await executeQuery(
+        'SELECT id, first_name, last_name, employee_number FROM employees WHERE id = ?',
+        [employeeIdNum]
+    );
+
+    if (!employeeCheck.success || employeeCheck.data.length === 0) {
+        throw new NotFoundError('Employee not found');
+    }
+
+    const employee = employeeCheck.data[0];
+
+    let whereConditions = ['pi.employee_id = ?'];
+    let queryParams = [employeeIdNum];
+
+    if (year) {
+        const yearNum = parseInt(year);
+        if (!isNaN(yearNum) && yearNum >= 2020 && yearNum <= 2030) {
+            whereConditions.push('pp.year = ?');
+            queryParams.push(yearNum);
+        }
+    }
+
+    const whereClause = whereConditions.join(' AND ');
+
+    // Get manual payroll history with additional metadata
+    const query = `
+        SELECT 
+            pi.*,
+            pp.year,
+            pp.month,
+            pp.period_number,
+            pp.start_date,
+            pp.end_date,
+            pp.pay_date,
+            pp.status as period_status,
+            pi.created_at as processed_date,
+            u.username as processed_by_name
+        FROM payroll_items pi
+        JOIN payroll_periods pp ON pi.payroll_period_id = pp.id
+        LEFT JOIN users u ON pp.created_by = u.id
+        WHERE ${whereClause}
+        ORDER BY pp.year DESC, pp.month DESC, pp.period_number DESC, pi.created_at DESC
+        LIMIT ?
+    `;
+
+    const result = await executeQuery(query, [...queryParams, finalLimit.toString()]);
+
+    if (!result.success) {
+        throw new Error('Failed to fetch manual payroll history');
+    }
+
+    const history = result.data;
+
+    // Calculate summary statistics
+    const totalNetPay = history.reduce((sum, item) => sum + parseFloat(item.net_pay || 0), 0);
+    const averageNetPay = history.length > 0 ? totalNetPay / history.length : 0;
+    const lastProcessedDate = history.length > 0 ? history[0].processed_date : null;
+
+    res.json({
+        success: true,
+        data: history,
+        summary: {
+            total_records: history.length,
+            total_net_pay: totalNetPay,
+            average_net_pay: averageNetPay,
+            last_processed_date: lastProcessedDate,
+            employee_info: {
+                id: employee.id,
+                name: `${employee.first_name} ${employee.last_name}`,
+                employee_number: employee.employee_number
+            }
+        },
+        filters: {
+            year: year ? parseInt(year) : null,
+            limit: finalLimit
+        }
+    });
+});
+
 module.exports = {
     getPayrollPeriods,
     createPayrollPeriod,
@@ -1027,5 +1629,11 @@ module.exports = {
     processStepIncrements,
     finalizePayrollPeriod,
     getGovernmentContributionRates,
-    payrollPeriodValidationRules
+    payrollPeriodValidationRules,
+    // Manual payroll processing
+    getEmployeeManualPayrollDetails,
+    calculateManualPayroll,
+    processManualPayroll,
+    deleteManualPayrollItem,
+    getManualPayrollHistory
 };

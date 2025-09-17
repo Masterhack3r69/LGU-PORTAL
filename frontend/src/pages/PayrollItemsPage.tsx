@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,104 +24,14 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
+import { payrollItemsService } from '@/services/payrollItemsService';
+import { payrollDeductionTypesService } from '@/services/payrollDeductionTypesService';
+import type { PayrollItemType, CreatePayrollItemForm } from '@/services/payrollItemsService';
+import type { PayrollDeductionType } from '@/services/payrollDeductionTypesService';
 
-// Types for Payroll Items
-interface PayrollItemType {
-  id: number;
-  code: string;
-  name: string;
-  description: string;
-  category: 'allowance' | 'deduction';
-  is_monthly: boolean;
-  is_prorated: boolean;
-  is_taxable: boolean;
-  is_active: boolean;
-  default_amount?: number;
-  created_at: string;
-  updated_at: string;
-}
+// Note: Types are now imported from the service
 
-interface CreatePayrollItemForm {
-  code: string;
-  name: string;
-  description: string;
-  category: 'allowance' | 'deduction';
-  is_monthly: boolean;
-  is_prorated: boolean;
-  is_taxable: boolean;
-  default_amount?: number;
-}
-
-// Mock data for development
-const mockPayrollItems: PayrollItemType[] = [
-  {
-    id: 1,
-    code: 'TRANS_ALLOW',
-    name: 'Transportation Allowance',
-    description: 'Monthly transportation allowance for employees',
-    category: 'allowance',
-    is_monthly: true,
-    is_prorated: false,
-    is_taxable: false,
-    is_active: true,
-    default_amount: 1500,
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z'
-  },
-  {
-    id: 2,
-    code: 'MEAL_ALLOW',
-    name: 'Meal Allowance',
-    description: 'Daily meal allowance based on working days',
-    category: 'allowance',
-    is_monthly: false,
-    is_prorated: true,
-    is_taxable: false,
-    is_active: true,
-    default_amount: 150,
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z'
-  },
-  {
-    id: 3,
-    code: 'GSIS_CONT',
-    name: 'GSIS Contribution',
-    description: 'Government Service Insurance System contribution',
-    category: 'deduction',
-    is_monthly: true,
-    is_prorated: false,
-    is_taxable: false,
-    is_active: true,
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z'
-  },
-  {
-    id: 4,
-    code: 'PHILHEALTH',
-    name: 'PhilHealth Contribution',
-    description: 'Philippine Health Insurance Corporation contribution',
-    category: 'deduction',
-    is_monthly: true,
-    is_prorated: false,
-    is_taxable: false,
-    is_active: true,
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z'
-  },
-  {
-    id: 5,
-    code: 'OVERTIME_PAY',
-    name: 'Overtime Pay',
-    description: 'Additional compensation for overtime work',
-    category: 'allowance',
-    is_monthly: false,
-    is_prorated: true,
-    is_taxable: true,
-    is_active: true,
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z'
-  }
-];
+// Mock data removed - now using real API
 
 // Component for Create/Edit Dialog
 function PayrollItemDialog({ 
@@ -139,11 +49,9 @@ function PayrollItemDialog({
     code: item?.code || '',
     name: item?.name || '',
     description: item?.description || '',
-    category: item?.category || 'allowance',
+    amount: item?.amount || 0,
     is_monthly: item?.is_monthly || false,
-    is_prorated: item?.is_prorated || false,
-    is_taxable: item?.is_taxable || false,
-    default_amount: item?.default_amount || undefined
+    is_prorated: item?.is_prorated || false
   });
 
   const handleSave = () => {
@@ -161,11 +69,9 @@ function PayrollItemDialog({
       code: item?.code || '',
       name: item?.name || '',
       description: item?.description || '',
-      category: item?.category || 'allowance',
+      amount: item?.amount || 0,
       is_monthly: item?.is_monthly || false,
-      is_prorated: item?.is_prorated || false,
-      is_taxable: item?.is_taxable || false,
-      default_amount: item?.default_amount || undefined
+      is_prorated: item?.is_prorated || false
     });
   };
 
@@ -186,7 +92,7 @@ function PayrollItemDialog({
         </DialogHeader>
         
         <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <div className="space-y-2">
               <Label htmlFor="code">Code *</Label>
               <Input
@@ -195,18 +101,6 @@ function PayrollItemDialog({
                 onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
                 placeholder="e.g., TRANS_ALLOW"
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="category">Category *</Label>
-              <select
-                id="category"
-                className="w-full px-3 py-2 border border-input bg-background rounded-md"
-                value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value as 'allowance' | 'deduction' })}
-              >
-                <option value="allowance">Allowance</option>
-                <option value="deduction">Deduction</option>
-              </select>
             </div>
           </div>
           
@@ -232,16 +126,18 @@ function PayrollItemDialog({
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="default_amount">Default Amount (₱)</Label>
+            <Label htmlFor="amount">Amount (₱)</Label>
             <Input
-              id="default_amount"
+              id="amount"
               type="number"
-              value={formData.default_amount || ''}
+              step="0.01"
+              min="0"
+              value={formData.amount || ''}
               onChange={(e) => setFormData({ 
                 ...formData, 
-                default_amount: e.target.value ? parseFloat(e.target.value) : undefined 
+                amount: e.target.value ? parseFloat(e.target.value) : 0
               })}
-              placeholder="Optional default amount"
+              placeholder="Enter allowance amount"
             />
           </div>
           
@@ -271,18 +167,6 @@ function PayrollItemDialog({
                   onCheckedChange={(checked) => setFormData({ ...formData, is_prorated: checked })}
                 />
               </div>
-              
-              <div className="flex items-center justify-between">
-                <Label htmlFor="is_taxable" className="text-sm font-normal">
-                  Taxable
-                  <span className="text-xs text-muted-foreground block">Subject to withholding tax</span>
-                </Label>
-                <Switch
-                  id="is_taxable"
-                  checked={formData.is_taxable}
-                  onCheckedChange={(checked) => setFormData({ ...formData, is_taxable: checked })}
-                />
-              </div>
             </div>
           </div>
         </div>
@@ -304,40 +188,87 @@ export const PayrollItemsPage: React.FC = () => {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
 
-  // State
-  const [payrollItems, setPayrollItems] = useState<PayrollItemType[]>(mockPayrollItems);
+  // State for both allowances and deductions
+  const [payrollItems, setPayrollItems] = useState<PayrollItemType[]>([]);
+  const [deductionTypes, setDeductionTypes] = useState<PayrollDeductionType[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState('all');
+  const [activeTab, setActiveTab] = useState('allowances');
   const [showDialog, setShowDialog] = useState(false);
   const [editingItem, setEditingItem] = useState<PayrollItemType | null>(null);
+  // const [editingDeduction, setEditingDeduction] = useState<PayrollDeductionType | null>(null);
+  // const [dialogType, setDialogType] = useState<'allowance' | 'deduction'>('allowance');
+
+  // Load both allowances and deductions from API
+  const loadPayrollItems = useCallback(async () => {
+    try {
+      setLoading(true);
+      const [allowancesResponse, deductionsResponse] = await Promise.all([
+        payrollItemsService.getPayrollItems({
+          search: searchTerm || undefined
+        }),
+        payrollDeductionTypesService.getPayrollDeductions({
+          search: searchTerm || undefined
+        })
+      ]);
+      
+      if (allowancesResponse.success) {
+        setPayrollItems(allowancesResponse.data);
+      } else {
+        toast.error(allowancesResponse.message || 'Failed to load allowance types');
+      }
+      
+      if (deductionsResponse.success) {
+        setDeductionTypes(deductionsResponse.data);
+      } else {
+        toast.error(deductionsResponse.message || 'Failed to load deduction types');
+      }
+    } catch (error) {
+      console.error('Error loading payroll data:', error);
+      toast.error('Failed to load payroll data');
+    } finally {
+      setLoading(false);
+    }
+  }, [searchTerm]);
+
+  // Load data on component mount
+  useEffect(() => {
+    loadPayrollItems();
+  }, [loadPayrollItems]);
+
+  // No separate useEffect for search term since it's already in the useCallback dependency
 
   // Filtered items based on search and tab
-  const filteredItems = payrollItems.filter(item => {
+  const filteredAllowances = payrollItems.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          item.code.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    if (activeTab === 'all') return matchesSearch;
-    if (activeTab === 'allowances') return matchesSearch && item.category === 'allowance';
-    if (activeTab === 'deductions') return matchesSearch && item.category === 'deduction';
-    if (activeTab === 'active') return matchesSearch && item.is_active;
-    if (activeTab === 'inactive') return matchesSearch && !item.is_active;
-    
+    return matchesSearch;
+  });
+  
+  const filteredDeductions = deductionTypes.filter(item => {
+    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         item.code.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesSearch;
   });
 
   // Event handlers
-  const handleCreateItem = (formData: CreatePayrollItemForm) => {
-    const newItem: PayrollItemType = {
-      id: Math.max(...payrollItems.map(i => i.id)) + 1,
-      ...formData,
-      is_active: true,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-    
-    setPayrollItems([...payrollItems, newItem]);
-    toast.success('Payroll item created successfully');
+  const handleCreateItem = async (formData: CreatePayrollItemForm) => {
+    try {
+      setLoading(true);
+      const response = await payrollItemsService.createPayrollItem(formData);
+      
+      if (response.success) {
+        await loadPayrollItems(); // Reload the list
+        toast.success('Payroll item created successfully');
+      } else {
+        toast.error(response.message || 'Failed to create payroll item');
+      }
+    } catch (error) {
+      console.error('Error creating payroll item:', error);
+      toast.error('Failed to create payroll item');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleEditItem = (item: PayrollItemType) => {
@@ -345,43 +276,130 @@ export const PayrollItemsPage: React.FC = () => {
     setShowDialog(true);
   };
 
-  const handleUpdateItem = (formData: CreatePayrollItemForm) => {
+  const handleUpdateItem = async (formData: CreatePayrollItemForm) => {
     if (!editingItem) return;
     
-    const updatedItems = payrollItems.map(item => 
-      item.id === editingItem.id 
-        ? { ...item, ...formData, updated_at: new Date().toISOString() }
-        : item
-    );
+    try {
+      setLoading(true);
+      const response = await payrollItemsService.updatePayrollItem(editingItem.id, formData);
+      
+      if (response.success) {
+        await loadPayrollItems(); // Reload the list
+        setEditingItem(null);
+        toast.success('Payroll item updated successfully');
+      } else {
+        toast.error(response.message || 'Failed to update payroll item');
+      }
+    } catch (error) {
+      console.error('Error updating payroll item:', error);
+      toast.error('Failed to update payroll item');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleToggleActive = async (item: PayrollItemType) => {
+    try {
+      setLoading(true);
+      const response = await payrollItemsService.togglePayrollItemStatus(item.id);
+      
+      if (response.success) {
+        await loadPayrollItems(); // Reload the list
+        toast.success(`Payroll item ${item.is_active ? 'deactivated' : 'activated'}`);
+      } else {
+        toast.error(response.message || 'Failed to toggle status');
+      }
+    } catch (error) {
+      console.error('Error toggling status:', error);
+      toast.error('Failed to toggle status');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteItem = async (item: PayrollItemType) => {
+    if (!confirm(`Are you sure you want to delete "${item.name}"?`)) {
+      return;
+    }
     
-    setPayrollItems(updatedItems);
-    setEditingItem(null);
-    toast.success('Payroll item updated successfully');
+    try {
+      setLoading(true);
+      const response = await payrollItemsService.deletePayrollItem(item.id);
+      
+      if (response.success) {
+        await loadPayrollItems(); // Reload the list
+        toast.success('Payroll item deleted successfully');
+      } else {
+        toast.error(response.message || 'Failed to delete payroll item');
+      }
+    } catch (error) {
+      console.error('Error deleting payroll item:', error);
+      toast.error('Failed to delete payroll item');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleToggleActive = (item: PayrollItemType) => {
-    const updatedItems = payrollItems.map(i => 
-      i.id === item.id ? { ...i, is_active: !i.is_active } : i
-    );
-    setPayrollItems(updatedItems);
-    toast.success(`Payroll item ${item.is_active ? 'deactivated' : 'activated'}`);
+  // Event handlers for deductions - removed unused functions
+
+  const handleToggleDeductionActive = async (deduction: PayrollDeductionType) => {
+    try {
+      setLoading(true);
+      const response = await payrollDeductionTypesService.togglePayrollDeductionStatus(deduction.id);
+      
+      if (response.success) {
+        await loadPayrollItems();
+        toast.success(`Deduction type ${deduction.is_active ? 'deactivated' : 'activated'}`);
+      } else {
+        toast.error(response.message || 'Failed to toggle status');
+      }
+    } catch (error) {
+      console.error('Error toggling deduction status:', error);
+      toast.error('Failed to toggle status');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDeleteItem = (item: PayrollItemType) => {
-    if (confirm(`Are you sure you want to delete "${item.name}"?`)) {
-      setPayrollItems(payrollItems.filter(i => i.id !== item.id));
-      toast.success('Payroll item deleted successfully');
+  const handleDeleteDeduction = async (deduction: PayrollDeductionType) => {
+    if (deduction.is_government) {
+      toast.error('Cannot delete government deduction types');
+      return;
+    }
+    
+    if (!confirm(`Are you sure you want to delete "${deduction.name}"?`)) {
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      const response = await payrollDeductionTypesService.deletePayrollDeduction(deduction.id);
+      
+      if (response.success) {
+        await loadPayrollItems();
+        toast.success('Deduction type deleted successfully');
+      } else {
+        toast.error(response.message || 'Failed to delete deduction type');
+      }
+    } catch (error) {
+      console.error('Error deleting deduction type:', error);
+      toast.error('Failed to delete deduction type');
+    } finally {
+      setLoading(false);
     }
   };
 
   // Get counts for tabs
   const counts = {
-    all: payrollItems.length,
-    allowances: payrollItems.filter(i => i.category === 'allowance').length,
-    deductions: payrollItems.filter(i => i.category === 'deduction').length,
-    active: payrollItems.filter(i => i.is_active).length,
-    inactive: payrollItems.filter(i => !i.is_active).length
+    allowances: payrollItems.length,
+    deductions: deductionTypes.length,
+    active_allowances: payrollItems.filter(i => i.is_active).length,
+    active_deductions: deductionTypes.filter(i => i.is_active).length
   };
+
+  // Get current filtered data based on active tab
+  const currentFilteredItems = activeTab === 'allowances' ? filteredAllowances : filteredDeductions;
+  // Component content
 
   // Access control
   if (!isAdmin) {
@@ -442,8 +460,8 @@ export const PayrollItemsPage: React.FC = () => {
                 />
               </div>
             </div>
-            <Button variant="outline" onClick={() => setLoading(!loading)}>
-              <RefreshCw className="mr-2 h-4 w-4" />
+            <Button variant="outline" onClick={loadPayrollItems} disabled={loading}>
+              <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
           </div>
@@ -452,8 +470,7 @@ export const PayrollItemsPage: React.FC = () => {
 
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="all">All ({counts.all})</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="allowances" className="flex items-center gap-1">
             <Gift className="h-4 w-4" />
             Allowances ({counts.allowances})
@@ -462,25 +479,26 @@ export const PayrollItemsPage: React.FC = () => {
             <Minus className="h-4 w-4" />
             Deductions ({counts.deductions})
           </TabsTrigger>
-          <TabsTrigger value="active">Active ({counts.active})</TabsTrigger>
-          <TabsTrigger value="inactive">Inactive ({counts.inactive})</TabsTrigger>
         </TabsList>
 
         <TabsContent value={activeTab} className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center text-lg">
-                <FileText className="mr-2 h-5 w-5" />
-                Payroll Items
+                {activeTab === 'allowances' ? (
+                  <><Gift className="mr-2 h-5 w-5" />Payroll Allowances</>
+                ) : (
+                  <><Minus className="mr-2 h-5 w-5" />Payroll Deductions</>
+                )}
                 <Badge variant="outline" className="ml-2">
-                  {filteredItems.length} items
+                  {currentFilteredItems.length} items
                 </Badge>
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {filteredItems.length === 0 ? (
+              {currentFilteredItems.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  No payroll items found.
+                  No {activeTab} found.
                 </div>
               ) : (
                 <div className="overflow-x-auto">
@@ -489,15 +507,17 @@ export const PayrollItemsPage: React.FC = () => {
                       <TableRow>
                         <TableHead>Code</TableHead>
                         <TableHead>Name</TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead className="hidden md:table-cell">Properties</TableHead>
-                        <TableHead className="hidden sm:table-cell">Default Amount</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead className="hidden md:table-cell">
+                          {activeTab === 'allowances' ? 'Properties' : 'Rate/Amount'}
+                        </TableHead>
+                        <TableHead className="hidden sm:table-cell">Amount</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredItems.map((item) => (
+                      {currentFilteredItems.map((item: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
                         <TableRow key={item.id}>
                           <TableCell className="font-mono text-sm">
                             {item.code}
@@ -511,41 +531,47 @@ export const PayrollItemsPage: React.FC = () => {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Badge 
-                              className={
-                                item.category === 'allowance' 
-                                  ? "bg-green-100 text-green-800" 
-                                  : "bg-red-100 text-red-800"
-                              }
-                            >
-                              {item.category === 'allowance' ? (
-                                <>
-                                  <Gift className="mr-1 h-3 w-3" />
-                                  Allowance
-                                </>
-                              ) : (
-                                <>
-                                  <Minus className="mr-1 h-3 w-3" />
-                                  Deduction
-                                </>
-                              )}
-                            </Badge>
+                            {activeTab === 'allowances' ? (
+                              <Badge className="bg-green-100 text-green-800">
+                                <Gift className="mr-1 h-3 w-3" />
+                                Allowance
+                              </Badge>
+                            ) : (
+                              <Badge className={item.is_government ? "bg-blue-100 text-blue-800" : "bg-orange-100 text-orange-800"}>
+                                <Minus className="mr-1 h-3 w-3" />
+                                {item.is_government ? 'Government' : 'Custom'}
+                              </Badge>
+                            )}
                           </TableCell>
                           <TableCell className="hidden md:table-cell">
-                            <div className="flex flex-wrap gap-1">
-                              {item.is_monthly && (
-                                <Badge variant="outline" className="text-xs">Monthly</Badge>
-                              )}
-                              {item.is_prorated && (
-                                <Badge variant="outline" className="text-xs">Prorated</Badge>
-                              )}
-                              {item.is_taxable && (
-                                <Badge variant="outline" className="text-xs">Taxable</Badge>
-                              )}
-                            </div>
+                            {activeTab === 'allowances' ? (
+                              <div className="flex flex-wrap gap-1">
+                                {item.is_monthly && (
+                                  <Badge variant="outline" className="text-xs">Monthly</Badge>
+                                )}
+                                {item.is_prorated && (
+                                  <Badge variant="outline" className="text-xs">Prorated</Badge>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="flex flex-wrap gap-1">
+                                <Badge variant="outline" className="text-xs">
+                                  {item.deduction_type === 'percentage' ? `${item.percentage}%` : 'Fixed'}
+                                </Badge>
+                                {item.is_mandatory && (
+                                  <Badge variant="outline" className="text-xs">Mandatory</Badge>
+                                )}
+                              </div>
+                            )}
                           </TableCell>
                           <TableCell className="hidden sm:table-cell">
-                            {item.default_amount ? `₱${item.default_amount.toLocaleString()}` : '-'}
+                            {activeTab === 'allowances' ? (
+                              `₱${item.amount?.toLocaleString()}`
+                            ) : (
+                              item.deduction_type === 'percentage' 
+                                ? `${item.percentage}%${item.max_amount ? ` (max ₱${item.max_amount.toLocaleString()})` : ''}` 
+                                : `₱${item.amount?.toLocaleString()}`
+                            )}
                           </TableCell>
                           <TableCell>
                             <Badge 
@@ -567,11 +593,11 @@ export const PayrollItemsPage: React.FC = () => {
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
                                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                <DropdownMenuItem onClick={() => handleEditItem(item)}>
+                                <DropdownMenuItem onClick={() => activeTab === 'allowances' ? handleEditItem(item) : undefined}>
                                   <Edit className="mr-2 h-4 w-4" />
                                   Edit
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleToggleActive(item)}>
+                                <DropdownMenuItem onClick={() => activeTab === 'allowances' ? handleToggleActive(item) : handleToggleDeductionActive(item)}>
                                   {item.is_active ? (
                                     <>
                                       <Minus className="mr-2 h-4 w-4" />
@@ -586,8 +612,9 @@ export const PayrollItemsPage: React.FC = () => {
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem 
-                                  onClick={() => handleDeleteItem(item)}
+                                  onClick={() => activeTab === 'allowances' ? handleDeleteItem(item) : handleDeleteDeduction(item)}
                                   className="text-red-600"
+                                  disabled={activeTab === 'deductions' && item.is_government}
                                 >
                                   <Trash2 className="mr-2 h-4 w-4" />
                                   Delete
