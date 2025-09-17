@@ -2,26 +2,22 @@ import React, { useState, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+
+
 import { Calendar } from '@/components/ui/calendar';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+
 import { 
   RefreshCw, AlertCircle, Eye, MoreHorizontal, ChevronDownIcon,
-  Cog, User, DollarSign, Calculator, FileText, Settings, Plus, ChevronDown
+  Cog, User, DollarSign, FileText, Settings, Plus, ChevronDown,
+  CheckCircle, XCircle
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -32,156 +28,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
-import { employeeService } from '@/services/employeeService';
 import { payrollSystemService } from '@/services/payrollSystemService';
-import type { Employee } from '@/types/employee';
 import type { PayrollPeriod, CreatePayrollPeriodForm } from '@/types/payrollSystem';
 import { formatDateRange } from 'little-date';
 import { type DateRange } from 'react-day-picker';
 
-// Types
-interface EmployeePayrollDialogProps {
-  employee: Employee | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}
 
-function EmployeePayrollDialog({ employee, open, onOpenChange }: EmployeePayrollDialogProps) {
-  if (!employee) return null;
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[95vw] max-w-4xl max-h-[95vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-lg sm:text-xl">Employee Payroll Details</DialogTitle>
-          <DialogDescription>
-            Payroll information for {employee.first_name} {employee.last_name} ({employee.employee_number})
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          {/* Employee Basic Info */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-muted/50 rounded-lg">
-            <div>
-              <label className="text-sm font-medium">Employee Name</label>
-              <p className="text-sm text-muted-foreground">
-                {employee.first_name} {employee.last_name}
-              </p>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Employee Number</label>
-              <p className="text-sm text-muted-foreground">{employee.employee_number}</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Monthly Salary</label>
-              <p className="text-sm text-muted-foreground">
-                {employee.current_monthly_salary ? `₱${employee.current_monthly_salary.toLocaleString()}` : 'N/A'}
-              </p>
-            </div>
-          </div>
-
-          {/* Payroll History Table */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Payroll History</h3>
-            <div className="border rounded-lg">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Period</TableHead>
-                    <TableHead className="hidden sm:table-cell">Gross Pay</TableHead>
-                    <TableHead className="hidden sm:table-cell">Deductions</TableHead>
-                    <TableHead>Net Pay</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {/* Placeholder data - will be populated from API */}
-                  <TableRow>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">2024-01 Period 1</div>
-                        <div className="text-sm text-muted-foreground sm:hidden">
-                          Gross: ₱45,000 | Deductions: ₱8,500
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell">₱45,000.00</TableCell>
-                    <TableCell className="hidden sm:table-cell">₱8,500.00</TableCell>
-                    <TableCell className="font-semibold text-green-600">₱36,500.00</TableCell>
-                    <TableCell>
-                      <Badge className="bg-green-100 text-green-800">Paid</Badge>
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">2024-01 Period 2</div>
-                        <div className="text-sm text-muted-foreground sm:hidden">
-                          Gross: ₱45,000 | Deductions: ₱8,500
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell">₱45,000.00</TableCell>
-                    <TableCell className="hidden sm:table-cell">₱8,500.00</TableCell>
-                    <TableCell className="font-semibold text-green-600">₱36,500.00</TableCell>
-                    <TableCell>
-                      <Badge className="bg-blue-100 text-blue-800">Processing</Badge>
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </div>
-          </div>
-
-          {/* Manual Adjustments Section */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Manual Adjustments</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium">Additional Allowances</label>
-                  <div className="mt-2 space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Overtime Pay:</span>
-                      <span>₱2,500.00</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Special Allowance:</span>
-                      <span>₱1,000.00</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium">Additional Deductions</label>
-                  <div className="mt-2 space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Late Deductions:</span>
-                      <span>₱500.00</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Loan Payment:</span>
-                      <span>₱2,000.00</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <DialogFooter className="flex-col sm:flex-row gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
-            Close
-          </Button>
-          <Button className="w-full sm:w-auto">
-            <FileText className="mr-2 h-4 w-4" />
-            Generate Payslip
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
 
 interface CreatePayrollPeriodCollapsibleProps {
   onCreatePeriod: (periodData: {
@@ -211,6 +63,35 @@ function CreatePayrollPeriodCollapsible({ onCreatePeriod }: CreatePayrollPeriodC
   );
 
   const handleSubmit = () => {
+    // Validate before submitting
+    if (!dateRange?.from || !dateRange?.to || !payDate) {
+      toast.error('Please select all required fields');
+      return;
+    }
+    
+    // Validate date range is in same month
+    const fromMonth = dateRange.from.getMonth();
+    const toMonth = dateRange.to.getMonth();
+    const fromYear = dateRange.from.getFullYear();
+    const toYear = dateRange.to.getFullYear();
+    
+    if (fromYear !== toYear || fromMonth !== toMonth) {
+      toast.error('Start and end dates must be in the same month for payroll period validation');
+      return;
+    }
+    
+    // Validate end date is after start date
+    if (dateRange.to <= dateRange.from) {
+      toast.error('End date must be after start date');
+      return;
+    }
+    
+    // Validate pay date is after end date
+    if (payDate <= dateRange.to) {
+      toast.error('Pay date must be after the end date');
+      return;
+    }
+    
     onCreatePeriod({
       dateRange,
       period_number: parseInt(periodNumber) as 1 | 2,
@@ -260,28 +141,7 @@ function CreatePayrollPeriodCollapsible({ onCreatePeriod }: CreatePayrollPeriodC
                   <Calendar
                     mode="range"
                     selected={dateRange}
-                    onSelect={(range) => {
-                      // Validate that both dates are in the same month
-                      if (range?.from && range?.to) {
-                        const fromMonth = range.from.getMonth();
-                        const toMonth = range.to.getMonth();
-                        const fromYear = range.from.getFullYear();
-                        const toYear = range.to.getFullYear();
-                        
-                        if (fromYear !== toYear || fromMonth !== toMonth) {
-                          toast.error('Start and end dates must be in the same month for payroll period validation');
-                          return;
-                        }
-                        
-                        // Ensure end date is after start date
-                        if (range.to <= range.from) {
-                          toast.error('End date must be after start date');
-                          return;
-                        }
-                      }
-                      
-                      setDateRange(range);
-                    }}
+                    onSelect={setDateRange}
                   />
                 </PopoverContent>
               </Popover>
@@ -302,14 +162,7 @@ function CreatePayrollPeriodCollapsible({ onCreatePeriod }: CreatePayrollPeriodC
                   <Calendar
                     mode="single"
                     selected={payDate}
-                    onSelect={(date) => {
-                      // Validate that pay date is after end date
-                      if (date && dateRange?.to && date <= dateRange.to) {
-                        toast.error('Pay date must be after the end date of the payroll period');
-                        return;
-                      }
-                      setPayDate(date);
-                    }}
+                    onSelect={setPayDate}
                   />
                 </PopoverContent>
               </Popover>
@@ -372,14 +225,9 @@ export const PayrollSystemPage: React.FC = () => {
   const isEmployee = user?.role === 'employee';
 
   // State
-  const [activeTab, setActiveTab] = useState('automated');
   const [payrollPeriods, setPayrollPeriods] = useState<PayrollPeriod[]>([]);
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [selectedPayrollEmployee, setSelectedPayrollEmployee] = useState<number | null>(null);
-  const [selectedEmployeeForDialog, setSelectedEmployeeForDialog] = useState<Employee | null>(null);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [showEmployeePayrollDialog, setShowEmployeePayrollDialog] = useState(false);
 
 
   // Utility functions
@@ -387,10 +235,6 @@ export const PayrollSystemPage: React.FC = () => {
     `${period.year}-${String(period.month).padStart(2, '0')} Period ${period.period_number}`;
 
   // Event handlers
-  const handleViewEmployeePayroll = (employee: Employee) => {
-    setSelectedEmployeeForDialog(employee);
-    setShowEmployeePayrollDialog(true);
-  };
 
   const handleCreatePayrollPeriod = async (periodData: {
     dateRange: DateRange | undefined;
@@ -410,20 +254,34 @@ export const PayrollSystemPage: React.FC = () => {
       const year = startDate.getFullYear();
       const month = startDate.getMonth() + 1;
 
+      // Helper function to format date without timezone issues
+      const formatDateForAPI = (date: Date): string => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
       const createForm: CreatePayrollPeriodForm = {
         year,
         month,
         period_number: periodData.period_number,
-        start_date: periodData.dateRange.from.toISOString().split('T')[0],
-        end_date: periodData.dateRange.to.toISOString().split('T')[0],
-        pay_date: periodData.pay_date.toISOString().split('T')[0]
+        start_date: formatDateForAPI(periodData.dateRange.from),
+        end_date: formatDateForAPI(periodData.dateRange.to),
+        pay_date: formatDateForAPI(periodData.pay_date)
       };
 
       console.log('Creating payroll period with extracted data:', {
         ...createForm,
-        dateRange: {
-          from: periodData.dateRange.from.toISOString(),
-          to: periodData.dateRange.to.toISOString()
+        originalDates: {
+          from: periodData.dateRange.from.toString(),
+          to: periodData.dateRange.to.toString(),
+          payDate: periodData.pay_date.toString()
+        },
+        formattedDates: {
+          start_date: createForm.start_date,
+          end_date: createForm.end_date,
+          pay_date: createForm.pay_date
         },
         extracted: { year, month },
         validation: {
@@ -495,16 +353,6 @@ export const PayrollSystemPage: React.FC = () => {
     }
   }, [isAdmin, user]);
 
-  const loadEmployees = useCallback(async () => {
-    try {
-      const response = await employeeService.getEmployees({});
-      setEmployees(response.employees || []);
-    } catch (error) {
-      console.error('Failed to load employees:', error);
-      toast.error('Failed to load employees');
-    }
-  }, []);
-
   const handleGenerateAutomatedPayroll = async (periodId: number) => {
     try {
       setActionLoading(`generate-${periodId}`);
@@ -527,8 +375,7 @@ export const PayrollSystemPage: React.FC = () => {
   // Auto-load data when component mounts
   React.useEffect(() => {
     loadPayrollPeriods();
-    loadEmployees();
-  }, [loadPayrollPeriods, loadEmployees]);
+  }, [loadPayrollPeriods]);
 
   // Access control
   if (!isAdmin && !isEmployee) {
@@ -557,8 +404,8 @@ export const PayrollSystemPage: React.FC = () => {
             </h1>
             <p className="text-muted-foreground text-sm sm:text-base">
               {isAdmin 
-                ? "Manage automated and manual payroll processing for employees" 
-                : "View your payroll information and history"}
+                ? "Manage automated payroll processing for all employees with system-wide period management" 
+                : "View your automated payroll information and history"}
             </p>
           </div>
           
@@ -572,283 +419,186 @@ export const PayrollSystemPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Content */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TooltipProvider>
-          <TabsList className="grid w-full grid-cols-2">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <TabsTrigger value="automated" className="flex items-center justify-center space-x-2 transition-all duration-200 hover:scale-105">
-                  <Cog className="h-5 w-5 md:h-4 md:w-4" />
-                  <span className="hidden sm:inline">Automated Processing</span>
-                </TabsTrigger>
-              </TooltipTrigger>
-              <TooltipContent className="sm:hidden">
-                <p>Automated Payroll Processing</p>
-              </TooltipContent>
-            </Tooltip>
-            
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <TabsTrigger value="manual" className="flex items-center justify-center space-x-2 transition-all duration-200 hover:scale-105">
-                  <Calculator className="h-5 w-5 md:h-4 md:w-4" />
-                  <span className="hidden sm:inline">Manual Processing</span>
-                </TabsTrigger>
-              </TooltipTrigger>
-              <TooltipContent className="sm:hidden">
-                <p>Manual Payroll Processing</p>
-              </TooltipContent>
-            </Tooltip>
-          </TabsList>
-        </TooltipProvider>
+      {/* Main Content - Automated Processing Only */}
+      <div className="space-y-4">
+        {isAdmin ? (
+          <div className="space-y-4">
+            {/* Create New Period */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center text-lg">
+                  <Cog className="mr-2 h-5 w-5" />
+                  Automated Payroll Processing
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <CreatePayrollPeriodCollapsible onCreatePeriod={handleCreatePayrollPeriod} />
+              </CardContent>
+            </Card>
 
-        {/* Automated Processing Tab */}
-        <TabsContent value="automated" className="space-y-4">
-          {isAdmin ? (
-            <div className="space-y-4">
-              {/* Create New Period */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center text-lg">
-                    <Cog className="mr-2 h-5 w-5" />
-                    Automated Payroll Processing
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <CreatePayrollPeriodCollapsible onCreatePeriod={handleCreatePayrollPeriod} />
-                </CardContent>
-              </Card>
-
-              {/* Payroll Periods Table */}
-              <Card>
-                <CardHeader>
-                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-                    <CardTitle className="text-lg">Payroll Periods</CardTitle>
-                    <Button onClick={loadPayrollPeriods} variant="outline" size="sm">
-                      <RefreshCw className="mr-2 h-4 w-4" />
-                      Refresh
-                    </Button>
+            {/* Payroll Periods Table */}
+            <Card>
+              <CardHeader>
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+                  <CardTitle className="text-lg">Payroll Periods</CardTitle>
+                  <Button onClick={loadPayrollPeriods} variant="outline" size="sm">
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Refresh
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="flex justify-center items-center py-8">
+                    <RefreshCw className="h-6 w-6 animate-spin" />
+                    <span className="ml-2">Loading payroll periods...</span>
                   </div>
-                </CardHeader>
-                <CardContent>
-                  {loading ? (
-                    <div className="flex justify-center items-center py-8">
-                      <RefreshCw className="h-6 w-6 animate-spin" />
-                      <span className="ml-2">Loading payroll periods...</span>
-                    </div>
-                  ) : payrollPeriods.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      No payroll periods found. Create a new period to get started.
-                    </div>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Period</TableHead>
-                            <TableHead className="hidden sm:table-cell">Date Range</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {payrollPeriods.map((period) => (
-                            <TableRow key={period.id}>
-                              <TableCell className="font-medium">
-                                <div>
-                                  <div>{formatPeriodName(period)}</div>
-                                  <div className="text-sm text-muted-foreground sm:hidden">
-                                    {new Date(period.start_date).toLocaleDateString()} - {new Date(period.end_date).toLocaleDateString()}
-                                  </div>
+                ) : payrollPeriods.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No payroll periods found. Create a new period to get started.
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Period</TableHead>
+                          <TableHead className="hidden sm:table-cell">Date Range</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead className="hidden md:table-cell text-right">Total Net Pay</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {payrollPeriods.map((period) => (
+                          <TableRow key={period.id}>
+                            <TableCell className="font-medium">
+                              <div>
+                                <div>{formatPeriodName(period)}</div>
+                                <div className="text-sm text-muted-foreground sm:hidden">
+                                  {new Date(period.start_date).toLocaleDateString()} - {new Date(period.end_date).toLocaleDateString()}
                                 </div>
-                              </TableCell>
-                              <TableCell className="hidden sm:table-cell">
-                                {new Date(period.start_date).toLocaleDateString()} - {new Date(period.end_date).toLocaleDateString()}
-                              </TableCell>
-                              <TableCell>
-                                <Badge className={getStatusColor(period.status)}>
-                                  {period.status}
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <div className="flex justify-end gap-1">
+                                <div className="text-sm text-muted-foreground md:hidden">
+                                  Net: ₱{(period.total_net_pay || 0).toLocaleString()}
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell className="hidden sm:table-cell">
+                              {new Date(period.start_date).toLocaleDateString()} - {new Date(period.end_date).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={getStatusColor(period.status)}>
+                                {period.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="hidden md:table-cell text-right">
+                              <div className="font-medium">
+                                ₱{(period.total_net_pay || 0).toLocaleString()}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {period.employee_count || 0} employees
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="sm">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                  
+                                  {/* Process Period - only for Draft status */}
                                   {period.status === 'Draft' && (
-                                    <Button
-                                      variant="default"
-                                      size="sm"
-                                      onClick={() => {
-                                        handleGenerateAutomatedPayroll(period.id);
-                                      }}
-                                      disabled={actionLoading === `generate-${period.id}`}
-                                      className="bg-green-600 hover:bg-green-700"
-                                    >
-                                      {actionLoading === `generate-${period.id}` ? (
-                                        <RefreshCw className="h-4 w-4 animate-spin" />
-                                      ) : (
-                                        <>
-                                          <Cog className="mr-1 h-4 w-4" />
-                                          <span className="hidden sm:inline">Process Period</span>
-                                        </>
-                                      )}
-                                    </Button>
+                                    <>
+                                      <DropdownMenuItem
+                                        onClick={() => handleGenerateAutomatedPayroll(period.id)}
+                                        disabled={actionLoading === `generate-${period.id}`}
+                                      >
+                                        {actionLoading === `generate-${period.id}` ? (
+                                          <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                                        ) : (
+                                          <Cog className="mr-2 h-4 w-4" />
+                                        )}
+                                        Process Period
+                                      </DropdownMenuItem>
+                                      <DropdownMenuSeparator />
+                                    </>
                                   )}
                                   
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                      <Button variant="ghost" size="sm">
-                                        <MoreHorizontal className="h-4 w-4" />
-                                      </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                      <DropdownMenuItem>
-                                        <Eye className="mr-2 h-4 w-4" />
-                                        View Details
+                                  {/* View Details */}
+                                  <DropdownMenuItem>
+                                    <Eye className="mr-2 h-4 w-4" />
+                                    View Details
+                                  </DropdownMenuItem>
+                                  
+                                  {/* Reports - only for non-Draft status */}
+                                  {period.status !== 'Draft' && (
+                                    <DropdownMenuItem>
+                                      <FileText className="mr-2 h-4 w-4" />
+                                      View Report
+                                    </DropdownMenuItem>
+                                  )}
+                                  
+                                  <DropdownMenuSeparator />
+                                  
+                                  {/* Status Change Actions */}
+                                  {period.status === 'Processing' && (
+                                    <>
+                                      <DropdownMenuItem className="text-green-600">
+                                        <CheckCircle className="mr-2 h-4 w-4" />
+                                        Mark as Completed
                                       </DropdownMenuItem>
-                                      {period.status !== 'Draft' && (
-                                        <DropdownMenuItem>
-                                          <FileText className="mr-2 h-4 w-4" />
-                                          View Report
-                                        </DropdownMenuItem>
-                                      )}
+                                      <DropdownMenuItem className="text-red-600">
+                                        <XCircle className="mr-2 h-4 w-4" />
+                                        Cancel Period
+                                      </DropdownMenuItem>
+                                    </>
+                                  )}
+                                  
+                                  {/* Configure - for Draft and Processing */}
+                                  {(period.status === 'Draft' || period.status === 'Processing') && (
+                                    <>
                                       <DropdownMenuSeparator />
                                       <DropdownMenuItem>
                                         <Settings className="mr-2 h-4 w-4" />
                                         Configure
                                       </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          ) : (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center text-lg">
-                  <User className="mr-2 h-5 w-5" />
-                  My Payroll Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Alert>
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>Employee Payroll View</AlertTitle>
-                  <AlertDescription>
-                    Your automated payroll information and history will be displayed here. This feature is under development.
-                  </AlertDescription>
-                </Alert>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-
-        {/* Manual Processing Tab */}
-        <TabsContent value="manual" className="space-y-4">
-          {isAdmin ? (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center text-lg">
-                  <Calculator className="mr-2 h-5 w-5" />
-                  Employee Payroll Processing
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Alert>
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>Individual Employee Processing</AlertTitle>
-                  <AlertDescription>
-                    Select an employee to view their payroll details, make manual adjustments, and process individual payroll entries.
-                  </AlertDescription>
-                </Alert>
-                
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">Select Employee</label>
-                    <Select
-                      value={selectedPayrollEmployee?.toString() || ''}
-                      onValueChange={(value) => setSelectedPayrollEmployee(parseInt(value))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Choose employee to process" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {employees.map(employee => (
-                          <SelectItem key={employee.id} value={employee.id.toString()}>
-                            {employee.first_name} {employee.last_name} ({employee.employee_number})
-                          </SelectItem>
+                                    </>
+                                  )}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
                         ))}
-                      </SelectContent>
-                    </Select>
+                      </TableBody>
+                    </Table>
                   </div>
-                  
-                  {selectedPayrollEmployee && (
-                    <div className="flex gap-2">
-                      <Button 
-                        onClick={() => {
-                          const employee = employees.find(emp => emp.id === selectedPayrollEmployee);
-                          if (employee) handleViewEmployeePayroll(employee);
-                        }}
-                      >
-                        <Eye className="mr-2 h-4 w-4" />
-                        View Payroll Details
-                      </Button>
-                      <Button variant="outline">
-                        <Calculator className="mr-2 h-4 w-4" />
-                        Process Payroll
-                      </Button>
-                    </div>
-                  )}
-                </div>
+                )}
               </CardContent>
             </Card>
-          ) : (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center text-lg">
-                  <User className="mr-2 h-5 w-5" />
-                  My Payroll Records
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Alert>
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>Individual Payroll Records</AlertTitle>
-                  <AlertDescription>
-                    Your individual payroll records and manual adjustments will be displayed here.
-                  </AlertDescription>
-                </Alert>
-                
-                <div className="mt-4">
-                  <Button onClick={() => {
-                    if (user?.employee_id) {
-                      const employee = employees.find(emp => emp.id === user.employee_id);
-                      if (employee) handleViewEmployeePayroll(employee);
-                    }
-                  }}>
-                    <Eye className="mr-2 h-4 w-4" />
-                    View My Payroll Details
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-      </Tabs>
-
-      {/* Employee Payroll Dialog */}
-      <EmployeePayrollDialog 
-        employee={selectedEmployeeForDialog}
-        open={showEmployeePayrollDialog}
-        onOpenChange={setShowEmployeePayrollDialog}
-      />
+          </div>
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center text-lg">
+                <User className="mr-2 h-5 w-5" />
+                My Automated Payroll Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Employee Automated Payroll View</AlertTitle>
+                <AlertDescription>
+                  Your automated payroll information and history will be displayed here. This feature processes your regular salary, allowances, and deductions automatically.
+                </AlertDescription>
+              </Alert>
+            </CardContent>
+          </Card>
+        )}
+      </div>
 
 
     </div>

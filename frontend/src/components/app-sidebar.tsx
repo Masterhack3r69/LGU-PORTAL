@@ -123,12 +123,34 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     });
   }
 
-  // Payroll System - Show for all users
+  // Payroll System - Show for all users with dropdown
   navMain.push({
-    title: user?.role === 'admin' ? "Payroll System" : "My Payroll",
+    title: user?.role === 'admin' ? "Payroll Management" : "My Payroll",
     url: "/payroll-system",
     icon: Calculator,
-    items: [],
+    items: user?.role === 'admin' ? [
+      {
+        title: "Automated Processing",
+        url: "/payroll-system",
+      },
+      {
+        title: "Manual Processing",
+        url: "/manual-payroll",
+      },
+      {
+        title: "Payroll Items",
+        url: "/payroll-items",
+      },
+    ] : [
+      {
+        title: "Automated Payroll",
+        url: "/payroll-system",
+      },
+      {
+        title: "Manual Records",
+        url: "/manual-payroll",
+      },
+    ],
   });
 
   // Compensation & Benefits - Show for all users

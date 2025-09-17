@@ -44,12 +44,10 @@ const payrollPeriodValidationRules = [
         .custom((value, { req }) => {
             const startDate = new Date(value);
             const year = req.body.year;
-            const month = req.body.month;
-            if (year && month) {
+            if (year) {
                 const expectedYear = startDate.getFullYear();
-                const expectedMonth = startDate.getMonth() + 1;
-                if (expectedYear !== parseInt(year) || expectedMonth !== parseInt(month)) {
-                    throw new Error('Start date must match the specified year and month');
+                if (expectedYear !== parseInt(year)) {
+                    throw new Error('Start date must be in the specified year');
                 }
             }
             return true;
@@ -207,7 +205,12 @@ const createPayrollPeriod = asyncHandler(async (req, res) => {
         [year, month, period_number]
     );
 
-    if (duplicateCheck.success && duplicateCheck.data.length > 0) {
+    if (!duplicateCheck.success) {
+        payrollLogger.error('Duplicate check failed', duplicateCheck.error);
+        throw new Error('Failed to check for duplicate payroll period');
+    }
+
+    if (duplicateCheck.data.length > 0) {
         throw new ValidationError('Payroll period already exists');
     }
 
@@ -221,7 +224,7 @@ const createPayrollPeriod = asyncHandler(async (req, res) => {
     }
 
     const insertQuery = `
-        INSERT INTO payroll_periods 
+        INSERT INTO payroll_periods
         (year, month, period_number, start_date, end_date, pay_date, status, created_by)
         VALUES (?, ?, ?, ?, ?, ?, 'Draft', ?)
     `;
@@ -231,6 +234,7 @@ const createPayrollPeriod = asyncHandler(async (req, res) => {
     ]);
 
     if (!result.success) {
+        payrollLogger.error('Payroll period insert failed', result.error);
         throw new Error('Failed to create payroll period');
     }
 
