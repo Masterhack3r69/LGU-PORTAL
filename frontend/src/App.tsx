@@ -18,7 +18,6 @@ import { LeaveApplicationsPage } from '@/pages/leaves/LeaveApplicationsPage';
 import { LeaveBalancesPage } from '@/pages/leaves/LeaveBalancesPage';
 import { LeaveApprovalsPage } from '@/pages/leaves/LeaveApprovalsPage';
 import { LeaveTypesPage } from '@/pages/leaves/LeaveTypesPage';
-import { BenefitsPage } from '@/pages/BenefitsPage';
 import { TLBManagementPage } from '@/pages/TLBManagementPage';
 
 // Training Management Pages
@@ -204,22 +203,6 @@ function App() {
         </Route>
         
 
-        
-
-        
-
-        
-        {/* Benefits - accessible to all authenticated users */}
-        <Route 
-          path="benefits" 
-          element={
-            <ProtectedRoute allowedRoles={['admin', 'employee']}>
-              <BenefitsPage />
-            </ProtectedRoute>
-          } 
-        />
-        
-      
         {/* Terminal Leave Benefits - Admin only */}
         <Route 
           path="tlb" 
