@@ -2,16 +2,13 @@ import * as React from "react"
 import {
   Users,
   Calendar,
-  DollarSign,
   BarChart3,
   Settings,
   Building2,
-  Award,
   Shield,
   Home,
   Calculator,
-  GraduationCap,
-  Gift,
+  GraduationCap
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -113,53 +110,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     ],
   });
 
-  // Employee Payroll - Show for employees only
-  if (user?.role === 'employee') {
-    navMain.push({
-      title: "My Payroll",
-      url: "/my-payroll",
-      icon: DollarSign,
-      items: [],
-    });
-  }
+  // Employee Payroll removed - no payroll system
 
-  // Payroll System - Show for all users with dropdown
-  navMain.push({
-    title: user?.role === 'admin' ? "Payroll Management" : "My Payroll",
-    url: "/payroll-system",
-    icon: Calculator,
-    items: user?.role === 'admin' ? [
-      {
-        title: "Automated Processing",
-        url: "/payroll-system",
-      },
-      {
-        title: "Manual Processing",
-        url: "/manual-payroll",
-      },
-      {
-        title: "Payroll Items",
-        url: "/payroll-items",
-      },
-    ] : [
-      {
-        title: "Automated Payroll",
-        url: "/payroll-system",
-      },
-      {
-        title: "Manual Records",
-        url: "/manual-payroll",
-      },
-    ],
-  });
 
-  // Compensation & Benefits - Show for all users
-  navMain.push({
-    title: user?.role === 'admin' ? "Compensation & Benefits" : "My Benefits",
-    url: "/compensation-benefits",
-    icon: Gift,
-    items: [],
-  });
 
   // Terminal Leave Benefits - Admin only
   if (user?.role === 'admin') {
@@ -187,10 +140,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           url: "/reports/leaves",
         },
         {
-          title: "Payroll Reports",
-          url: "/reports/payroll",
-        },
-        {
           title: "Analytics Dashboard",
           url: "/reports/analytics",
         },
@@ -200,21 +149,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   // Add admin-only sections
   if (user?.role === 'admin') {
-    // Keep legacy Payroll Management for backward compatibility if needed
-    navMain.push({
-      title: "Legacy Payroll (Old)",
-      url: "/payroll",
-      icon: DollarSign,
-      items: [],
-    });
-
-    // Benefits Management (Legacy)
-    navMain.push({
-      title: "Legacy Benefits (Old)",
-      url: "/benefits",
-      icon: Award,
-      items: [],
-    });
+    // Payroll and Benefits removed - no payroll system
 
     // Keep System Administration
     navMain.push({

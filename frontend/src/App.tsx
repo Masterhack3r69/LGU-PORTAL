@@ -18,14 +18,7 @@ import { LeaveApplicationsPage } from '@/pages/leaves/LeaveApplicationsPage';
 import { LeaveBalancesPage } from '@/pages/leaves/LeaveBalancesPage';
 import { LeaveApprovalsPage } from '@/pages/leaves/LeaveApprovalsPage';
 import { LeaveTypesPage } from '@/pages/leaves/LeaveTypesPage';
-import { PayrollPage } from '@/pages/PayrollPage';
-import { PayrollSystemPage } from '@/pages/PayrollSystemPage';
-import ManualPayrollPage from '@/pages/ManualPayrollPage';
-import { PayrollItemsPage } from '@/pages/PayrollItemsPage';
-import { CompensationBenefitsPage } from '@/pages/CompensationBenefitsPage';
-import { EmployeePayrollPage } from '@/pages/EmployeePayrollPage';
 import { BenefitsPage } from '@/pages/BenefitsPage';
-import { CompensationPage } from '@/pages/CompensationPage';
 import { TLBManagementPage } from '@/pages/TLBManagementPage';
 
 // Training Management Pages
@@ -210,65 +203,11 @@ function App() {
           />
         </Route>
         
-        {/* Payroll System - All users */}
-        <Route 
-          path="payroll-system" 
-          element={
-            <ProtectedRoute allowedRoles={['admin', 'employee']}>
-              <PayrollSystemPage />
-            </ProtectedRoute>
-          } 
-        />
+
         
-        {/* Manual Payroll Processing - All users */}
-        <Route 
-          path="manual-payroll" 
-          element={
-            <ProtectedRoute allowedRoles={['admin', 'employee']}>
-              <ManualPayrollPage />
-            </ProtectedRoute>
-          } 
-        />
+
         
-        {/* Payroll Items Management - Admin only */}
-        <Route 
-          path="payroll-items" 
-          element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <PayrollItemsPage />
-            </ProtectedRoute>
-          } 
-        />
-        
-        {/* Compensation & Benefits - All users */}
-        <Route 
-          path="compensation-benefits" 
-          element={
-            <ProtectedRoute allowedRoles={['admin', 'employee']}>
-              <CompensationBenefitsPage />
-            </ProtectedRoute>
-          } 
-        />
-        
-        {/* Legacy Payroll Management - Admin only */}
-        <Route 
-          path="payroll" 
-          element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <PayrollPage />
-            </ProtectedRoute>
-          } 
-        />
-        
-        {/* Employee Payroll - Accessible to employees for their own payroll */}
-        <Route 
-          path="my-payroll" 
-          element={
-            <ProtectedRoute allowedRoles={['employee']}>
-              <EmployeePayrollPage />
-            </ProtectedRoute>
-          } 
-        />
+
         
         {/* Benefits - accessible to all authenticated users */}
         <Route 
@@ -280,16 +219,7 @@ function App() {
           } 
         />
         
-        {/* Compensation - Admin only */}
-        <Route 
-          path="compensation" 
-          element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <CompensationPage />
-            </ProtectedRoute>
-          } 
-        />
-        
+      
         {/* Terminal Leave Benefits - Admin only */}
         <Route 
           path="tlb" 

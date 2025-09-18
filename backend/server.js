@@ -23,8 +23,6 @@ const { auditLogger } = require('./middleware/auditLogger');
 const authRoutes = require('./routes/authRoutes');
 const employeeRoutes = require('./routes/employeeRoutes');
 const leaveRoutes = require('./routes/leaveRoutes');
-const payrollRoutes = require('./routes/payrollRoutes');
-const compensationRoutes = require('./routes/compensationRoutes');
 const benefitsRoutes = require('./routes/benefitsRoutes');
 const documentRoutes = require('./routes/documentRoutes');
 const reportsRoutes = require('./routes/reportsRoutes');
@@ -193,15 +191,7 @@ app.get('/health', async (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/employees', authMiddleware.requireAuth, auditLogger, employeeRoutes);
 app.use('/api/leaves', authMiddleware.requireAuth, auditLogger, leaveRoutes);
-
-// Legacy payroll and compensation routes (to be gradually phased out)
-app.use('/api/payroll', payrollRoutes);
-app.use('/api/compensation', compensationRoutes);
 app.use('/api/benefits', benefitsRoutes);
-
-// NEW RESTRUCTURED ROUTES - Separated Payroll and Compensation Systems
-app.use('/api/payroll-system', authMiddleware.requireAuth, auditLogger, require('./routes/payrollSystemRoutes'));
-app.use('/api/compensation-benefits', authMiddleware.requireAuth, auditLogger, require('./routes/compensationBenefitsRoutes'));
 
 app.use('/api/documents', authMiddleware.requireAuth, auditLogger, documentRoutes);
 app.use('/api/reports', authMiddleware.requireAuth, auditLogger, reportsRoutes);

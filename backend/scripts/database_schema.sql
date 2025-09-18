@@ -1,3 +1,23 @@
+-- MySQL dump 10.13  Distrib 8.0.40, for Win64 (x86_64)
+--
+-- Host: localhost    Database: employee_management_system
+-- ------------------------------------------------------
+-- Server version	8.0.40
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!50503 SET NAMES utf8mb4 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+--
+-- Table structure for table `audit_logs`
+--
 
 DROP TABLE IF EXISTS `audit_logs`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -19,78 +39,7 @@ CREATE TABLE `audit_logs` (
   KEY `idx_audit_table` (`table_name`),
   KEY `idx_audit_created` (`created_at`),
   CONSTRAINT `audit_logs_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=692 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `benefits_types`
---
-
-DROP TABLE IF EXISTS `benefits_types`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `benefits_types` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `code` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` text COLLATE utf8mb4_unicode_ci,
-  `calculation_method` enum('Fixed','Percentage','Formula') COLLATE utf8mb4_unicode_ci DEFAULT 'Fixed',
-  `is_taxable` tinyint(1) DEFAULT '1',
-  `is_active` tinyint(1) DEFAULT '1',
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `code` (`code`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `cb_benefit_types`
---
-
-DROP TABLE IF EXISTS `cb_benefit_types`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `cb_benefit_types` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `code` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` text COLLATE utf8mb4_unicode_ci,
-  `category` enum('BONUS','ALLOWANCE','AWARD','MONETIZATION','INSURANCE','CLAIM') COLLATE utf8mb4_unicode_ci NOT NULL,
-  `frequency` enum('YEARLY','CONDITIONAL','ONE_TIME') COLLATE utf8mb4_unicode_ci NOT NULL,
-  `calculation_method` enum('FIXED','PERCENTAGE','FORMULA') COLLATE utf8mb4_unicode_ci DEFAULT 'FIXED',
-  `base_amount` decimal(12,2) DEFAULT '0.00',
-  `percentage_rate` decimal(5,4) DEFAULT '0.0000',
-  `formula_code` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `is_taxable` tinyint(1) DEFAULT '1',
-  `is_active` tinyint(1) DEFAULT '1',
-  `eligibility_rules` json DEFAULT NULL,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `code` (`code`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `compensation_types`
---
-
-DROP TABLE IF EXISTS `compensation_types`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `compensation_types` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `code` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` text COLLATE utf8mb4_unicode_ci,
-  `is_taxable` tinyint(1) DEFAULT '1',
-  `calculation_method` enum('Fixed','Percentage','Formula') COLLATE utf8mb4_unicode_ci DEFAULT 'Fixed',
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `name` (`name`),
-  UNIQUE KEY `code` (`code`)
-) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=698 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -111,98 +60,6 @@ CREATE TABLE `document_types` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`)
 ) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `employee_benefit_selections`
---
-
-DROP TABLE IF EXISTS `employee_benefit_selections`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `employee_benefit_selections` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `employee_id` int NOT NULL,
-  `benefit_type_id` int NOT NULL,
-  `year` year NOT NULL,
-  `is_selected` tinyint(1) DEFAULT '0',
-  `calculated_amount` decimal(12,2) DEFAULT '0.00',
-  `actual_amount` decimal(12,2) DEFAULT '0.00',
-  `status` enum('PENDING','CALCULATED','APPROVED','PAID','CANCELLED') COLLATE utf8mb4_unicode_ci DEFAULT 'PENDING',
-  `selection_date` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `processed_by` int DEFAULT NULL,
-  `processed_date` timestamp NULL DEFAULT NULL,
-  `payment_date` date DEFAULT NULL,
-  `reference_number` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `notes` text COLLATE utf8mb4_unicode_ci,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `unique_employee_benefit_year` (`employee_id`,`benefit_type_id`,`year`),
-  KEY `benefit_type_id` (`benefit_type_id`),
-  KEY `processed_by` (`processed_by`),
-  KEY `idx_benefit_selections_employee` (`employee_id`,`year`),
-  KEY `idx_benefit_selections_status` (`status`),
-  KEY `idx_benefit_selections_year` (`year`),
-  CONSTRAINT `employee_benefit_selections_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `employee_benefit_selections_ibfk_2` FOREIGN KEY (`benefit_type_id`) REFERENCES `cb_benefit_types` (`id`),
-  CONSTRAINT `employee_benefit_selections_ibfk_3` FOREIGN KEY (`processed_by`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `employee_benefits`
---
-
-DROP TABLE IF EXISTS `employee_benefits`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `employee_benefits` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `employee_id` int NOT NULL,
-  `benefit_type_id` int NOT NULL,
-  `amount` decimal(15,2) NOT NULL,
-  `year` int NOT NULL,
-  `month` int DEFAULT NULL,
-  `date_calculated` date DEFAULT NULL,
-  `date_paid` date DEFAULT NULL,
-  `reference_number` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `notes` text COLLATE utf8mb4_unicode_ci,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  KEY `idx_employee_benefits_employee` (`employee_id`),
-  KEY `idx_employee_benefits_type` (`benefit_type_id`),
-  KEY `idx_employee_benefits_year_month` (`year`,`month`),
-  CONSTRAINT `employee_benefits_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `employee_benefits_ibfk_2` FOREIGN KEY (`benefit_type_id`) REFERENCES `benefits_types` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `employee_compensation`
---
-
-DROP TABLE IF EXISTS `employee_compensation`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `employee_compensation` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `employee_id` int NOT NULL,
-  `compensation_type_id` int NOT NULL,
-  `amount` decimal(12,2) NOT NULL,
-  `year` year NOT NULL,
-  `month` tinyint DEFAULT NULL,
-  `date_paid` date DEFAULT NULL,
-  `reference_number` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `notes` text COLLATE utf8mb4_unicode_ci,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  KEY `compensation_type_id` (`compensation_type_id`),
-  KEY `idx_employee_compensation` (`employee_id`,`year`),
-  CONSTRAINT `employee_compensation_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `employee_compensation_ibfk_2` FOREIGN KEY (`compensation_type_id`) REFERENCES `compensation_types` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -544,161 +401,6 @@ CREATE TABLE `monthly_accrual_log` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `payroll_allowance_items`
---
-
-DROP TABLE IF EXISTS `payroll_allowance_items`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `payroll_allowance_items` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `payroll_item_id` int NOT NULL,
-  `allowance_type_id` int NOT NULL,
-  `amount` decimal(12,2) NOT NULL,
-  `prorated_amount` decimal(12,2) NOT NULL,
-  `days_applicable` decimal(4,2) DEFAULT '22.00',
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  KEY `idx_payroll_allowances` (`payroll_item_id`),
-  KEY `idx_allowance_type_items` (`allowance_type_id`),
-  CONSTRAINT `payroll_allowance_items_ibfk_1` FOREIGN KEY (`payroll_item_id`) REFERENCES `payroll_items` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `payroll_allowance_items_ibfk_2` FOREIGN KEY (`allowance_type_id`) REFERENCES `payroll_allowance_types` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `payroll_allowance_types`
---
-
-DROP TABLE IF EXISTS `payroll_allowance_types`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `payroll_allowance_types` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `code` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` text COLLATE utf8mb4_unicode_ci,
-  `amount` decimal(10,2) DEFAULT '0.00',
-  `is_monthly` tinyint(1) DEFAULT '1',
-  `is_prorated` tinyint(1) DEFAULT '1',
-  `is_active` tinyint(1) DEFAULT '1',
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `code` (`code`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `payroll_deduction_items`
---
-
-DROP TABLE IF EXISTS `payroll_deduction_items`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `payroll_deduction_items` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `payroll_item_id` int NOT NULL,
-  `deduction_type_id` int NOT NULL,
-  `amount` decimal(12,2) NOT NULL,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  KEY `idx_payroll_deduction_items` (`payroll_item_id`),
-  KEY `idx_deduction_type_items` (`deduction_type_id`),
-  CONSTRAINT `payroll_deduction_items_ibfk_1` FOREIGN KEY (`payroll_item_id`) REFERENCES `payroll_items` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `payroll_deduction_items_ibfk_2` FOREIGN KEY (`deduction_type_id`) REFERENCES `payroll_deduction_types` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `payroll_deduction_types`
---
-
-DROP TABLE IF EXISTS `payroll_deduction_types`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `payroll_deduction_types` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `code` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `deduction_type` enum('fixed','percentage') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'fixed',
-  `amount` decimal(10,2) DEFAULT '0.00',
-  `percentage` decimal(5,4) DEFAULT '0.0000',
-  `max_amount` decimal(10,2) DEFAULT NULL,
-  `is_government` tinyint(1) DEFAULT '0',
-  `is_mandatory` tinyint(1) DEFAULT '0',
-  `is_active` tinyint(1) DEFAULT '1',
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `code` (`code`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `payroll_items`
---
-
-DROP TABLE IF EXISTS `payroll_items`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `payroll_items` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `employee_id` int NOT NULL,
-  `payroll_period_id` int NOT NULL,
-  `basic_salary` decimal(12,2) DEFAULT '0.00',
-  `days_worked` decimal(4,2) DEFAULT '0.00',
-  `pagibig_contribution` decimal(10,2) DEFAULT '0.00',
-  `gross_pay` decimal(12,2) DEFAULT '0.00',
-  `total_deductions` decimal(12,2) DEFAULT '0.00',
-  `deductions_breakdown` json DEFAULT NULL COMMENT 'Dynamic deductions breakdown',
-  `net_pay` decimal(12,2) DEFAULT '0.00',
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `leave_days_deducted` decimal(4,2) DEFAULT '0.00',
-  `working_days_in_month` decimal(4,2) DEFAULT '22.00',
-  `salary_adjustment` decimal(10,2) DEFAULT '0.00',
-  `total_allowances` decimal(12,2) DEFAULT '0.00',
-  `allowances_breakdown` json DEFAULT NULL COMMENT 'Dynamic allowances breakdown',
-  `is_manual` tinyint(1) DEFAULT '0' COMMENT 'Flag to indicate if payroll item was manually processed',
-  `notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Additional notes for manual processing',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `unique_employee_payroll` (`employee_id`,`payroll_period_id`),
-  KEY `idx_payroll_items` (`payroll_period_id`),
-  KEY `idx_employee_period` (`employee_id`,`payroll_period_id`),
-  KEY `idx_created_at` (`created_at`),
-  CONSTRAINT `payroll_items_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `payroll_items_ibfk_2` FOREIGN KEY (`payroll_period_id`) REFERENCES `payroll_periods` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `payroll_periods`
---
-
-DROP TABLE IF EXISTS `payroll_periods`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `payroll_periods` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `year` year NOT NULL,
-  `month` tinyint NOT NULL,
-  `period_number` tinyint NOT NULL,
-  `start_date` date NOT NULL,
-  `end_date` date NOT NULL,
-  `pay_date` date NOT NULL,
-  `status` enum('Draft','Processing','Completed','Cancelled') COLLATE utf8mb4_unicode_ci DEFAULT 'Draft',
-  `created_by` int NOT NULL,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `unique_payroll_period` (`year`,`month`,`period_number`),
-  KEY `created_by` (`created_by`),
-  KEY `idx_payroll_periods` (`year`,`month`),
-  CONSTRAINT `payroll_periods_ibfk_1` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
 -- Table structure for table `salary_grades`
 --
 
@@ -820,4 +522,10 @@ CREATE TABLE `users` (
   KEY `idx_email` (`email`),
   KEY `idx_role` (`role`)
 ) ENGINE=InnoDB AUTO_INCREMENT=36 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
+--
+-- Temporary view structure for view `v_compensation_migration_analysis`
+--
+
+DROP TABLE IF EXISTS `v_compensation_migration_analysis`;
