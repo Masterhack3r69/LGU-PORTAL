@@ -1237,6 +1237,8 @@ const calculateManualPayroll = asyncHandler(async (req, res) => {
         days_worked = 22,
         overtime_hours = 0,
         holiday_hours = 0,
+        additional_allowances = [],
+        additional_deductions = [],
         notes
     } = req.body;
 
@@ -1288,6 +1290,7 @@ const calculateManualPayroll = asyncHandler(async (req, res) => {
     let totalAllowances = 0;
     const allowanceBreakdown = [];
 
+    // Add configured allowances
     currentAllowances.forEach(allowance => {
         let allowanceAmount = parseFloat(allowance.amount || 0);
         if (allowance.is_prorated && days_worked < 22) {
@@ -1303,6 +1306,19 @@ const calculateManualPayroll = asyncHandler(async (req, res) => {
         });
     });
 
+    // Add additional allowances
+    additional_allowances.forEach(allowance => {
+        const allowanceAmount = parseFloat(allowance.amount || 0);
+        totalAllowances += allowanceAmount;
+        allowanceBreakdown.push({
+            code: 'ADDITIONAL',
+            name: allowance.name,
+            base_amount: allowanceAmount,
+            prorated_amount: allowanceAmount,
+            is_prorated: false
+        });
+    });
+
     // Calculate gross pay
     const grossPay = parseFloat(basicSalary + overtimePay + holidayPay + totalAllowances);
 
@@ -1310,8 +1326,45 @@ const calculateManualPayroll = asyncHandler(async (req, res) => {
     const deductionsData = await calculateAllDeductions(employee, grossPay);
     const totalDeductions = parseFloat(deductionsData.total);
 
+    // Add additional deductions
+    let totalDeductionsWithAdditional = totalDeductions;
+    const deductionBreakdown = [...deductionsData.breakdown];
+    
+    additional_deductions.forEach(deduction => {
+        const deductionAmount = parseFloat(deduction.amount || 0);
+        totalDeductionsWithAdditional += deductionAmount;
+        deductionBreakdown.push({
+            code: 'ADDITIONAL',
+            name: deduction.name,
+            base_amount: deductionAmount,
+            calculated_amount: deductionAmount,
+            is_percentage: false
+        });
+    });
+
     // Calculate net pay
-    const netPay = parseFloat(grossPay - totalDeductions);
+    const netPay = parseFloat(grossPay - totalDeductionsWithAdditional);
+
+    // Prepare breakdowns for storage
+    const allowancesBreakdownForStorage = {};
+    allowanceBreakdown.forEach(item => {
+        allowancesBreakdownForStorage[item.name] = {
+            code: item.code,
+            base_amount: item.base_amount,
+            prorated_amount: item.prorated_amount,
+            is_prorated: item.is_prorated
+        };
+    });
+
+    const deductionsBreakdownForStorage = {};
+    deductionBreakdown.forEach(item => {
+        deductionsBreakdownForStorage[item.name] = {
+            code: item.code,
+            base_amount: item.base_amount,
+            calculated_amount: item.calculated_amount,
+            is_percentage: item.is_percentage
+        };
+    });
 
     res.json({
         success: true,
@@ -1324,7 +1377,7 @@ const calculateManualPayroll = asyncHandler(async (req, res) => {
                 holiday_pay: parseFloat(holidayPay.toFixed(2)),
                 total_allowances: parseFloat(totalAllowances.toFixed(2)),
                 gross_pay: parseFloat(grossPay.toFixed(2)),
-                total_deductions: parseFloat(totalDeductions.toFixed(2)),
+                total_deductions: parseFloat(totalDeductionsWithAdditional.toFixed(2)),
                 net_pay: parseFloat(netPay.toFixed(2)),
                 days_worked: parseInt(days_worked),
                 overtime_hours: parseFloat(overtime_hours),
@@ -1332,8 +1385,10 @@ const calculateManualPayroll = asyncHandler(async (req, res) => {
             },
             breakdown: {
                 allowances: allowanceBreakdown,
-                deductions: deductionsData.breakdown
+                deductions: deductionBreakdown
             },
+            allowances_breakdown: JSON.stringify(allowancesBreakdownForStorage),
+            deductions_breakdown: JSON.stringify(deductionsBreakdownForStorage),
             notes: notes,
             auto_calculated: {
                 allowances_from_database: true,
@@ -1403,7 +1458,10 @@ const processManualPayroll = asyncHandler(async (req, res) => {
         other_deductions: parseFloat(calculation_data.additional_deductions_total || 0),
         gross_pay: parseFloat(calculation_data.gross_pay || 0),
         total_deductions: parseFloat(calculation_data.total_deductions || 0),
-        net_pay: parseFloat(calculation_data.net_pay || 0)
+        net_pay: parseFloat(calculation_data.net_pay || 0),
+        // New fields for dynamic allowances and deductions
+        allowances_breakdown: calculation_data.allowances_breakdown || JSON.stringify({}),
+        deductions_breakdown: calculation_data.deductions_breakdown || JSON.stringify({})
     };
 
     let result;
@@ -1415,7 +1473,8 @@ const processManualPayroll = asyncHandler(async (req, res) => {
                 basic_salary = ?, days_worked = ?, leave_days_deducted = ?,
                 working_days_in_month = ?, salary_adjustment = ?, total_allowances = ?,
                 gsis_contribution = ?, pagibig_contribution = ?, philhealth_contribution = ?,
-                tax_withheld = ?, other_deductions = ?, gross_pay = ?, total_deductions = ?, net_pay = ?
+                tax_withheld = ?, other_deductions = ?, gross_pay = ?, total_deductions = ?, net_pay = ?,
+                allowances_breakdown = ?, deductions_breakdown = ?
             WHERE id = ?
         `;
 
@@ -1424,7 +1483,9 @@ const processManualPayroll = asyncHandler(async (req, res) => {
             payrollItemData.working_days_in_month, payrollItemData.salary_adjustment, payrollItemData.total_allowances,
             payrollItemData.gsis_contribution, payrollItemData.pagibig_contribution, payrollItemData.philhealth_contribution,
             payrollItemData.tax_withheld, payrollItemData.other_deductions, payrollItemData.gross_pay,
-            payrollItemData.total_deductions, payrollItemData.net_pay, existingItemId
+            payrollItemData.total_deductions, payrollItemData.net_pay, 
+            payrollItemData.allowances_breakdown, payrollItemData.deductions_breakdown,
+            existingItemId
         ]);
     } else {
         // Create new payroll item
@@ -1433,8 +1494,8 @@ const processManualPayroll = asyncHandler(async (req, res) => {
                 employee_id, payroll_period_id, basic_salary, days_worked, leave_days_deducted,
                 working_days_in_month, salary_adjustment, total_allowances, gsis_contribution,
                 pagibig_contribution, philhealth_contribution, tax_withheld, other_deductions,
-                gross_pay, total_deductions, net_pay
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                gross_pay, total_deductions, net_pay, allowances_breakdown, deductions_breakdown
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
         result = await executeQuery(insertQuery, [
@@ -1442,7 +1503,8 @@ const processManualPayroll = asyncHandler(async (req, res) => {
             payrollItemData.days_worked, payrollItemData.leave_days_deducted, payrollItemData.working_days_in_month,
             payrollItemData.salary_adjustment, payrollItemData.total_allowances, payrollItemData.gsis_contribution,
             payrollItemData.pagibig_contribution, payrollItemData.philhealth_contribution, payrollItemData.tax_withheld,
-            payrollItemData.other_deductions, payrollItemData.gross_pay, payrollItemData.total_deductions, payrollItemData.net_pay
+            payrollItemData.other_deductions, payrollItemData.gross_pay, payrollItemData.total_deductions, payrollItemData.net_pay,
+            payrollItemData.allowances_breakdown, payrollItemData.deductions_breakdown
         ]);
     }
 

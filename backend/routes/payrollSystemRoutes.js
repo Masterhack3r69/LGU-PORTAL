@@ -4,6 +4,7 @@ const router = express.Router();
 const authMiddleware = require('../middleware/auth');
 const {
     generateAutomatedPayroll,
+    bulkProcessPayroll,
     getPayrollComputation,
     getEmployeeAllowances,
     updateEmployeeAllowances
@@ -43,6 +44,17 @@ router.get('/periods',
 router.post('/generate-automated', 
     authMiddleware.requireAdmin,
     generateAutomatedPayroll
+);
+
+/**
+ * @route   POST /api/payroll-system/bulk-process
+ * @desc    Process payroll for multiple employees with selected allowances/deductions
+ * @access  Admin only
+ * @body    { period_id: number, employee_ids: number[], selected_allowance_types: number[], selected_deduction_types: number[] }
+ */
+router.post('/bulk-process', 
+    authMiddleware.requireAdmin,
+    bulkProcessPayroll
 );
 
 /**

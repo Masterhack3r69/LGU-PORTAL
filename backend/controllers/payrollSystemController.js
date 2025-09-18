@@ -269,13 +269,12 @@ const generateAutomatedPayroll = asyncHandler(async (req, res) => {
                 const insertResult = await executeQuery(`
                     INSERT INTO payroll_items 
                     (employee_id, payroll_period_id, basic_salary, 
-                     total_allowances, gsis_contribution, pagibig_contribution, philhealth_contribution, 
-                     tax_withheld, other_deductions, gross_pay, total_deductions, net_pay)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     total_allowances, pagibig_contribution, 
+                     gross_pay, total_deductions, net_pay)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 `, [
                     employee.id, period_id, parseFloat(basicSalary.toFixed(2)),
-                    parseFloat(totalAllowances.toFixed(2)), parseFloat(gsis.toFixed(2)), parseFloat(pagibig.toFixed(2)), 
-                    parseFloat(philhealth.toFixed(2)), parseFloat(tax.toFixed(2)), parseFloat(otherDeductions.toFixed(2)), 
+                    parseFloat(totalAllowances.toFixed(2)), parseFloat(pagibig.toFixed(2)), 
                     parseFloat(grossPay.toFixed(2)), parseFloat(totalDeductions.toFixed(2)), parseFloat(netPay.toFixed(2))
                 ]);
 
@@ -350,6 +349,297 @@ const generateAutomatedPayroll = asyncHandler(async (req, res) => {
             error: {
                 message: `Automated payroll generation failed: ${error.message}`,
                 code: 'PAYROLL_GENERATION_ERROR',
+                details: {
+                    period_id,
+                    error_details: error.stack || error.toString()
+                }
+            }
+        });
+    }
+});
+
+// ===================================================================
+// BULK PAYROLL PROCESSING
+// ===================================================================
+
+// POST /api/payroll-system/bulk-process - Process payroll for multiple employees with selected allowances/deductions
+const bulkProcessPayroll = asyncHandler(async (req, res) => {
+    const { period_id, employee_ids, selected_allowance_types, selected_deduction_types } = req.body;
+    const startTime = Date.now();
+
+    payrollLogger.info('Starting bulk payroll processing', { 
+        period_id, 
+        employee_count: employee_ids?.length || 0,
+        selected_allowance_types: selected_allowance_types?.length || 0,
+        selected_deduction_types: selected_deduction_types?.length || 0,
+        user_id: req.user?.id 
+    });
+
+    if (!period_id) {
+        throw new ValidationError('Payroll period ID is required');
+    }
+
+    if (!employee_ids || !Array.isArray(employee_ids) || employee_ids.length === 0) {
+        throw new ValidationError('At least one employee ID is required');
+    }
+
+    // Get payroll period
+    const periodResult = await executeQuery(
+        'SELECT * FROM payroll_periods WHERE id = ?',
+        [period_id]
+    );
+
+    if (!periodResult.success || periodResult.data.length === 0) {
+        throw new NotFoundError('Payroll period not found');
+    }
+
+    const period = periodResult.data[0];
+
+    // Check period status - only allow Draft periods
+    if (period.status !== 'Draft') {
+        throw new ValidationError(`Cannot process payroll for periods with status: ${period.status}. Only Draft periods are allowed.`);
+    }
+
+    try {
+        // Get selected allowance types details
+        let allowanceTypes = [];
+        if (selected_allowance_types && selected_allowance_types.length > 0) {
+            const allowanceQuery = `
+                SELECT * FROM payroll_allowance_types 
+                WHERE id IN (${selected_allowance_types.map(() => '?').join(',')}) AND is_active = 1
+            `;
+            const allowanceResult = await executeQuery(allowanceQuery, selected_allowance_types);
+            allowanceTypes = allowanceResult.success ? allowanceResult.data : [];
+        }
+
+        // Get selected deduction types details
+        let deductionTypes = [];
+        if (selected_deduction_types && selected_deduction_types.length > 0) {
+            const deductionQuery = `
+                SELECT * FROM payroll_deduction_types 
+                WHERE id IN (${selected_deduction_types.map(() => '?').join(',')}) AND is_active = 1
+            `;
+            const deductionResult = await executeQuery(deductionQuery, selected_deduction_types);
+            deductionTypes = deductionResult.success ? deductionResult.data : [];
+        }
+
+        // Get active employees
+        const placeholders = employee_ids.map(() => '?').join(',');
+        const employeesQuery = `
+            SELECT 
+                id, employee_number, first_name, last_name,
+                current_daily_rate, current_monthly_salary,
+                appointment_date, employment_status,
+                salary_grade, step_increment
+            FROM employees 
+            WHERE id IN (${placeholders}) AND employment_status = 'Active'
+                AND appointment_date <= ?
+            ORDER BY employee_number ASC
+        `;
+        
+        const queryParams = [...employee_ids, period.end_date];
+        const employeesResult = await executeQuery(employeesQuery, queryParams);
+
+        if (!employeesResult.success) {
+            throw new Error('Failed to fetch employees: ' + employeesResult.error);
+        }
+        
+        if (employeesResult.data.length === 0) {
+            return res.json({
+                success: true,
+                data: {
+                    period_id,
+                    message: 'No active employees found for payroll processing',
+                    employees_processed: 0,
+                    action: 'no_employees'
+                },
+                message: 'No employees to process'
+            });
+        }
+
+        const employees = employeesResult.data;
+        payrollLogger.info('Processing bulk payroll for employees', { 
+            employee_count: employees.length, 
+            period_id 
+        });
+
+        const payrollItems = [];
+        let successCount = 0;
+        let errorCount = 0;
+
+        // Process each employee with selected allowances and deductions
+        for (const employee of employees) {
+            try {
+                // Basic calculation parameters
+                const workingDaysInMonth = 22;
+                const dailyRate = parseFloat(employee.current_daily_rate) || (parseFloat(employee.current_monthly_salary) / 22) || 500;
+                
+                // Basic salary calculation
+                const basicSalary = dailyRate * workingDaysInMonth;
+                
+                // Calculate total allowances from selected types
+                let totalAllowances = 0;
+                const allowanceBreakdown = [];
+                
+                for (const allowanceType of allowanceTypes) {
+                    let allowanceAmount = parseFloat(allowanceType.amount) || 0;
+                    
+                    // Apply proration if needed
+                    if (allowanceType.is_prorated && workingDaysInMonth < 22) {
+                        allowanceAmount = (allowanceAmount * workingDaysInMonth) / 22;
+                    }
+                    
+                    totalAllowances += allowanceAmount;
+                    allowanceBreakdown.push({
+                        code: allowanceType.code,
+                        name: allowanceType.name,
+                        amount: parseFloat(allowanceAmount.toFixed(2)),
+                        is_prorated: allowanceType.is_prorated
+                    });
+                }
+                
+                // Calculate gross pay
+                const grossPay = basicSalary + totalAllowances;
+                
+                // Calculate deductions from selected types
+                let gsis = 0, pagibig = 0, philhealth = 0, tax = 0, otherDeductions = 0;
+                const deductionBreakdown = [];
+                
+                for (const deductionType of deductionTypes) {
+                    let deductionAmount = 0;
+                    
+                    if (deductionType.deduction_type === 'fixed') {
+                        deductionAmount = parseFloat(deductionType.amount || 0);
+                    } else if (deductionType.deduction_type === 'percentage') {
+                        deductionAmount = grossPay * (parseFloat(deductionType.percentage || 0) / 100);
+                        
+                        // Apply maximum amount if specified
+                        if (deductionType.max_amount && deductionAmount > parseFloat(deductionType.max_amount)) {
+                            deductionAmount = parseFloat(deductionType.max_amount);
+                        }
+                    }
+                    
+                    // Categorize deductions
+                    switch (deductionType.code) {
+                        case 'GSIS':
+                            gsis = deductionAmount;
+                            break;
+                        case 'PAGIBIG':
+                            pagibig = deductionAmount;
+                            break;
+                        case 'PHILHEALTH':
+                            philhealth = deductionAmount;
+                            break;
+                        case 'WITHHOLDING_TAX':
+                            tax = deductionAmount;
+                            break;
+                        default:
+                            otherDeductions += deductionAmount;
+                            break;
+                    }
+                    
+                    deductionBreakdown.push({
+                        code: deductionType.code,
+                        name: deductionType.name,
+                        type: deductionType.deduction_type,
+                        amount: parseFloat(deductionAmount.toFixed(2)),
+                        is_government: deductionType.is_government,
+                        is_mandatory: deductionType.is_mandatory
+                    });
+                }
+                
+                const totalDeductions = gsis + pagibig + philhealth + tax + otherDeductions;
+                
+                // Calculate net pay
+                const netPay = grossPay - totalDeductions;
+
+                // Insert payroll item
+                const insertResult = await executeQuery(`
+                    INSERT INTO payroll_items 
+                    (employee_id, payroll_period_id, basic_salary, 
+                     total_allowances, pagibig_contribution, 
+                     gross_pay, total_deductions, net_pay,
+                     allowances_breakdown, deductions_breakdown)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                `, [
+                    employee.id, period_id, parseFloat(basicSalary.toFixed(2)),
+                    parseFloat(totalAllowances.toFixed(2)), parseFloat(pagibig.toFixed(2)), 
+                    parseFloat(grossPay.toFixed(2)), parseFloat(totalDeductions.toFixed(2)), parseFloat(netPay.toFixed(2)),
+                    JSON.stringify(allowanceBreakdown), JSON.stringify(deductionBreakdown)
+                ]);
+
+                if (insertResult.success) {
+                    successCount++;
+                    payrollItems.push({
+                        employee_id: employee.id,
+                        employee_number: employee.employee_number,
+                        employee_name: `${employee.first_name} ${employee.last_name}`,
+                        basic_salary: parseFloat(basicSalary.toFixed(2)),
+                        total_allowances: parseFloat(totalAllowances.toFixed(2)),
+                        gross_pay: parseFloat(grossPay.toFixed(2)),
+                        total_deductions: parseFloat(totalDeductions.toFixed(2)),
+                        net_pay: parseFloat(netPay.toFixed(2))
+                    });
+                } else {
+                    errorCount++;
+                    payrollLogger.error('Failed to insert payroll item', insertResult.error, {
+                        employee_id: employee.id,
+                        employee_number: employee.employee_number
+                    });
+                }
+
+            } catch (employeeError) {
+                errorCount++;
+                payrollLogger.error('Error processing employee payroll', employeeError, { 
+                    employee_id: employee.id,
+                    employee_number: employee.employee_number 
+                });
+            }
+        }
+
+        // Update period status if any payroll items were created
+        if (successCount > 0) {
+            await executeQuery(
+                'UPDATE payroll_periods SET status = "Processing" WHERE id = ?',
+                [period_id]
+            );
+        }
+
+        const endTime = Date.now();
+        const processingTime = endTime - startTime;
+
+        payrollLogger.info('Bulk payroll processing completed', {
+            period_id,
+            employees_processed: employees.length,
+            successful_items: successCount,
+            failed_items: errorCount,
+            processing_time_ms: processingTime
+        });
+
+        res.json({
+            success: true,
+            data: {
+                period_id,
+                employees_processed: employees.length,
+                successful_items: successCount,
+                failed_items: errorCount,
+                sample_payroll_items: payrollItems.slice(0, 3), // Show first 3 as sample
+                processing_summary: {
+                    total_gross_pay: payrollItems.reduce((sum, item) => sum + item.gross_pay, 0),
+                    total_net_pay: payrollItems.reduce((sum, item) => sum + item.net_pay, 0),
+                    processing_time_ms: processingTime
+                }
+            },
+            message: `Bulk payroll processed successfully. ${successCount} items created${errorCount > 0 ? `, ${errorCount} errors` : ''}.`
+        });
+    } catch (error) {
+        payrollLogger.error('Bulk payroll processing failed', error, { period_id });
+        
+        res.status(500).json({
+            success: false,
+            error: {
+                message: `Bulk payroll processing failed: ${error.message}`,
+                code: 'BULK_PAYROLL_PROCESSING_ERROR',
                 details: {
                     period_id,
                     error_details: error.stack || error.toString()
@@ -880,6 +1170,7 @@ const calculateGovernmentDeductions = (grossPay) => {
 
 module.exports = {
     generateAutomatedPayroll,
+    bulkProcessPayroll,
     getPayrollComputation,
     getEmployeeAllowances,
     updateEmployeeAllowances,

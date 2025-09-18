@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, RefreshCw, AlertCircle, CheckCircle, Play, Eye, Calculator, Users } from 'lucide-react';
+import { Plus, RefreshCw, AlertCircle, Eye, Calculator, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { payrollService } from '@/services/payrollService';
 import { EmployeePayrollHistory } from '@/components/payroll/EmployeePayrollHistory';
@@ -114,40 +114,6 @@ export const PayrollPage: React.FC = () => {
     } catch (error) {
       console.error('Failed to create payroll period:', error);
       toast.error('Failed to create payroll period');
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const handleGeneratePayroll = async (periodId: number) => {
-    try {
-      setActionLoading(`generate-${periodId}`);
-      const response = await payrollService.generatePayroll({ period_id: periodId });
-      
-      if (response.success) {
-        toast.success(
-          `Payroll generated! ${response.data.payroll_items_created} items for ${response.data.employees_processed} employees.`
-        );
-        if (response.warnings) toast.warning(response.warnings);
-        loadPayrollPeriods();
-      }
-    } catch (error) {
-      console.error('Failed to generate payroll:', error);
-      toast.error('Failed to generate payroll');
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const handleFinalizePayroll = async (periodId: number) => {
-    try {
-      setActionLoading(`finalize-${periodId}`);
-      await payrollService.finalizePayrollPeriod(periodId);
-      toast.success('Payroll period finalized successfully');
-      loadPayrollPeriods();
-    } catch (error) {
-      console.error('Failed to finalize payroll:', error);
-      toast.error('Failed to finalize payroll');
     } finally {
       setActionLoading(null);
     }
@@ -516,22 +482,8 @@ export const PayrollPage: React.FC = () => {
                           )}
                         </Button>
 
-                        {period.status === 'Draft' && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleGeneratePayroll(period.id)}
-                            disabled={actionLoading === `generate-${period.id}`}
-                          >
-                            {actionLoading === `generate-${period.id}` ? (
-                              <RefreshCw className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Play className="h-4 w-4" />
-                            )}
-                          </Button>
-                        )}
-
-                        {period.status === 'Processing' && (
+                        {/* Removed the finalize/process payroll button */}
+                        {/* {period.status === 'Processing' && (
                           <Button
                             variant="ghost"
                             size="sm"
@@ -544,7 +496,7 @@ export const PayrollPage: React.FC = () => {
                               <CheckCircle className="h-4 w-4" />
                             )}
                           </Button>
-                        )}
+                        )} */}
                       </div>
                     </TableCell>
                   </TableRow>

@@ -820,4 +820,59 @@ CREATE TABLE `users` (
   KEY `idx_email` (`email`),
   KEY `idx_role` (`role`)
 ) ENGINE=InnoDB AUTO_INCREMENT=36 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
+--
+-- Temporary view structure for view `v_compensation_migration_analysis`
+--
+
+DROP TABLE IF EXISTS `v_compensation_migration_analysis`;
+/*!50001 DROP VIEW IF EXISTS `v_compensation_migration_analysis`*/;
+SET @saved_cs_client     = @@character_set_client;
+/*!50503 SET character_set_client = utf8mb4 */;
+/*!50001 CREATE VIEW `v_compensation_migration_analysis` AS SELECT 
+ 1 AS `compensation_id`,
+ 1 AS `employee_id`,
+ 1 AS `code`,
+ 1 AS `name`,
+ 1 AS `amount`,
+ 1 AS `year`,
+ 1 AS `month`,
+ 1 AS `suggested_category`,
+ 1 AS `first_name`,
+ 1 AS `last_name`,
+ 1 AS `employee_number`*/;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Dumping routines for database 'employee_management_system'
+--
+
+--
+-- Final view structure for view `v_compensation_migration_analysis`
+--
+
+/*!50001 DROP VIEW IF EXISTS `v_compensation_migration_analysis`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_unicode_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_compensation_migration_analysis` AS select `ec`.`id` AS `compensation_id`,`ec`.`employee_id` AS `employee_id`,`ct`.`code` AS `code`,`ct`.`name` AS `name`,`ec`.`amount` AS `amount`,`ec`.`year` AS `year`,`ec`.`month` AS `month`,(case when (`ct`.`code` in ('RATA','CA','MA','HA','SL','PERA','ACA')) then 'PAYROLL_ALLOWANCE' when (`ct`.`code` in ('PBB','MYB','YEB','VLM','SLM','LA','EC','GSIS')) then 'MANUAL_BENEFIT' else 'UNKNOWN' end) AS `suggested_category`,`e`.`first_name` AS `first_name`,`e`.`last_name` AS `last_name`,`e`.`employee_number` AS `employee_number` from ((`employee_compensation` `ec` join `compensation_types` `ct` on((`ec`.`compensation_type_id` = `ct`.`id`))) join `employees` `e` on((`ec`.`employee_id` = `e`.`id`))) order by (case when (`ct`.`code` in ('RATA','CA','MA','HA','SL','PERA','ACA')) then 'PAYROLL_ALLOWANCE' when (`ct`.`code` in ('PBB','MYB','YEB','VLM','SLM','LA','EC','GSIS')) then 'MANUAL_BENEFIT' else 'UNKNOWN' end),`ec`.`year` desc,`e`.`employee_number` */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- Dump completed on 2025-09-18  7:24:49

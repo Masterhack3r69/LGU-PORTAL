@@ -43,6 +43,30 @@ export class PayrollSystemService {
   }
 
   /**
+   * Bulk process payroll for multiple employees with selected allowances/deductions
+   * @param periodId - The payroll period ID
+   * @param employeeIds - Array of employee IDs to process
+   * @param selectedAllowanceTypes - Array of selected allowance type IDs
+   * @param selectedDeductionTypes - Array of selected deduction type IDs
+   */
+  async bulkProcessPayroll(
+    periodId: number,
+    employeeIds: number[],
+    selectedAllowanceTypes: number[],
+    selectedDeductionTypes: number[]
+  ): Promise<PayrollSystemApiResponse<PayrollSystemSummary>> {
+    const requestData = {
+      period_id: periodId,
+      employee_ids: employeeIds,
+      selected_allowance_types: selectedAllowanceTypes,
+      selected_deduction_types: selectedDeductionTypes
+    };
+    
+    const response = await apiService.post<PayrollSystemApiResponse<PayrollSystemSummary>>('/payroll-system/bulk-process', requestData);
+    return response;
+  }
+
+  /**
    * Generate payroll for a single employee in a specific period
    * @param periodId - The payroll period ID
    * @param employeeId - The specific employee ID to process
@@ -53,6 +77,7 @@ export class PayrollSystemService {
   ): Promise<PayrollSystemApiResponse<PayrollSystemSummary>> {
     return this.generateAutomatedPayroll(periodId, [employeeId]);
   }
+
   async getPayrollComputation(periodId: number): Promise<PayrollSystemApiResponse<PayrollSystemDetails>> {
     const response = await apiService.get<PayrollSystemApiResponse<PayrollSystemDetails>>(`/payroll-system/computation/${periodId}`);
     return response;

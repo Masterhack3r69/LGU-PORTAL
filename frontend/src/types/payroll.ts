@@ -560,6 +560,8 @@ export interface ManualPayrollCalculation {
     standard_deductions: StandardDeductions;
     additional_deductions: AdditionalDeduction[];
   };
+  allowances_breakdown?: string;
+  deductions_breakdown?: string;
   notes?: string;
 }
 
@@ -569,6 +571,8 @@ export interface ProcessManualPayrollRequest {
   calculation_data: ManualPayrollCalculation['calculation'] & {
     standard_deductions?: StandardDeductions;
     additional_deductions_total?: number;
+    allowances_breakdown?: string;
+    deductions_breakdown?: string;
   };
   notes?: string;
   override_existing?: boolean;

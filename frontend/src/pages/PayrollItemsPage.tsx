@@ -64,7 +64,7 @@ function PayrollItemDialog({
     onOpenChange(false);
   };
 
-  const handleReset = () => {
+  const handleReset = useCallback(() => {
     setFormData({
       code: item?.code || '',
       name: item?.name || '',
@@ -73,13 +73,13 @@ function PayrollItemDialog({
       is_monthly: item?.is_monthly || false,
       is_prorated: item?.is_prorated || false
     });
-  };
+  }, [item]);
 
   React.useEffect(() => {
     if (open) {
       handleReset();
     }
-  }, [open, item]);
+  }, [open, item, handleReset]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -235,8 +235,6 @@ export const PayrollItemsPage: React.FC = () => {
   useEffect(() => {
     loadPayrollItems();
   }, [loadPayrollItems]);
-
-  // No separate useEffect for search term since it's already in the useCallback dependency
 
   // Filtered items based on search and tab
   const filteredAllowances = payrollItems.filter(item => {
