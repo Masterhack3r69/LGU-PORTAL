@@ -28,11 +28,14 @@ const extractTableName = (path) => {
         const tableMap = {
             'employees': 'employees',
             'leaves': 'leave_applications',
-            'payroll': 'payroll_items',
+            'payroll': 'payroll_periods',
             'documents': 'employee_documents',
             'trainings': 'employee_trainings',
             'compensation': 'employee_compensation',
-            'auth': 'users'
+            'auth': 'users',
+            'allowance-types': 'allowance_types',
+            'deduction-types': 'deduction_types',
+            'overrides': 'employee_overrides'
         };
         
         return tableMap[resource] || resource;

@@ -46,13 +46,13 @@ class ApiService {
   }
 
   // Generic API methods
-  public async get<T>(url: string, params?: Record<string, unknown>): Promise<T> {
-    const response = await this.api.get(url, { params });
+  public async get<T>(url: string, config?: Record<string, unknown>): Promise<T> {
+    const response = await this.api.get(url, config);
     return response.data;
   }
 
-  public async post<T>(url: string, data?: unknown): Promise<T> {
-    const response = await this.api.post(url, data);
+  public async post<T>(url: string, data?: unknown, config?: Record<string, unknown>): Promise<T> {
+    const response = await this.api.post(url, data, config);
     return response.data;
   }
 

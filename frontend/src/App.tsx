@@ -30,6 +30,10 @@ import EmployeeMyTrainingsPage from '@/pages/training/EmployeeMyTrainingsPage';
 import EmployeeCertificatesPage from '@/pages/training/EmployeeCertificatesPage';
 import AuditLogsPage from '@/pages/admin/AuditLogsPage';
 
+// Payroll Management Pages
+import { AdminPayrollPage } from '@/pages/payroll/AdminPayrollPage';
+import { EmployeePayrollPage } from '@/pages/payroll/EmployeePayrollPage';
+
 function App() {
   return (
     <Routes>
@@ -202,6 +206,27 @@ function App() {
           />
         </Route>
         
+        {/* Payroll Management - accessible to all authenticated users */}
+        <Route path="payroll">
+          {/* Admin Payroll Routes */}
+          <Route 
+            index 
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminPayrollPage />
+              </ProtectedRoute>
+            } 
+          />
+          {/* Employee Payroll Routes */}
+          <Route 
+            path="employee" 
+            element={
+              <ProtectedRoute allowedRoles={['employee']}>
+                <EmployeePayrollPage />
+              </ProtectedRoute>
+            } 
+          />
+        </Route>
 
         {/* Terminal Leave Benefits - Admin only */}
         <Route 

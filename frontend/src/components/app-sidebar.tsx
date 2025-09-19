@@ -8,7 +8,8 @@ import {
   Shield,
   Home,
   Calculator,
-  GraduationCap
+  GraduationCap,
+  DollarSign
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -110,9 +111,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     ],
   });
 
-  // Employee Payroll removed - no payroll system
-
-
+  // Payroll Management - Show for all users
+  navMain.push({
+    title: "Payroll Management",
+    url: user?.role === 'admin' ? "/payroll" : "/payroll/employee",
+    icon: DollarSign,
+    items: [], // No dropdown items since everything is in tabs
+  });
 
   // Terminal Leave Benefits - Admin only
   if (user?.role === 'admin') {

@@ -192,7 +192,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/employees', authMiddleware.requireAuth, auditLogger, employeeRoutes);
 app.use('/api/leaves', authMiddleware.requireAuth, auditLogger, leaveRoutes);
 app.use('/api/benefits', benefitsRoutes);
-
+app.use('/api/payroll', authMiddleware.requireAuth, require('./routes/payrollRoutes'));
 app.use('/api/documents', authMiddleware.requireAuth, auditLogger, documentRoutes);
 app.use('/api/reports', authMiddleware.requireAuth, auditLogger, reportsRoutes);
 app.use('/api/jobs', authMiddleware.requireAuth, auditLogger, jobRoutes);
