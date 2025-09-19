@@ -1,5 +1,5 @@
 // models/PayrollPeriod.js - Payroll Period model
-const { executeQuery, findOne, executeTransaction } = require('../../config/database');
+const { executeQuery, findOne, findOneByTable, executeTransaction } = require('../../config/database');
 
 class PayrollPeriod {
     constructor(data = {}) {
@@ -10,13 +10,13 @@ class PayrollPeriod {
         this.start_date = data.start_date || null;
         this.end_date = data.end_date || null;
         this.pay_date = data.pay_date || null;
-        this.status = data.status || 'open';
+        this.status = data.status || 'Draft';
         this.created_by = data.created_by || null;
         this.finalized_by = data.finalized_by || null;
         this.finalized_at = data.finalized_at || null;
         this.created_at = data.created_at || null;
         this.updated_at = data.updated_at || null;
-        
+
         // Additional computed properties
         this.employee_count = data.employee_count || 0;
         this.total_items = data.total_items || 0;
@@ -39,12 +39,12 @@ class PayrollPeriod {
 
     // Check if period can be edited
     canEdit() {
-        return ['open', 'calculating'].includes(this.status);
+        return ['Draft', 'Processing'].includes(this.status);
     }
 
     // Check if period can be finalized
     canFinalize() {
-        return this.status === 'calculating';
+        return this.status === 'Processing';
     }
 
     // Validate payroll period data
@@ -152,77 +152,107 @@ class PayrollPeriod {
 
     // Finalize period
     async finalize(userId) {
-        this.status = 'finalized';
+        this.status = 'Completed';
         this.finalized_by = userId;
         this.finalized_at = new Date().toISOString();
-        
+
         return await this.update();
     }
 
     // Reopen period
     async reopen() {
-        this.status = 'calculating';
+        this.status = 'Processing';
         this.finalized_by = null;
         this.finalized_at = null;
-        
+
+        return await this.update();
+    }
+
+    // Mark period as paid
+    async markAsPaid() {
+        this.status = 'Completed';
+
         return await this.update();
     }
 
     // Static methods
     static async findAll(filters = {}) {
-        let query = `
-            SELECT p.*, 
-                   COUNT(pi.id) as total_items,
-                   SUM(pi.basic_pay) as total_basic_pay,
-                   SUM(pi.total_allowances) as total_allowances,
-                   SUM(pi.total_deductions) as total_deductions,
-                   SUM(pi.net_pay) as total_net_pay
-            FROM payroll_periods p
-            LEFT JOIN payroll_items pi ON p.id = pi.period_id
-            WHERE 1=1
-        `;
-        
+        let query = 'SELECT * FROM payroll_periods WHERE 1=1';
         const params = [];
 
-        if (filters.year) {
-            query += ' AND p.year = ?';
+        // Add filters
+        if (filters.year !== undefined && filters.year !== null && filters.year !== '') {
+            query += ' AND year = ?';
             params.push(filters.year);
         }
 
-        if (filters.month) {
-            query += ' AND p.month = ?';
+        if (filters.month !== undefined && filters.month !== null && filters.month !== '') {
+            query += ' AND month = ?';
             params.push(filters.month);
         }
 
-        if (filters.status) {
-            query += ' AND p.status = ?';
+        if (filters.status !== undefined && filters.status !== null && filters.status !== '') {
+            query += ' AND status = ?';
             params.push(filters.status);
         }
 
-        query += ' GROUP BY p.id ORDER BY p.year DESC, p.month DESC, p.period_number DESC';
+        query += ' ORDER BY year DESC, month DESC, period_number DESC';
 
+        // Add pagination using string interpolation for LIMIT (MySQL doesn't support LIMIT with bound parameters)
         if (filters.limit) {
-            query += ' LIMIT ?';
-            params.push(parseInt(filters.limit));
-        }
-
-        if (filters.offset) {
-            query += ' OFFSET ?';
-            params.push(parseInt(filters.offset));
+            const limit = Math.max(1, Math.min(1000, parseInt(filters.limit) || 20)); // Sanitize limit
+            const offset = Math.max(0, parseInt(filters.offset) || 0); // Sanitize offset
+            
+            if (offset > 0) {
+                query += ` LIMIT ${offset}, ${limit}`;
+            } else {
+                query += ` LIMIT ${limit}`;
+            }
         }
 
         const result = await executeQuery(query, params);
         if (result.success) {
+            // For each period, get the aggregated data from payroll_items
+            const periodsWithStats = await Promise.all(
+                result.data.map(async (row) => {
+                    const period = new PayrollPeriod(row);
+                    
+                    // Get aggregated data for this period
+                    const statsQuery = `
+                        SELECT 
+                            COUNT(pi.id) as total_items,
+                            COALESCE(SUM(pi.basic_pay), 0) as total_basic_pay,
+                            COALESCE(SUM(pi.total_allowances), 0) as total_allowances,
+                            COALESCE(SUM(pi.total_deductions), 0) as total_deductions,
+                            COALESCE(SUM(pi.net_pay), 0) as total_net_pay
+                        FROM payroll_items pi
+                        WHERE pi.payroll_period_id = ?
+                    `;
+                    
+                    const statsResult = await executeQuery(statsQuery, [period.id]);
+                    if (statsResult.success && statsResult.data.length > 0) {
+                        const stats = statsResult.data[0];
+                        period.total_items = stats.total_items;
+                        period.total_basic_pay = stats.total_basic_pay;
+                        period.total_allowances = stats.total_allowances;
+                        period.total_deductions = stats.total_deductions;
+                        period.total_net_pay = stats.total_net_pay;
+                    }
+                    
+                    return period;
+                })
+            );
+            
             return {
                 success: true,
-                data: result.data.map(row => new PayrollPeriod(row))
+                data: periodsWithStats
             };
         }
         return result;
     }
 
     static async findById(id) {
-        const result = await findOne('payroll_periods', { id });
+        const result = await findOneByTable('payroll_periods', { id });
         if (result.success && result.data) {
             return {
                 success: true,
@@ -233,7 +263,7 @@ class PayrollPeriod {
     }
 
     static async findByPeriod(year, month, periodNumber) {
-        const result = await findOne('payroll_periods', { 
+        const result = await findOneByTable('payroll_periods', { 
             year, 
             month, 
             period_number: periodNumber 
@@ -251,12 +281,12 @@ class PayrollPeriod {
         let query = 'SELECT COUNT(*) as count FROM payroll_periods WHERE 1=1';
         const params = [];
 
-        if (filters.year) {
+        if (filters.year !== undefined && filters.year !== null && filters.year !== '') {
             query += ' AND year = ?';
             params.push(filters.year);
         }
 
-        if (filters.status) {
+        if (filters.status !== undefined && filters.status !== null && filters.status !== '') {
             query += ' AND status = ?';
             params.push(filters.status);
         }
@@ -268,6 +298,75 @@ class PayrollPeriod {
     static async delete(id) {
         const query = 'DELETE FROM payroll_periods WHERE id = ?';
         return await executeQuery(query, [id]);
+    }
+
+    static async getStatistics() {
+        const queries = [
+            'SELECT COUNT(*) as total FROM payroll_periods',
+            'SELECT COUNT(*) as draft FROM payroll_periods WHERE status = "Draft"',
+            'SELECT COUNT(*) as processing FROM payroll_periods WHERE status = "Processing"',
+            'SELECT COUNT(*) as completed FROM payroll_periods WHERE status = "Completed"',
+            'SELECT COUNT(*) as paid FROM payroll_periods WHERE status = "Paid"',
+            `SELECT 
+                COALESCE(SUM(pi.net_pay), 0) as total_net_pay,
+                COALESCE(SUM(pi.basic_pay), 0) as total_basic_pay,
+                COALESCE(SUM(pi.total_allowances), 0) as total_allowances,
+                COALESCE(SUM(pi.total_deductions), 0) as total_deductions
+             FROM payroll_periods pp
+             LEFT JOIN payroll_items pi ON pp.id = pi.payroll_period_id
+             WHERE pp.created_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)`
+        ];
+
+        try {
+            const results = await Promise.all(queries.map(query => executeQuery(query)));
+            
+            if (results.every(result => result.success)) {
+                return {
+                    success: true,
+                    data: {
+                        total_periods: results[0].data[0].total,
+                        draft_periods: results[1].data[0].draft,
+                        processing_periods: results[2].data[0].processing,
+                        completed_periods: results[3].data[0].completed,
+                        paid_periods: results[4].data[0].paid,
+                        yearly_totals: results[5].data[0]
+                    }
+                };
+            }
+
+            return {
+                success: false,
+                error: 'Failed to retrieve statistics'
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: 'Failed to retrieve statistics',
+                details: error.message
+            };
+        }
+    }
+
+    static async getCurrentPeriod() {
+        const query = `
+            SELECT * FROM payroll_periods 
+            WHERE status IN ('Draft', 'Processing') 
+            ORDER BY year DESC, month DESC, period_number DESC 
+            LIMIT 1
+        `;
+        
+        const result = await executeQuery(query);
+        if (result.success && result.data.length > 0) {
+            return {
+                success: true,
+                data: new PayrollPeriod(result.data[0])
+            };
+        }
+        
+        return {
+            success: false,
+            error: 'No active payroll period found'
+        };
     }
 }
 

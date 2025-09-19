@@ -25,6 +25,7 @@ import {
   Eye
 } from 'lucide-react';
 import payrollService from '@/services/payrollService';
+import { PayrollConfiguration } from '@/components/payroll/PayrollConfiguration';
 import type { PayrollPeriod, PayrollSummary, PayrollItem } from '@/types/payroll';
 
 export function AdminPayrollPage() {
@@ -44,6 +45,7 @@ export function AdminPayrollPage() {
 
   useEffect(() => {
     loadPeriods();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -57,12 +59,18 @@ export function AdminPayrollPage() {
     try {
       const response = await payrollService.getPeriods();
       if (response.success) {
-        setPeriods(response.data);
-        if (response.data.length > 0 && !selectedPeriod) {
-          setSelectedPeriod(response.data[0]);
+        // Handle paginated response structure
+        const responseData = response.data as { periods?: PayrollPeriod[] } | PayrollPeriod[];
+        const periodsData = Array.isArray(responseData) ? responseData : responseData.periods || [];
+        setPeriods(Array.isArray(periodsData) ? periodsData : []);
+        if (periodsData.length > 0 && !selectedPeriod) {
+          setSelectedPeriod(periodsData[0]);
         }
+      } else {
+        toast.error('Failed to load payroll periods');
       }
     } catch (error) {
+      console.error('Failed to load payroll periods:', error);
       toast.error('Failed to load payroll periods');
     } finally {
       setLoading(false);
@@ -93,7 +101,36 @@ export function AdminPayrollPage() {
 
   const handleCreatePeriod = async () => {
     try {
-      const response = await payrollService.createPeriod(newPeriodData);
+      // Calculate start and end dates based on period
+      const { year, month, period_number } = newPeriodData;
+      const daysInMonth = new Date(year, month, 0).getDate();
+      
+      let start_date, end_date, pay_date;
+      
+      if (period_number === 1) {
+        // 1st half: 1st to 15th
+        start_date = `${year}-${month.toString().padStart(2, '0')}-01`;
+        end_date = `${year}-${month.toString().padStart(2, '0')}-15`;
+        pay_date = `${year}-${month.toString().padStart(2, '0')}-20`; // Pay on 20th
+      } else {
+        // 2nd half: 16th to end of month
+        start_date = `${year}-${month.toString().padStart(2, '0')}-16`;
+        end_date = `${year}-${month.toString().padStart(2, '0')}-${daysInMonth.toString().padStart(2, '0')}`;
+        
+        // Pay date is 5th of next month
+        const nextMonth = month === 12 ? 1 : month + 1;
+        const nextYear = month === 12 ? year + 1 : year;
+        pay_date = `${nextYear}-${nextMonth.toString().padStart(2, '0')}-05`;
+      }
+      
+      const periodData = {
+        ...newPeriodData,
+        start_date,
+        end_date,
+        pay_date
+      };
+      
+      const response = await payrollService.createPeriod(periodData);
       if (response.success) {
         toast.success('Payroll period created successfully');
         loadPeriods();
@@ -102,8 +139,11 @@ export function AdminPayrollPage() {
           month: new Date().getMonth() + 1,
           period_number: 1
         });
+      } else {
+        toast.error('Failed to create payroll period');
       }
     } catch (error) {
+      console.error('Failed to create payroll period:', error);
       toast.error('Failed to create payroll period');
     }
   };
@@ -122,6 +162,7 @@ export function AdminPayrollPage() {
         loadPayrollItems(selectedPeriod.id);
       }
     } catch (error) {
+      console.error('Failed to calculate payroll:', error);
       toast.error('Failed to calculate payroll');
     }
   };
@@ -136,6 +177,7 @@ export function AdminPayrollPage() {
         loadPeriods();
       }
     } catch (error) {
+      console.error('Failed to finalize payroll period:', error);
       toast.error('Failed to finalize payroll period');
     }
   };
@@ -150,19 +192,34 @@ export function AdminPayrollPage() {
         loadPeriods();
       }
     } catch (error) {
+      console.error('Failed to reopen payroll period:', error);
       toast.error('Failed to reopen payroll period');
     }
   };
 
   const getStatusBadge = (status: string) => {
+    const statusLower = status.toLowerCase();
     const variants = {
+      draft: 'default',
+      processing: 'secondary', 
+      completed: 'outline',
+      finalized: 'outline',
+      paid: 'outline',
       open: 'default',
       calculating: 'secondary',
-      finalized: 'outline',
       locked: 'destructive'
     } as const;
     
-    return <Badge variant={variants[status as keyof typeof variants] || 'default'}>{status}</Badge>;
+    return <Badge variant={variants[statusLower as keyof typeof variants] || 'default'}>{status}</Badge>;
+  };
+
+  const formatDate = (dateString: string | Date) => {
+    try {
+      const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+      return date.toLocaleDateString();
+    } catch {
+      return 'Invalid Date';
+    }
   };
 
   const formatCurrency = (amount: number) => {
@@ -255,6 +312,37 @@ export function AdminPayrollPage() {
                     </SelectContent>
                   </Select>
                 </div>
+                
+                {/* Preview of calculated dates */}
+                <div className="space-y-2">
+                  <Label>Calculated Period Dates</Label>
+                  <div className="text-sm text-muted-foreground p-3 bg-muted rounded-lg">
+                    {(() => {
+                      const { year, month, period_number } = newPeriodData;
+                      const daysInMonth = new Date(year, month, 0).getDate();
+                      
+                      if (period_number === 1) {
+                        const pay_date = `${year}-${month.toString().padStart(2, '0')}-20`;
+                        return (
+                          <div>
+                            <div><strong>Period:</strong> 1st to 15th of {new Date(2024, month - 1).toLocaleString('default', { month: 'long' })} {year}</div>
+                            <div><strong>Pay Date:</strong> {new Date(pay_date).toLocaleDateString()}</div>
+                          </div>
+                        );
+                      } else {
+                        const nextMonth = month === 12 ? 1 : month + 1;
+                        const nextYear = month === 12 ? year + 1 : year;
+                        const pay_date = `${nextYear}-${nextMonth.toString().padStart(2, '0')}-05`;
+                        return (
+                          <div>
+                            <div><strong>Period:</strong> 16th to {daysInMonth}th of {new Date(2024, month - 1).toLocaleString('default', { month: 'long' })} {year}</div>
+                            <div><strong>Pay Date:</strong> {new Date(pay_date).toLocaleDateString()}</div>
+                          </div>
+                        );
+                      }
+                    })()}
+                  </div>
+                </div>
               </div>
               <div className="flex justify-end gap-2">
                 <DialogTrigger asChild>
@@ -323,11 +411,14 @@ export function AdminPayrollPage() {
                         {new Date(period.year, period.month - 1).toLocaleString('default', { month: 'long' })}
                       </TableCell>
                       <TableCell>
-                        {new Date(period.start_date).toLocaleDateString()} - {new Date(period.end_date).toLocaleDateString()}
+                        {period.start_date && period.end_date 
+                          ? `${formatDate(period.start_date)} - ${formatDate(period.end_date)}`
+                          : 'Not set'
+                        }
                       </TableCell>
                       <TableCell>{getStatusBadge(period.status)}</TableCell>
                       <TableCell>
-                        {period.status === 'open' ? '-' : (summary?.total_employees || '-')}
+                        {period.status?.toLowerCase() === 'draft' ? '-' : (summary?.total_employees || '-')}
                       </TableCell>
                       <TableCell>
                         {period.total_net_pay ? formatCurrency(period.total_net_pay) : '-'}
@@ -341,7 +432,7 @@ export function AdminPayrollPage() {
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          {period.status === 'finalized' && (
+                          {(period.status?.toLowerCase() === 'completed' || period.status?.toLowerCase() === 'finalized') && (
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button variant="outline" size="sm">
@@ -434,13 +525,13 @@ export function AdminPayrollPage() {
                       </CardDescription>
                     </div>
                     <div className="flex gap-2">
-                      {selectedPeriod.status === 'open' && (
+                      {(selectedPeriod.status?.toLowerCase() === 'draft' || selectedPeriod.status?.toLowerCase() === 'open') && (
                         <Button onClick={handleCalculatePayroll}>
                           <Play className="mr-2 h-4 w-4" />
                           Calculate Payroll
                         </Button>
                       )}
-                      {selectedPeriod.status === 'calculating' && (
+                      {(selectedPeriod.status?.toLowerCase() === 'processing' || selectedPeriod.status?.toLowerCase() === 'calculating') && (
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button>
@@ -498,7 +589,7 @@ export function AdminPayrollPage() {
                               <Button variant="outline" size="sm">
                                 <Eye className="h-4 w-4" />
                               </Button>
-                              {item.status === 'calculated' && (
+                              {(item.status?.toLowerCase() === 'calculated' || item.status?.toLowerCase() === 'processed') && (
                                 <Button 
                                   variant="outline" 
                                   size="sm"
@@ -536,19 +627,7 @@ export function AdminPayrollPage() {
         </TabsContent>
 
         <TabsContent value="configuration" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Payroll Configuration</CardTitle>
-              <CardDescription>
-                Manage allowance types, deduction types, and employee overrides
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                Configuration functionality coming soon...
-              </div>
-            </CardContent>
-          </Card>
+          <PayrollConfiguration />
         </TabsContent>
       </Tabs>
     </div>

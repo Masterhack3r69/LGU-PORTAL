@@ -1,3 +1,49 @@
+-- MySQL dump 10.13  Distrib 8.0.40, for Win64 (x86_64)
+--
+-- Host: localhost    Database: employee_management_system
+-- ------------------------------------------------------
+-- Server version	8.0.40
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!50503 SET NAMES utf8mb4 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+--
+-- Table structure for table `allowance_types`
+--
+
+DROP TABLE IF EXISTS `allowance_types`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `allowance_types` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `code` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `default_amount` decimal(12,2) DEFAULT NULL,
+  `calculation_type` enum('Fixed','Percentage','Formula') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Fixed',
+  `percentage_base` enum('BasicPay','MonthlySalary','GrossPay') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `is_taxable` tinyint(1) NOT NULL DEFAULT '0',
+  `frequency` enum('Monthly','Annual','Conditional') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Monthly',
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `name` (`name`),
+  UNIQUE KEY `code` (`code`)
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `audit_logs`
+--
 
 DROP TABLE IF EXISTS `audit_logs`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -23,6 +69,32 @@ CREATE TABLE `audit_logs` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `deduction_types`
+--
+
+DROP TABLE IF EXISTS `deduction_types`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `deduction_types` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `code` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `default_amount` decimal(12,2) DEFAULT NULL,
+  `calculation_type` enum('Fixed','Percentage','Formula') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Fixed',
+  `percentage_base` enum('BasicPay','MonthlySalary','GrossPay') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `is_mandatory` tinyint(1) NOT NULL DEFAULT '0',
+  `frequency` enum('Monthly','Annual','Conditional') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Monthly',
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `name` (`name`),
+  UNIQUE KEY `code` (`code`)
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `document_types`
 --
 
@@ -40,6 +112,64 @@ CREATE TABLE `document_types` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`)
 ) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `employee_allowance_overrides`
+--
+
+DROP TABLE IF EXISTS `employee_allowance_overrides`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `employee_allowance_overrides` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `employee_id` int NOT NULL,
+  `allowance_type_id` int NOT NULL,
+  `override_amount` decimal(12,2) NOT NULL,
+  `effective_date` date NOT NULL,
+  `end_date` date DEFAULT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `created_by` int NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_employee_allowance_effective` (`employee_id`,`allowance_type_id`,`effective_date`),
+  KEY `allowance_type_id` (`allowance_type_id`),
+  KEY `created_by` (`created_by`),
+  KEY `idx_allowance_overrides_employee_active` (`employee_id`,`is_active`),
+  CONSTRAINT `employee_allowance_overrides_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `employee_allowance_overrides_ibfk_2` FOREIGN KEY (`allowance_type_id`) REFERENCES `allowance_types` (`id`),
+  CONSTRAINT `employee_allowance_overrides_ibfk_3` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `employee_deduction_overrides`
+--
+
+DROP TABLE IF EXISTS `employee_deduction_overrides`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `employee_deduction_overrides` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `employee_id` int NOT NULL,
+  `deduction_type_id` int NOT NULL,
+  `override_amount` decimal(12,2) NOT NULL,
+  `effective_date` date NOT NULL,
+  `end_date` date DEFAULT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `created_by` int NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_employee_deduction_effective` (`employee_id`,`deduction_type_id`,`effective_date`),
+  KEY `deduction_type_id` (`deduction_type_id`),
+  KEY `created_by` (`created_by`),
+  KEY `idx_deduction_overrides_employee_active` (`employee_id`,`is_active`),
+  CONSTRAINT `employee_deduction_overrides_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `employee_deduction_overrides_ibfk_2` FOREIGN KEY (`deduction_type_id`) REFERENCES `deduction_types` (`id`),
+  CONSTRAINT `employee_deduction_overrides_ibfk_3` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -379,6 +509,179 @@ CREATE TABLE `monthly_accrual_log` (
   CONSTRAINT `monthly_accrual_log_ibfk_3` FOREIGN KEY (`processed_by`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Tracks monthly leave accrual processing for employees';
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `payroll_item_lines`
+--
+
+DROP TABLE IF EXISTS `payroll_item_lines`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `payroll_item_lines` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `payroll_item_id` int NOT NULL,
+  `line_type` enum('Allowance','Deduction','Adjustment') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `type_id` int DEFAULT NULL,
+  `description` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `amount` decimal(12,2) NOT NULL,
+  `is_override` tinyint(1) NOT NULL DEFAULT '0',
+  `calculation_basis` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `payroll_item_id` (`payroll_item_id`),
+  CONSTRAINT `payroll_item_lines_ibfk_1` FOREIGN KEY (`payroll_item_id`) REFERENCES `payroll_items` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `payroll_items`
+--
+
+DROP TABLE IF EXISTS `payroll_items`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `payroll_items` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `payroll_period_id` int NOT NULL,
+  `employee_id` int NOT NULL,
+  `working_days` decimal(4,2) NOT NULL DEFAULT '22.00',
+  `daily_rate` decimal(10,2) NOT NULL,
+  `basic_pay` decimal(12,2) NOT NULL,
+  `total_allowances` decimal(12,2) NOT NULL DEFAULT '0.00',
+  `total_deductions` decimal(12,2) NOT NULL DEFAULT '0.00',
+  `gross_pay` decimal(12,2) NOT NULL DEFAULT '0.00',
+  `net_pay` decimal(12,2) NOT NULL,
+  `status` enum('Draft','Processed','Finalized','Paid') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Draft',
+  `processed_by` int DEFAULT NULL,
+  `processed_at` timestamp NULL DEFAULT NULL,
+  `paid_by` int DEFAULT NULL,
+  `paid_at` timestamp NULL DEFAULT NULL,
+  `notes` text COLLATE utf8mb4_unicode_ci,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_payroll_period_employee` (`payroll_period_id`,`employee_id`),
+  KEY `processed_by` (`processed_by`),
+  KEY `paid_by` (`paid_by`),
+  KEY `idx_payroll_items_period_status` (`payroll_period_id`,`status`),
+  KEY `idx_payroll_items_employee_status` (`employee_id`,`status`),
+  CONSTRAINT `payroll_items_ibfk_1` FOREIGN KEY (`payroll_period_id`) REFERENCES `payroll_periods` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `payroll_items_ibfk_2` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `payroll_items_ibfk_3` FOREIGN KEY (`processed_by`) REFERENCES `users` (`id`),
+  CONSTRAINT `payroll_items_ibfk_4` FOREIGN KEY (`paid_by`) REFERENCES `users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'IGNORE_SPACE,ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `tr_payroll_items_insert` AFTER INSERT ON `payroll_items` FOR EACH ROW BEGIN
+    INSERT INTO `audit_logs` (`user_id`, `action`, `table_name`, `record_id`, `new_values`)
+    VALUES (IFNULL(NEW.processed_by, 1), 'CREATE_PAYROLL_ITEM', 'payroll_items', NEW.id,
+            JSON_OBJECT('payroll_period_id', NEW.payroll_period_id, 'employee_id', NEW.employee_id, 
+                       'working_days', NEW.working_days, 'basic_pay', NEW.basic_pay, 'net_pay', NEW.net_pay, 'status', NEW.status));
+END */;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'IGNORE_SPACE,ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `tr_payroll_items_update` AFTER UPDATE ON `payroll_items` FOR EACH ROW BEGIN
+    INSERT INTO `audit_logs` (`user_id`, `action`, `table_name`, `record_id`, `old_values`, `new_values`)
+    VALUES (IFNULL(NEW.processed_by, IFNULL(NEW.paid_by, 1)), 'UPDATE_PAYROLL_ITEM', 'payroll_items', NEW.id,
+            JSON_OBJECT('working_days', OLD.working_days, 'basic_pay', OLD.basic_pay, 'net_pay', OLD.net_pay, 'status', OLD.status),
+            JSON_OBJECT('working_days', NEW.working_days, 'basic_pay', NEW.basic_pay, 'net_pay', NEW.net_pay, 'status', NEW.status));
+END */;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+
+--
+-- Table structure for table `payroll_periods`
+--
+
+DROP TABLE IF EXISTS `payroll_periods`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `payroll_periods` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `year` year NOT NULL,
+  `month` tinyint NOT NULL,
+  `period_number` tinyint NOT NULL,
+  `start_date` date NOT NULL,
+  `end_date` date NOT NULL,
+  `pay_date` date NOT NULL,
+  `status` enum('Draft','Processing','Completed','Paid') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Draft',
+  `created_by` int NOT NULL,
+  `finalized_by` int DEFAULT NULL,
+  `finalized_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_period` (`year`,`month`,`period_number`),
+  KEY `created_by` (`created_by`),
+  KEY `finalized_by` (`finalized_by`),
+  KEY `idx_payroll_periods_year_month_status` (`year`,`month`,`status`),
+  CONSTRAINT `payroll_periods_ibfk_1` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`),
+  CONSTRAINT `payroll_periods_ibfk_2` FOREIGN KEY (`finalized_by`) REFERENCES `users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'IGNORE_SPACE,ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `tr_payroll_periods_insert` AFTER INSERT ON `payroll_periods` FOR EACH ROW BEGIN
+    INSERT INTO `audit_logs` (`user_id`, `action`, `table_name`, `record_id`, `new_values`)
+    VALUES (NEW.created_by, 'CREATE_PAYROLL_PERIOD', 'payroll_periods', NEW.id, 
+            JSON_OBJECT('year', NEW.year, 'month', NEW.month, 'period_number', NEW.period_number, 
+                       'start_date', NEW.start_date, 'end_date', NEW.end_date, 'pay_date', NEW.pay_date, 'status', NEW.status));
+END */;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'IGNORE_SPACE,ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `tr_payroll_periods_update` AFTER UPDATE ON `payroll_periods` FOR EACH ROW BEGIN
+    INSERT INTO `audit_logs` (`user_id`, `action`, `table_name`, `record_id`, `old_values`, `new_values`)
+    VALUES (IFNULL(NEW.finalized_by, NEW.created_by), 'UPDATE_PAYROLL_PERIOD', 'payroll_periods', NEW.id,
+            JSON_OBJECT('status', OLD.status, 'finalized_by', OLD.finalized_by, 'finalized_at', OLD.finalized_at),
+            JSON_OBJECT('status', NEW.status, 'finalized_by', NEW.finalized_by, 'finalized_at', NEW.finalized_at));
+END */;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 
 --
 -- Table structure for table `salary_grades`

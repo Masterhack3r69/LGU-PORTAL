@@ -129,4 +129,17 @@ class ApiResponse {
     }
 }
 
+// Helper functions for backward compatibility
+const successResponse = (res, data, message = 'Success', status = 200) => {
+    const response = ApiResponse.success(data, message);
+    return res.status(status).json(response);
+};
+
+const errorResponse = (res, message, status = 500, details = null) => {
+    const response = ApiResponse.error(message, null, details, status);
+    return res.status(status).json(response);
+};
+
 module.exports = ApiResponse;
+module.exports.successResponse = successResponse;
+module.exports.errorResponse = errorResponse;

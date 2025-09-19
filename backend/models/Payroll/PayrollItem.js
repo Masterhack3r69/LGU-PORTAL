@@ -1,24 +1,26 @@
 // models/PayrollItem.js - Payroll Item model
-const { executeQuery, findOne } = require('../../config/database');
+const { executeQuery, findOne, findOneByTable } = require('../../config/database');
 
 class PayrollItem {
     constructor(data = {}) {
         this.id = data.id || null;
-        this.period_id = data.period_id || null;
+        this.payroll_period_id = data.payroll_period_id || data.period_id || null;
         this.employee_id = data.employee_id || null;
+        this.working_days = data.working_days || 22.00;
+        this.daily_rate = data.daily_rate || 0.00;
         this.basic_pay = data.basic_pay || 0.00;
         this.total_allowances = data.total_allowances || 0.00;
         this.total_deductions = data.total_deductions || 0.00;
         this.gross_pay = data.gross_pay || 0.00;
-        this.total_taxes = data.total_taxes || 0.00;
         this.net_pay = data.net_pay || 0.00;
-        this.status = data.status || 'draft';
+        this.status = data.status || 'Draft';
+        this.processed_by = data.processed_by || null;
+        this.processed_at = data.processed_at || null;
+        this.paid_by = data.paid_by || null;
+        this.paid_at = data.paid_at || null;
+        this.notes = data.notes || null;
         this.created_at = data.created_at || null;
         this.updated_at = data.updated_at || null;
-        this.calculated_at = data.calculated_at || null;
-        this.approved_at = data.approved_at || null;
-        this.approved_by = data.approved_by || null;
-        this.paid_at = data.paid_at || null;
         
         // Additional employee information
         this.employee = data.employee || null;
@@ -30,12 +32,11 @@ class PayrollItem {
     static async findByPeriod(periodId, filters = {}) {
         let query = `
             SELECT pi.*, 
-                   e.id as employee_id, e.employee_id as employee_employee_id, 
-                   e.first_name, e.last_name, e.current_department as department,
-                   e.plantilla_position as position
+                   e.id as employee_id, e.employee_number as employee_number, 
+                   e.first_name, e.last_name, e.plantilla_position as position
             FROM payroll_items pi
             LEFT JOIN employees e ON pi.employee_id = e.id
-            WHERE pi.period_id = ?
+            WHERE pi.payroll_period_id = ?
         `;
         const params = [periodId];
 
@@ -45,7 +46,7 @@ class PayrollItem {
         }
 
         if (filters.search) {
-            query += ' AND (e.first_name LIKE ? OR e.last_name LIKE ? OR e.employee_id LIKE ?)';
+            query += ' AND (e.first_name LIKE ? OR e.last_name LIKE ? OR e.employee_number LIKE ?)';
             const searchTerm = `%${filters.search}%`;
             params.push(searchTerm, searchTerm, searchTerm);
         }
@@ -60,9 +61,8 @@ class PayrollItem {
                     const item = new PayrollItem(row);
                     item.employee = {
                         id: row.employee_id,
-                        employee_id: row.employee_employee_id,
+                        employee_number: row.employee_number,
                         full_name: `${row.first_name} ${row.last_name}`,
-                        department: row.department,
                         position: row.position
                     };
                     return item;
@@ -73,7 +73,7 @@ class PayrollItem {
     }
 
     static async findById(id) {
-        const result = await findOne('payroll_items', { id });
+        const result = await findOneByTable('payroll_items', { id });
         if (result.success && result.data) {
             return {
                 success: true,
@@ -90,25 +90,36 @@ class PayrollItem {
         for (const emp of employees) {
             const query = `
                 INSERT INTO payroll_items (
-                    period_id, employee_id, basic_pay, total_allowances, 
-                    total_deductions, gross_pay, net_pay, status
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    payroll_period_id, employee_id, working_days, daily_rate, 
+                    basic_pay, total_allowances, total_deductions, gross_pay, 
+                    net_pay, status, processed_by, processed_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
                 ON DUPLICATE KEY UPDATE
+                    working_days = VALUES(working_days),
+                    daily_rate = VALUES(daily_rate),
                     basic_pay = VALUES(basic_pay),
                     total_allowances = VALUES(total_allowances),
                     total_deductions = VALUES(total_deductions),
                     gross_pay = VALUES(gross_pay),
                     net_pay = VALUES(net_pay),
-                    status = VALUES(status)
+                    status = VALUES(status),
+                    processed_by = VALUES(processed_by),
+                    processed_at = VALUES(processed_at)
             `;
             
             // Basic calculation (this would be enhanced with the PayrollCalculationEngine)
-            const basicPay = emp.working_days * 500; // Simplified daily rate
-            const grossPay = basicPay;
-            const netPay = grossPay;
+            const workingDays = emp.working_days || 22;
+            const dailyRate = 500; // Simplified daily rate - should come from employee data
+            const basicPay = workingDays * dailyRate;
+            const totalAllowances = 0; // Would be calculated based on allowance types
+            const totalDeductions = 0; // Would be calculated based on deduction types
+            const grossPay = basicPay + totalAllowances;
+            const netPay = grossPay - totalDeductions;
             
             const params = [
-                periodId, emp.employee_id, basicPay, 0, 0, grossPay, netPay, 'calculated'
+                periodId, emp.employee_id, workingDays, dailyRate,
+                basicPay, totalAllowances, totalDeductions, grossPay, 
+                netPay, 'Processed', userId
             ];
             
             const result = await executeQuery(query, params);
@@ -117,13 +128,19 @@ class PayrollItem {
                     employee_id: emp.employee_id,
                     status: 'success'
                 });
+            } else {
+                processedItems.push({
+                    employee_id: emp.employee_id,
+                    status: 'error',
+                    error: result.error
+                });
             }
         }
         
         return {
             success: true,
             data: {
-                processed_count: processedItems.length,
+                processed_count: processedItems.filter(item => item.status === 'success').length,
                 items: processedItems
             }
         };
@@ -132,11 +149,11 @@ class PayrollItem {
     static async bulkMarkPaid(itemIds, userId) {
         const query = `
             UPDATE payroll_items 
-            SET status = 'paid', paid_at = NOW() 
+            SET status = 'Paid', paid_by = ?, paid_at = NOW() 
             WHERE id IN (${itemIds.map(() => '?').join(',')})
         `;
         
-        const result = await executeQuery(query, itemIds);
+        const result = await executeQuery(query, [userId, ...itemIds]);
         return {
             success: result.success,
             data: { updated_count: result.success ? result.data.affectedRows : 0 }

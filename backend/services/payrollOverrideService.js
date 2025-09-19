@@ -9,6 +9,90 @@ class PayrollOverrideService {
         this.minOverrideAmount = 0;
     }
 
+    // Get all overrides with filtering (for management)
+    async getAllOverrides(filters = {}) {
+        try {
+            const results = {
+                overrides: [],
+                pagination: {
+                    total: 0,
+                    limit: parseInt(filters.limit) || 50,
+                    offset: parseInt(filters.offset) || 0
+                }
+            };
+
+            // Get allowance overrides
+            const allowanceOverrides = await EmployeeAllowanceOverride.findAll({
+                employee_id: filters.employee_id,
+                is_active: filters.is_active,
+                limit: filters.type === 'allowance' ? filters.limit : undefined,
+                offset: filters.type === 'allowance' ? filters.offset : 0,
+                search: filters.search
+            });
+
+            // Get deduction overrides
+            const deductionOverrides = await EmployeeDeductionOverride.findAll({
+                employee_id: filters.employee_id,
+                is_active: filters.is_active,
+                limit: filters.type === 'deduction' ? filters.limit : undefined,
+                offset: filters.type === 'deduction' ? filters.offset : 0,
+                search: filters.search
+            });
+
+            let allOverrides = [];
+
+            if (!filters.type || filters.type === 'allowance') {
+                if (allowanceOverrides.success) {
+                    const allowanceData = allowanceOverrides.data.map(override => ({
+                        ...override,
+                        type: 'allowance'
+                    }));
+                    allOverrides = allOverrides.concat(allowanceData);
+                }
+            }
+
+            if (!filters.type || filters.type === 'deduction') {
+                if (deductionOverrides.success) {
+                    const deductionData = deductionOverrides.data.map(override => ({
+                        ...override,
+                        type: 'deduction'
+                    }));
+                    allOverrides = allOverrides.concat(deductionData);
+                }
+            }
+
+            // Apply search filter if needed
+            if (filters.search) {
+                const searchLower = filters.search.toLowerCase();
+                allOverrides = allOverrides.filter(override => 
+                    override.employee?.full_name?.toLowerCase().includes(searchLower) ||
+                    override.allowance_type?.name?.toLowerCase().includes(searchLower) ||
+                    override.deduction_type?.name?.toLowerCase().includes(searchLower)
+                );
+            }
+
+            // Apply pagination to combined results
+            const start = parseInt(filters.offset) || 0;
+            const limit = parseInt(filters.limit) || 50;
+            const paginatedOverrides = allOverrides.slice(start, start + limit);
+
+            results.overrides = paginatedOverrides;
+            results.pagination.total = allOverrides.length;
+
+            return {
+                success: true,
+                data: results
+            };
+
+        } catch (error) {
+            return {
+                success: false,
+                error: 'Failed to retrieve overrides',
+                details: error.message
+            };
+        }
+    }
+
     // Create allowance override for employee
     async createAllowanceOverride(overrideData, userId) {
         try {

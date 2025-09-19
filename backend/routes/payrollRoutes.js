@@ -25,19 +25,18 @@ const {
 
 // Apply common middleware to all payroll routes
 router.use(payrollAuditLogger);
-router.use(rateLimitPayroll);
 router.use(validateBusinessHours);
 
 // ===== PAYROLL PERIODS ROUTES =====
 
 // GET /api/payroll/periods - Get all payroll periods
-router.get('/periods', requireAdmin, payrollController.getAllPeriods);
+router.get('/periods', requireAdmin, rateLimitPayroll, payrollController.getAllPeriods);
 
 // GET /api/payroll/periods/current - Get current active period
-router.get('/periods/current', requireAdmin, payrollController.getCurrentPeriod);
+router.get('/periods/current', requireAdmin, rateLimitPayroll, payrollController.getCurrentPeriod);
 
 // GET /api/payroll/periods/statistics - Get payroll statistics
-router.get('/periods/statistics', requireAdmin, payrollController.getPayrollStatistics);
+router.get('/periods/statistics', requireAdmin, rateLimitPayroll, payrollController.getPayrollStatistics);
 
 // GET /api/payroll/periods/:id - Get specific payroll period
 router.get('/periods/:id', requireAdmin, validatePeriodAccess, payrollController.getPeriod);
@@ -71,10 +70,16 @@ router.post('/periods/:id/employees', requireAdmin, validatePeriodAccess, valida
 // GET /api/payroll/periods/:id/items - Get payroll items for period
 router.get('/periods/:id/items', requireAdmin, validatePeriodAccess, payrollController.getPeriodPayrollItems);
 
+// GET /api/payroll/periods/:id/summary - Get payroll summary for period
+router.get('/periods/:id/summary', requireAdmin, validatePeriodAccess, payrollController.getPeriodSummary);
+
 // POST /api/payroll/periods/:id/bulk-mark-paid - Bulk mark payroll items as paid
 router.post('/periods/:id/bulk-mark-paid', requireAdmin, validatePeriodAccess, validateBulkOperation, logSensitiveOperation, auditLogger, payrollController.bulkMarkAsPaid);
 
 // ===== PAYROLL ITEMS ROUTES =====
+
+// GET /api/payroll/items - Get payroll items (with filters)
+router.get('/items', requirePayrollAccess, payrollItemController.getAllPayrollItems);
 
 // GET /api/payroll/items/:id - Get specific payroll item
 router.get('/items/:id', requirePayrollAccess, validateItemAccess, payrollItemController.getPayrollItem);
@@ -116,6 +121,9 @@ router.get('/employees/:employeeId/overrides', payrollConfigController.getEmploy
 
 // GET /api/payroll/employees/:employeeId/override-summary - Get employee override summary
 router.get('/employees/:employeeId/override-summary', payrollConfigController.getEmployeeOverrideSummary);
+
+// GET /api/payroll/overrides - Get all overrides (for management)
+router.get('/overrides', payrollConfigController.getAllOverrides);
 
 // ===== ALLOWANCE TYPES ROUTES =====
 

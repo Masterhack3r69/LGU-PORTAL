@@ -72,6 +72,26 @@ const findOne = async (query, params = []) => {
     }
 };
 
+// Find one record by table name and conditions (helper function)
+const findOneByTable = async (tableName, conditions = {}) => {
+    try {
+        const keys = Object.keys(conditions);
+        if (keys.length === 0) {
+            throw new Error('At least one condition is required');
+        }
+        
+        const whereClause = keys.map(key => `${key} = ?`).join(' AND ');
+        const query = `SELECT * FROM ${tableName} WHERE ${whereClause}`;
+        const params = keys.map(key => conditions[key]);
+        
+        const [results] = await pool.execute(query, params);
+        return { success: true, data: results[0] || null };
+    } catch (error) {
+        console.error('Database findOneByTable error:', error.message);
+        return { success: false, error: error.message };
+    }
+};
+
 // Enhanced transaction wrapper with proper error handling
 const executeTransaction = async (callback) => {
     let connection;
@@ -134,6 +154,7 @@ module.exports = {
     testConnection,
     executeQuery,
     findOne,
+    findOneByTable,
     executeTransaction,
     getPoolStats,
     closePool

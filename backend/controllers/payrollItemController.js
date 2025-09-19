@@ -11,6 +11,65 @@ class PayrollItemController {
     constructor() {
         this.calculationEngine = new PayrollCalculationEngine();
         this.validationEngine = new PayrollValidationEngine();
+        
+        // Bind methods to preserve 'this' context
+        this.getAllPayrollItems = this.getAllPayrollItems.bind(this);
+        this.getPayrollItem = this.getPayrollItem.bind(this);
+        this.updatePayrollItem = this.updatePayrollItem.bind(this);
+        this.recalculatePayrollItem = this.recalculatePayrollItem.bind(this);
+        this.finalizePayrollItem = this.finalizePayrollItem.bind(this);
+        this.markPayrollItemAsPaid = this.markPayrollItemAsPaid.bind(this);
+        this.deletePayrollItem = this.deletePayrollItem.bind(this);
+        this.getEmployeePayrollItems = this.getEmployeePayrollItems.bind(this);
+        this.adjustWorkingDays = this.adjustWorkingDays.bind(this);
+        this.addManualAdjustment = this.addManualAdjustment.bind(this);
+        this.getCalculationDetails = this.getCalculationDetails.bind(this);
+        this.generatePayslip = this.generatePayslip.bind(this);
+    }
+
+    // Get all payroll items with filters
+    async getAllPayrollItems(req, res) {
+        try {
+            const { period_id, employee_id, status, search, limit = 50, offset = 0 } = req.query;
+
+            // If period_id is provided, use the existing findByPeriod method
+            if (period_id) {
+                const filters = { search, status };
+                const itemsResult = await PayrollItem.findByPeriod(period_id, filters);
+                
+                if (itemsResult.success) {
+                    return successResponse(res, itemsResult.data, 'Payroll items retrieved successfully');
+                }
+                
+                return errorResponse(res, 'Failed to retrieve payroll items', 500);
+            }
+            
+            // If employee_id is provided, use findByEmployee method
+            if (employee_id) {
+                const filters = { status, limit, offset };
+                const itemsResult = await PayrollItem.findByEmployee(employee_id, filters);
+                
+                if (itemsResult.success) {
+                    return successResponse(res, itemsResult.data, 'Employee payroll items retrieved successfully');
+                }
+                
+                return errorResponse(res, 'Failed to retrieve employee payroll items', 500);
+            }
+
+            // General query for all payroll items (with pagination)
+            const filters = { status, search, limit, offset };
+            const itemsResult = await PayrollItem.findAll(filters);
+            
+            if (itemsResult.success) {
+                return successResponse(res, itemsResult.data, 'Payroll items retrieved successfully');
+            }
+            
+            return errorResponse(res, 'Failed to retrieve payroll items', 500);
+
+        } catch (error) {
+            console.error('Get all payroll items error:', error);
+            return errorResponse(res, 'Internal server error', 500);
+        }
     }
 
     // Get specific payroll item

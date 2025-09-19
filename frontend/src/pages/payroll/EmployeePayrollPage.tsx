@@ -26,6 +26,7 @@ export function EmployeePayrollPage() {
 
   useEffect(() => {
     loadPeriods();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -47,6 +48,7 @@ export function EmployeePayrollPage() {
         }
       }
     } catch (error) {
+      console.error('Failed to load payroll periods:', error);
       toast.error('Failed to load payroll periods');
     } finally {
       setLoading(false);
@@ -61,6 +63,7 @@ export function EmployeePayrollPage() {
         setPayslip(response.data);
       }
     } catch (error) {
+      console.error('Failed to load payslip data:', error);
       toast.error('Failed to load payslip data');
     }
   };
@@ -84,6 +87,7 @@ export function EmployeePayrollPage() {
       
       toast.success('Payslip downloaded successfully');
     } catch (error) {
+      console.error('Failed to download payslip:', error);
       toast.error('Failed to download payslip');
     } finally {
       setDownloadingPayslip(false);

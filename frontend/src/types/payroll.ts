@@ -21,10 +21,13 @@ export interface PayrollPeriod {
 export interface AllowanceType {
   id: number;
   name: string;
+  code: string;
   description?: string;
-  calculation_type: 'fixed' | 'percentage' | 'formula';
   default_amount?: number;
+  calculation_type: 'Fixed' | 'Percentage' | 'Formula';
+  percentage_base?: 'BasicPay' | 'MonthlySalary' | 'GrossPay';
   is_taxable: boolean;
+  frequency: 'Monthly' | 'Annual' | 'Conditional';
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -33,10 +36,13 @@ export interface AllowanceType {
 export interface DeductionType {
   id: number;
   name: string;
+  code: string;
   description?: string;
-  calculation_type: 'fixed' | 'percentage' | 'formula';
   default_amount?: number;
-  is_required: boolean;
+  calculation_type: 'Fixed' | 'Percentage' | 'Formula';
+  percentage_base?: 'BasicPay' | 'MonthlySalary' | 'GrossPay';
+  is_mandatory: boolean;
+  frequency: 'Monthly' | 'Annual' | 'Conditional';
   is_active: boolean;
   created_at: string;
   updated_at: string;

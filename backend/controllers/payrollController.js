@@ -5,32 +5,63 @@ const Employee = require('../models/Employee');
 const PayrollCalculationEngine = require('../utils/payrollCalculations');
 const PayrollValidationEngine = require('../utils/payrollValidation');
 const { logPayrollAudit } = require('../middleware/payrollAudit');
-const { successResponse, errorResponse } = require('../utils/apiResponse');
+const ApiResponse = require('../utils/apiResponse');
 
 class PayrollController {
     constructor() {
-        this.calculationEngine = new PayrollCalculationEngine();
-        this.validationEngine = new PayrollValidationEngine();
+        try {
+            console.log('Initializing PayrollController...');
+            this.calculationEngine = new PayrollCalculationEngine();
+            console.log('PayrollCalculationEngine initialized successfully');
+            this.validationEngine = new PayrollValidationEngine();
+            console.log('PayrollValidationEngine initialized successfully');
+            
+            // Bind all methods to preserve 'this' context
+            this.getAllPeriods = this.getAllPeriods.bind(this);
+            this.getPeriod = this.getPeriod.bind(this);
+            this.createPeriod = this.createPeriod.bind(this);
+            this.updatePeriod = this.updatePeriod.bind(this);
+            this.deletePeriod = this.deletePeriod.bind(this);
+            this.finalizePeriod = this.finalizePeriod.bind(this);
+            this.reopenPeriod = this.reopenPeriod.bind(this);
+            this.markPeriodAsPaid = this.markPeriodAsPaid.bind(this);
+            this.getPeriodEmployees = this.getPeriodEmployees.bind(this);
+            this.processEmployees = this.processEmployees.bind(this);
+            this.getPeriodPayrollItems = this.getPeriodPayrollItems.bind(this);
+            this.getPeriodSummary = this.getPeriodSummary.bind(this);
+            this.getPayrollStatistics = this.getPayrollStatistics.bind(this);
+            this.getCurrentPeriod = this.getCurrentPeriod.bind(this);
+            this.bulkMarkAsPaid = this.bulkMarkAsPaid.bind(this);
+        } catch (error) {
+            console.error('Error initializing PayrollController:', error);
+            console.error('Stack trace:', error.stack);
+            // Fallback to ensure properties exist
+            this.calculationEngine = null;
+            this.validationEngine = null;
+        }
     }
 
     // Get all payroll periods
     async getAllPeriods(req, res) {
         try {
-            const filters = {
-                year: req.query.year,
-                month: req.query.month,
-                status: req.query.status,
-                year_from: req.query.year_from,
-                year_to: req.query.year_to,
-                limit: req.query.limit || 20,
-                offset: req.query.offset || 0
-            };
+            const filters = {};
+            
+            // Only add filters with defined values
+            if (req.query.year) filters.year = req.query.year;
+            if (req.query.month) filters.month = req.query.month;
+            if (req.query.status) filters.status = req.query.status;
+            if (req.query.year_from) filters.year_from = req.query.year_from;
+            if (req.query.year_to) filters.year_to = req.query.year_to;
+            
+            // Always include limit and offset with defaults
+            filters.limit = req.query.limit || 20;
+            filters.offset = req.query.offset || 0;
 
             const periodsResult = await PayrollPeriod.findAll(filters);
             const totalCount = await PayrollPeriod.getCount(filters);
 
             if (periodsResult.success) {
-                return successResponse(res, {
+                const response = ApiResponse.success({
                     periods: periodsResult.data,
                     pagination: {
                         total: totalCount,
@@ -39,13 +70,16 @@ class PayrollController {
                         has_more: totalCount > (parseInt(filters.offset) + parseInt(filters.limit))
                     }
                 }, 'Payroll periods retrieved successfully');
+                return res.status(200).json(response);
             }
 
-            return errorResponse(res, 'Failed to retrieve payroll periods', 500);
+            const response = ApiResponse.error('Failed to retrieve payroll periods', 'FETCH_ERROR', null, 500);
+            return res.status(500).json(response);
 
         } catch (error) {
             console.error('Get payroll periods error:', error);
-            return errorResponse(res, 'Internal server error', 500);
+            const response = ApiResponse.serverError('Internal server error');
+            return res.status(500).json(response);
         }
     }
 
@@ -56,27 +90,43 @@ class PayrollController {
             const periodResult = await PayrollPeriod.findById(id);
 
             if (periodResult.success && periodResult.data) {
-                return successResponse(res, periodResult.data, 'Payroll period retrieved successfully');
+                const response = ApiResponse.success(periodResult.data, 'Payroll period retrieved successfully');
+                return res.status(200).json(response);
             }
 
-            return errorResponse(res, 'Payroll period not found', 404);
+            const response = ApiResponse.notFound('Payroll period');
+            return res.status(404).json(response);
 
         } catch (error) {
             console.error('Get payroll period error:', error);
-            return errorResponse(res, 'Internal server error', 500);
+            const response = ApiResponse.serverError('Internal server error');
+            return res.status(500).json(response);
         }
     }
 
     // Create new payroll period
     async createPeriod(req, res) {
         try {
+            console.log('PayrollController createPeriod - this:', typeof this);
+            console.log('PayrollController createPeriod - validationEngine:', typeof this.validationEngine);
+            
             const { year, month, period_number, start_date, end_date, pay_date } = req.body;
             const userId = req.session.user.id;
 
-            // Validate period data
-            const validation = await this.validationEngine.validatePayrollPeriod(req.body);
-            if (!validation.isValid) {
-                return errorResponse(res, 'Validation failed', 400, validation.errors);
+            // Validate period data (with fallback if validation engine failed to initialize)
+            if (this.validationEngine) {
+                const validation = await this.validationEngine.validatePayrollPeriod(req.body);
+                if (!validation.isValid) {
+                    const response = ApiResponse.validationError('Validation failed', validation.errors);
+                    return res.status(400).json(response);
+                }
+            } else {
+                console.log('PayrollController - using fallback validation');
+                // Basic validation fallback
+                if (!year || !month || !period_number) {
+                    const response = ApiResponse.validationError('Validation failed', ['Year, month, and period number are required']);
+                    return res.status(400).json(response);
+                }
             }
 
             // Create period
@@ -94,14 +144,17 @@ class PayrollController {
             const result = await period.save();
 
             if (result.success) {
-                return successResponse(res, result.data, 'Payroll period created successfully', 201);
+                const response = ApiResponse.success(result.data, 'Payroll period created successfully');
+                return res.status(201).json(response);
             }
 
-            return errorResponse(res, result.error, 400, result.details);
+            const response = ApiResponse.error(result.error, 'CREATE_ERROR', result.details, 400);
+            return res.status(400).json(response);
 
         } catch (error) {
             console.error('Create payroll period error:', error);
-            return errorResponse(res, 'Internal server error', 500);
+            const response = ApiResponse.serverError('Internal server error');
+            return res.status(500).json(response);
         }
     }
 
@@ -113,36 +166,44 @@ class PayrollController {
 
             const periodResult = await PayrollPeriod.findById(id);
             if (!periodResult.success || !periodResult.data) {
-                return errorResponse(res, 'Payroll period not found', 404);
+                const response = ApiResponse.notFound('Payroll period');
+                return res.status(404).json(response);
             }
 
             const period = periodResult.data;
 
             // Check if period can be edited
             if (!period.canEdit()) {
-                return errorResponse(res, `Cannot edit payroll period with status: ${period.status}`, 400);
+                const response = ApiResponse.error(`Cannot edit payroll period with status: ${period.status}`, 'INVALID_STATUS', null, 400);
+                return res.status(400).json(response);
             }
 
             // Update period properties
             Object.assign(period, req.body);
 
-            // Validate updated data
-            const validation = await this.validationEngine.validatePayrollPeriod(period);
-            if (!validation.isValid) {
-                return errorResponse(res, 'Validation failed', 400, validation.errors);
+            // Validate updated data (with fallback if validation engine failed to initialize)
+            if (this.validationEngine) {
+                const validation = await this.validationEngine.validatePayrollPeriod(period);
+                if (!validation.isValid) {
+                    const response = ApiResponse.validationError('Validation failed', validation.errors);
+                    return res.status(400).json(response);
+                }
             }
 
             const result = await period.update();
 
             if (result.success) {
-                return successResponse(res, result.data, 'Payroll period updated successfully');
+                const response = ApiResponse.success(result.data, 'Payroll period updated successfully');
+                return res.status(200).json(response);
             }
 
-            return errorResponse(res, result.error, 400, result.details);
+            const response = ApiResponse.error(result.error, 'UPDATE_ERROR', result.details, 400);
+            return res.status(400).json(response);
 
         } catch (error) {
             console.error('Update payroll period error:', error);
-            return errorResponse(res, 'Internal server error', 500);
+            const response = ApiResponse.serverError('Internal server error');
+            return res.status(500).json(response);
         }
     }
 
@@ -165,14 +226,17 @@ class PayrollController {
                     userAgent: req.get('User-Agent')
                 });
 
-                return successResponse(res, null, 'Payroll period deleted successfully');
+                const response = ApiResponse.success(null, 'Payroll period deleted successfully');
+                return res.status(200).json(response);
             }
 
-            return errorResponse(res, result.error, 400);
+            const response = ApiResponse.error(result.error, 'DELETE_ERROR', null, 400);
+            return res.status(400).json(response);
 
         } catch (error) {
             console.error('Delete payroll period error:', error);
-            return errorResponse(res, 'Internal server error', 500);
+            const response = ApiResponse.serverError('Internal server error');
+            return res.status(500).json(response);
         }
     }
 
@@ -182,29 +246,36 @@ class PayrollController {
             const { id } = req.params;
             const userId = req.session.user.id;
 
-            // Validate period can be finalized
-            const validation = await this.validationEngine.validatePeriodFinalization(id);
-            if (!validation.isValid) {
-                return errorResponse(res, 'Cannot finalize period', 400, validation.errors);
+            // Validate period can be finalized (with fallback if validation engine failed to initialize)
+            if (this.validationEngine) {
+                const validation = await this.validationEngine.validatePeriodFinalization(id);
+                if (!validation.isValid) {
+                    const response = ApiResponse.validationError('Cannot finalize period', validation.errors);
+                    return res.status(400).json(response);
+                }
             }
 
             const periodResult = await PayrollPeriod.findById(id);
             if (!periodResult.success || !periodResult.data) {
-                return errorResponse(res, 'Payroll period not found', 404);
+                const response = ApiResponse.notFound('Payroll period');
+                return res.status(404).json(response);
             }
 
             const period = periodResult.data;
             const result = await period.finalize(userId);
 
             if (result.success) {
-                return successResponse(res, result.data, 'Payroll period finalized successfully');
+                const response = ApiResponse.success(result.data, 'Payroll period finalized successfully');
+                return res.status(200).json(response);
             }
 
-            return errorResponse(res, result.error, 400);
+            const response = ApiResponse.error(result.error, 'FINALIZE_ERROR', null, 400);
+            return res.status(400).json(response);
 
         } catch (error) {
             console.error('Finalize payroll period error:', error);
-            return errorResponse(res, 'Internal server error', 500);
+            const response = ApiResponse.serverError('Internal server error');
+            return res.status(500).json(response);
         }
     }
 
@@ -215,21 +286,25 @@ class PayrollController {
 
             const periodResult = await PayrollPeriod.findById(id);
             if (!periodResult.success || !periodResult.data) {
-                return errorResponse(res, 'Payroll period not found', 404);
+                const response = ApiResponse.notFound('Payroll period');
+                return res.status(404).json(response);
             }
 
             const period = periodResult.data;
             const result = await period.reopen();
 
             if (result.success) {
-                return successResponse(res, result.data, 'Payroll period reopened successfully');
+                const response = ApiResponse.success(result.data, 'Payroll period reopened successfully');
+                return res.status(200).json(response);
             }
 
-            return errorResponse(res, result.error, 400);
+            const response = ApiResponse.error(result.error, 'REOPEN_ERROR', null, 400);
+            return res.status(400).json(response);
 
         } catch (error) {
             console.error('Reopen payroll period error:', error);
-            return errorResponse(res, 'Internal server error', 500);
+            const response = ApiResponse.serverError('Internal server error');
+            return res.status(500).json(response);
         }
     }
 
@@ -240,21 +315,25 @@ class PayrollController {
 
             const periodResult = await PayrollPeriod.findById(id);
             if (!periodResult.success || !periodResult.data) {
-                return errorResponse(res, 'Payroll period not found', 404);
+                const response = ApiResponse.notFound('Payroll period');
+                return res.status(404).json(response);
             }
 
             const period = periodResult.data;
             const result = await period.markAsPaid();
 
             if (result.success) {
-                return successResponse(res, result.data, 'Payroll period marked as paid successfully');
+                const response = ApiResponse.success(result.data, 'Payroll period marked as paid successfully');
+                return res.status(200).json(response);
             }
 
-            return errorResponse(res, result.error, 400);
+            const response = ApiResponse.error(result.error, 'MARK_PAID_ERROR', null, 400);
+            return res.status(400).json(response);
 
         } catch (error) {
             console.error('Mark period as paid error:', error);
-            return errorResponse(res, 'Internal server error', 500);
+            const response = ApiResponse.serverError('Internal server error');
+            return res.status(500).json(response);
         }
     }
 
@@ -267,7 +346,8 @@ class PayrollController {
             // Get period
             const periodResult = await PayrollPeriod.findById(id);
             if (!periodResult.success || !periodResult.data) {
-                return errorResponse(res, 'Payroll period not found', 404);
+                const response = ApiResponse.notFound('Payroll period');
+                return res.status(404).json(response);
             }
 
             // Get employees
@@ -280,7 +360,8 @@ class PayrollController {
 
             const employeesResult = await Employee.findAll(employeeFilters);
             if (!employeesResult.success) {
-                return errorResponse(res, 'Failed to retrieve employees', 500);
+                const response = ApiResponse.error('Failed to retrieve employees', 'FETCH_ERROR', null, 500);
+                return res.status(500).json(response);
             }
 
             // Get existing payroll items for this period
@@ -298,7 +379,7 @@ class PayrollController {
                 };
             });
 
-            return successResponse(res, {
+            const response = ApiResponse.success({
                 employees: employees,
                 period: periodResult.data,
                 pagination: {
@@ -307,10 +388,12 @@ class PayrollController {
                     total: await Employee.getCount(employeeFilters)
                 }
             }, 'Period employees retrieved successfully');
+            return res.status(200).json(response);
 
         } catch (error) {
             console.error('Get period employees error:', error);
-            return errorResponse(res, 'Internal server error', 500);
+            const response = ApiResponse.serverError('Internal server error');
+            return res.status(500).json(response);
         }
     }
 
@@ -322,18 +405,21 @@ class PayrollController {
             const userId = req.session.user.id;
 
             if (!employees || !Array.isArray(employees) || employees.length === 0) {
-                return errorResponse(res, 'No employees provided for processing', 400);
+                const response = ApiResponse.error('No employees provided for processing', 'VALIDATION_ERROR', null, 400);
+                return res.status(400).json(response);
             }
 
             // Get period
             const periodResult = await PayrollPeriod.findById(id);
             if (!periodResult.success || !periodResult.data) {
-                return errorResponse(res, 'Payroll period not found', 404);
+                const response = ApiResponse.notFound('Payroll period');
+                return res.status(404).json(response);
             }
 
             const period = periodResult.data;
             if (!period.canEdit()) {
-                return errorResponse(res, `Cannot process employees for period with status: ${period.status}`, 400);
+                const response = ApiResponse.error(`Cannot process employees for period with status: ${period.status}`, 'INVALID_STATUS', null, 400);
+                return res.status(400).json(response);
             }
 
             // Get employee data
@@ -347,17 +433,20 @@ class PayrollController {
                 }
             }
 
-            // Validate employees
-            const validation = await this.validationEngine.validateBulkPayroll(
-                Object.values(employeeData), 
-                employees.reduce((acc, emp) => {
-                    acc[emp.employee_id] = { working_days: emp.working_days };
-                    return acc;
-                }, {})
-            );
+            // Validate employees (with fallback if validation engine failed to initialize)
+            if (this.validationEngine) {
+                const validation = await this.validationEngine.validateBulkPayroll(
+                    Object.values(employeeData), 
+                    employees.reduce((acc, emp) => {
+                        acc[emp.employee_id] = { working_days: emp.working_days };
+                        return acc;
+                    }, {})
+                );
 
-            if (!validation.isValid) {
-                return errorResponse(res, 'Employee validation failed', 400, validation.errors);
+                if (!validation.isValid) {
+                    const response = ApiResponse.validationError('Employee validation failed', validation.errors);
+                    return res.status(400).json(response);
+                }
             }
 
             // Process employees using bulk operation
@@ -370,14 +459,17 @@ class PayrollController {
                     await period.update();
                 }
 
-                return successResponse(res, result.data, 'Employees processed successfully');
+                const response = ApiResponse.success(result.data, 'Employees processed successfully');
+                return res.status(200).json(response);
             }
 
-            return errorResponse(res, result.error, 400, result.details);
+            const response = ApiResponse.error(result.error, 'PROCESS_ERROR', result.details, 400);
+            return res.status(400).json(response);
 
         } catch (error) {
             console.error('Process employees error:', error);
-            return errorResponse(res, 'Internal server error', 500);
+            const response = ApiResponse.serverError('Internal server error');
+            return res.status(500).json(response);
         }
     }
 
@@ -391,14 +483,81 @@ class PayrollController {
             const itemsResult = await PayrollItem.findByPeriod(id, filters);
 
             if (itemsResult.success) {
-                return successResponse(res, itemsResult.data, 'Payroll items retrieved successfully');
+                const response = ApiResponse.success(itemsResult.data, 'Payroll items retrieved successfully');
+                return res.status(200).json(response);
             }
 
-            return errorResponse(res, 'Failed to retrieve payroll items', 500);
+            const response = ApiResponse.error('Failed to retrieve payroll items', 'FETCH_ERROR', null, 500);
+            return res.status(500).json(response);
 
         } catch (error) {
             console.error('Get period payroll items error:', error);
-            return errorResponse(res, 'Internal server error', 500);
+            const response = ApiResponse.serverError('Internal server error');
+            return res.status(500).json(response);
+        }
+    }
+
+    // Get payroll summary for period
+    async getPeriodSummary(req, res) {
+        try {
+            const { id } = req.params;
+
+            // Get period
+            const periodResult = await PayrollPeriod.findById(id);
+            if (!periodResult.success || !periodResult.data) {
+                const response = ApiResponse.notFound('Payroll period');
+                return res.status(404).json(response);
+            }
+
+            const period = periodResult.data;
+
+            // Get payroll items for this period to calculate summary
+            const itemsResult = await PayrollItem.findByPeriod(id);
+            const payrollItems = itemsResult.success ? itemsResult.data : [];
+
+            // Calculate summary statistics
+            const summary = {
+                period_id: parseInt(id),
+                period_name: period.getPeriodName(),
+                total_employees: payrollItems.length,
+                total_basic_pay: 0,
+                total_allowances: 0,
+                total_deductions: 0,
+                total_gross_pay: 0,
+                total_net_pay: 0,
+                period_status: period.status,
+                items_by_status: {
+                    draft: 0,
+                    calculated: 0,
+                    finalized: 0,
+                    paid: 0
+                }
+            };
+
+            // Calculate totals from payroll items
+            payrollItems.forEach(item => {
+                summary.total_basic_pay += parseFloat(item.basic_pay || 0);
+                summary.total_allowances += parseFloat(item.total_allowances || 0);
+                summary.total_deductions += parseFloat(item.total_deductions || 0);
+                summary.total_gross_pay += parseFloat(item.gross_pay || 0);
+                summary.total_net_pay += parseFloat(item.net_pay || 0);
+                
+                // Count items by status
+                const status = (item.status || 'draft').toLowerCase();
+                if (summary.items_by_status.hasOwnProperty(status)) {
+                    summary.items_by_status[status]++;
+                } else {
+                    summary.items_by_status[status] = 1;
+                }
+            });
+
+            const response = ApiResponse.success(summary, 'Payroll summary retrieved successfully');
+            return res.status(200).json(response);
+
+        } catch (error) {
+            console.error('Get payroll summary error:', error);
+            const response = ApiResponse.serverError('Internal server error');
+            return res.status(500).json(response);
         }
     }
 
@@ -408,14 +567,17 @@ class PayrollController {
             const statisticsResult = await PayrollPeriod.getStatistics();
 
             if (statisticsResult.success) {
-                return successResponse(res, statisticsResult.data, 'Payroll statistics retrieved successfully');
+                const response = ApiResponse.success(statisticsResult.data, 'Payroll statistics retrieved successfully');
+                return res.status(200).json(response);
             }
 
-            return errorResponse(res, 'Failed to retrieve payroll statistics', 500);
+            const response = ApiResponse.error('Failed to retrieve payroll statistics', 'FETCH_ERROR', null, 500);
+            return res.status(500).json(response);
 
         } catch (error) {
             console.error('Get payroll statistics error:', error);
-            return errorResponse(res, 'Internal server error', 500);
+            const response = ApiResponse.serverError('Internal server error');
+            return res.status(500).json(response);
         }
     }
 
@@ -425,14 +587,17 @@ class PayrollController {
             const periodResult = await PayrollPeriod.getCurrentPeriod();
 
             if (periodResult.success) {
-                return successResponse(res, periodResult.data, 'Current period retrieved successfully');
+                const response = ApiResponse.success(periodResult.data, 'Current period retrieved successfully');
+                return res.status(200).json(response);
             }
 
-            return errorResponse(res, 'No active payroll period found', 404);
+            const response = ApiResponse.notFound('Active payroll period');
+            return res.status(404).json(response);
 
         } catch (error) {
             console.error('Get current period error:', error);
-            return errorResponse(res, 'Internal server error', 500);
+            const response = ApiResponse.serverError('Internal server error');
+            return res.status(500).json(response);
         }
     }
 
@@ -444,20 +609,24 @@ class PayrollController {
             const userId = req.session.user.id;
 
             if (!item_ids || !Array.isArray(item_ids) || item_ids.length === 0) {
-                return errorResponse(res, 'No payroll items provided', 400);
+                const response = ApiResponse.error('No payroll items provided', 'VALIDATION_ERROR', null, 400);
+                return res.status(400).json(response);
             }
 
             const result = await PayrollItem.bulkMarkPaid(item_ids, userId);
 
             if (result.success) {
-                return successResponse(res, result.data, 'Payroll items marked as paid successfully');
+                const response = ApiResponse.success(result.data, 'Payroll items marked as paid successfully');
+                return res.status(200).json(response);
             }
 
-            return errorResponse(res, 'Failed to mark payroll items as paid', 500);
+            const response = ApiResponse.error('Failed to mark payroll items as paid', 'MARK_PAID_ERROR', null, 500);
+            return res.status(500).json(response);
 
         } catch (error) {
             console.error('Bulk mark as paid error:', error);
-            return errorResponse(res, 'Internal server error', 500);
+            const response = ApiResponse.serverError('Internal server error');
+            return res.status(500).json(response);
         }
     }
 }

@@ -45,54 +45,74 @@ class PayrollService {
 
   // Allowance Types
   async getAllowanceTypes(): Promise<PayrollResponse<AllowanceType[]>> {
-    return api.get<PayrollResponse<AllowanceType[]>>('/payroll/config/allowance-types');
+    return api.get<PayrollResponse<AllowanceType[]>>('/payroll/allowance-types');
   }
 
   async createAllowanceType(data: Partial<AllowanceType>): Promise<PayrollResponse<AllowanceType>> {
-    return api.post<PayrollResponse<AllowanceType>>('/payroll/config/allowance-types', data);
+    return api.post<PayrollResponse<AllowanceType>>('/payroll/allowance-types', data);
   }
 
   async updateAllowanceType(id: number, data: Partial<AllowanceType>): Promise<PayrollResponse<AllowanceType>> {
-    return api.put<PayrollResponse<AllowanceType>>(`/payroll/config/allowance-types/${id}`, data);
+    return api.put<PayrollResponse<AllowanceType>>(`/payroll/allowance-types/${id}`, data);
   }
 
   async deleteAllowanceType(id: number): Promise<PayrollResponse<void>> {
-    return api.delete<PayrollResponse<void>>(`/payroll/config/allowance-types/${id}`);
+    return api.delete<PayrollResponse<void>>(`/payroll/allowance-types/${id}`);
+  }
+
+  async toggleAllowanceType(id: number): Promise<PayrollResponse<AllowanceType>> {
+    return api.post<PayrollResponse<AllowanceType>>(`/payroll/allowance-types/${id}/toggle`);
   }
 
   // Deduction Types
   async getDeductionTypes(): Promise<PayrollResponse<DeductionType[]>> {
-    return api.get<PayrollResponse<DeductionType[]>>('/payroll/config/deduction-types');
+    return api.get<PayrollResponse<DeductionType[]>>('/payroll/deduction-types');
   }
 
   async createDeductionType(data: Partial<DeductionType>): Promise<PayrollResponse<DeductionType>> {
-    return api.post<PayrollResponse<DeductionType>>('/payroll/config/deduction-types', data);
+    return api.post<PayrollResponse<DeductionType>>('/payroll/deduction-types', data);
   }
 
   async updateDeductionType(id: number, data: Partial<DeductionType>): Promise<PayrollResponse<DeductionType>> {
-    return api.put<PayrollResponse<DeductionType>>(`/payroll/config/deduction-types/${id}`, data);
+    return api.put<PayrollResponse<DeductionType>>(`/payroll/deduction-types/${id}`, data);
   }
 
   async deleteDeductionType(id: number): Promise<PayrollResponse<void>> {
-    return api.delete<PayrollResponse<void>>(`/payroll/config/deduction-types/${id}`);
+    return api.delete<PayrollResponse<void>>(`/payroll/deduction-types/${id}`);
+  }
+
+  async toggleDeductionType(id: number): Promise<PayrollResponse<DeductionType>> {
+    return api.post<PayrollResponse<DeductionType>>(`/payroll/deduction-types/${id}/toggle`);
   }
 
   // Employee Overrides
   async getEmployeeOverrides(employeeId?: number): Promise<PayrollResponse<EmployeeOverride[]>> {
-    const url = employeeId ? `/payroll/config/overrides?employee_id=${employeeId}` : '/payroll/config/overrides';
+    const url = employeeId ? `/payroll/overrides?employee_id=${employeeId}` : '/payroll/overrides';
     return api.get<PayrollResponse<EmployeeOverride[]>>(url);
   }
 
-  async createEmployeeOverride(data: Partial<EmployeeOverride>): Promise<PayrollResponse<EmployeeOverride>> {
-    return api.post<PayrollResponse<EmployeeOverride>>('/payroll/config/overrides', data);
+  async createAllowanceOverride(data: Partial<EmployeeOverride>): Promise<PayrollResponse<EmployeeOverride>> {
+    return api.post<PayrollResponse<EmployeeOverride>>('/payroll/overrides/allowances', data);
   }
 
-  async updateEmployeeOverride(id: number, data: Partial<EmployeeOverride>): Promise<PayrollResponse<EmployeeOverride>> {
-    return api.put<PayrollResponse<EmployeeOverride>>(`/payroll/config/overrides/${id}`, data);
+  async createDeductionOverride(data: Partial<EmployeeOverride>): Promise<PayrollResponse<EmployeeOverride>> {
+    return api.post<PayrollResponse<EmployeeOverride>>('/payroll/overrides/deductions', data);
   }
 
-  async deleteEmployeeOverride(id: number): Promise<PayrollResponse<void>> {
-    return api.delete<PayrollResponse<void>>(`/payroll/config/overrides/${id}`);
+  async updateAllowanceOverride(id: number, data: Partial<EmployeeOverride>): Promise<PayrollResponse<EmployeeOverride>> {
+    return api.put<PayrollResponse<EmployeeOverride>>(`/payroll/overrides/allowances/${id}`, data);
+  }
+
+  async updateDeductionOverride(id: number, data: Partial<EmployeeOverride>): Promise<PayrollResponse<EmployeeOverride>> {
+    return api.put<PayrollResponse<EmployeeOverride>>(`/payroll/overrides/deductions/${id}`, data);
+  }
+
+  async deleteAllowanceOverride(id: number): Promise<PayrollResponse<void>> {
+    return api.delete<PayrollResponse<void>>(`/payroll/overrides/allowances/${id}`);
+  }
+
+  async deleteDeductionOverride(id: number): Promise<PayrollResponse<void>> {
+    return api.delete<PayrollResponse<void>>(`/payroll/overrides/deductions/${id}`);
   }
 
   // Payroll Items

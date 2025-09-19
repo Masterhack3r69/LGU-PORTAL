@@ -306,6 +306,11 @@ const logSensitiveOperation = (req, res, next) => {
 
 // Middleware to rate limit payroll operations
 const rateLimitPayroll = (req, res, next) => {
+    // Skip rate limiting if user is not authenticated
+    if (!req.session?.user?.id) {
+        return next();
+    }
+
     // Simple in-memory rate limiting (in production, use Redis)
     if (!global.payrollRateLimit) {
         global.payrollRateLimit = new Map();

@@ -7,6 +7,32 @@ const { successResponse, errorResponse } = require('../utils/apiResponse');
 class PayrollConfigController {
     constructor() {
         this.overrideService = new PayrollOverrideService();
+        
+        // Bind all methods to preserve 'this' context
+        this.getAllowanceTypes = this.getAllowanceTypes.bind(this);
+        this.getAllowanceType = this.getAllowanceType.bind(this);
+        this.createAllowanceType = this.createAllowanceType.bind(this);
+        this.updateAllowanceType = this.updateAllowanceType.bind(this);
+        this.deleteAllowanceType = this.deleteAllowanceType.bind(this);
+        this.toggleAllowanceType = this.toggleAllowanceType.bind(this);
+        this.getDeductionTypes = this.getDeductionTypes.bind(this);
+        this.getDeductionType = this.getDeductionType.bind(this);
+        this.createDeductionType = this.createDeductionType.bind(this);
+        this.updateDeductionType = this.updateDeductionType.bind(this);
+        this.deleteDeductionType = this.deleteDeductionType.bind(this);
+        this.toggleDeductionType = this.toggleDeductionType.bind(this);
+        this.getAllOverrides = this.getAllOverrides.bind(this);
+        this.getEmployeeOverrides = this.getEmployeeOverrides.bind(this);
+        this.createAllowanceOverride = this.createAllowanceOverride.bind(this);
+        this.createDeductionOverride = this.createDeductionOverride.bind(this);
+        this.updateAllowanceOverride = this.updateAllowanceOverride.bind(this);
+        this.updateDeductionOverride = this.updateDeductionOverride.bind(this);
+        this.deleteAllowanceOverride = this.deleteAllowanceOverride.bind(this);
+        this.deleteDeductionOverride = this.deleteDeductionOverride.bind(this);
+        this.getEmployeeOverrideSummary = this.getEmployeeOverrideSummary.bind(this);
+        this.bulkCreateAllowanceOverrides = this.bulkCreateAllowanceOverrides.bind(this);
+        this.bulkCreateDeductionOverrides = this.bulkCreateDeductionOverrides.bind(this);
+        this.getConfigurationStatistics = this.getConfigurationStatistics.bind(this);
     }
 
     // ===== ALLOWANCE TYPES =====
@@ -307,6 +333,32 @@ class PayrollConfigController {
 
     // ===== EMPLOYEE OVERRIDES =====
 
+    // Get all overrides (for management)
+    async getAllOverrides(req, res) {
+        try {
+            const filters = {
+                employee_id: req.query.employee_id,
+                type: req.query.type,
+                is_active: req.query.is_active !== undefined ? req.query.is_active === 'true' : undefined,
+                search: req.query.search,
+                limit: req.query.limit || 50,
+                offset: req.query.offset || 0
+            };
+
+            const result = await this.overrideService.getAllOverrides(filters);
+
+            if (result.success) {
+                return successResponse(res, result.data, 'Overrides retrieved successfully');
+            }
+
+            return errorResponse(res, result.error, 500);
+
+        } catch (error) {
+            console.error('Get all overrides error:', error);
+            return errorResponse(res, 'Internal server error', 500);
+        }
+    }
+
     // Get employee overrides
     async getEmployeeOverrides(req, res) {
         try {
@@ -314,6 +366,11 @@ class PayrollConfigController {
             const filters = {
                 is_active: req.query.is_active !== undefined ? req.query.is_active === 'true' : undefined
             };
+
+            // Ensure service is available
+            if (!this.overrideService) {
+                this.overrideService = new PayrollOverrideService();
+            }
 
             const result = await this.overrideService.getEmployeeOverrides(employeeId, filters);
 
@@ -335,6 +392,11 @@ class PayrollConfigController {
             const overrideData = req.body;
             const userId = req.session.user.id;
 
+            // Ensure service is available
+            if (!this.overrideService) {
+                this.overrideService = new PayrollOverrideService();
+            }
+
             const result = await this.overrideService.createAllowanceOverride(overrideData, userId);
 
             if (result.success) {
@@ -354,6 +416,11 @@ class PayrollConfigController {
         try {
             const overrideData = req.body;
             const userId = req.session.user.id;
+
+            // Ensure service is available
+            if (!this.overrideService) {
+                this.overrideService = new PayrollOverrideService();
+            }
 
             const result = await this.overrideService.createDeductionOverride(overrideData, userId);
 
@@ -376,6 +443,11 @@ class PayrollConfigController {
             const updateData = req.body;
             const userId = req.session.user.id;
 
+            // Ensure service is available
+            if (!this.overrideService) {
+                this.overrideService = new PayrollOverrideService();
+            }
+
             const result = await this.overrideService.updateAllowanceOverride(id, updateData, userId);
 
             if (result.success) {
@@ -397,6 +469,11 @@ class PayrollConfigController {
             const updateData = req.body;
             const userId = req.session.user.id;
 
+            // Ensure service is available
+            if (!this.overrideService) {
+                this.overrideService = new PayrollOverrideService();
+            }
+
             const result = await this.overrideService.updateDeductionOverride(id, updateData, userId);
 
             if (result.success) {
@@ -416,6 +493,11 @@ class PayrollConfigController {
         try {
             const { id } = req.params;
             const userId = req.session.user.id;
+
+            // Ensure service is available
+            if (!this.overrideService) {
+                this.overrideService = new PayrollOverrideService();
+            }
 
             const result = await this.overrideService.deleteAllowanceOverride(id, userId);
 
@@ -437,6 +519,11 @@ class PayrollConfigController {
             const { id } = req.params;
             const userId = req.session.user.id;
 
+            // Ensure service is available
+            if (!this.overrideService) {
+                this.overrideService = new PayrollOverrideService();
+            }
+
             const result = await this.overrideService.deleteDeductionOverride(id, userId);
 
             if (result.success) {
@@ -455,6 +542,11 @@ class PayrollConfigController {
     async getEmployeeOverrideSummary(req, res) {
         try {
             const { employeeId } = req.params;
+
+            // Ensure service is available
+            if (!this.overrideService) {
+                this.overrideService = new PayrollOverrideService();
+            }
 
             const result = await this.overrideService.getEmployeeOverrideSummary(employeeId);
 
@@ -480,6 +572,11 @@ class PayrollConfigController {
                 return errorResponse(res, 'Invalid overrides data', 400);
             }
 
+            // Ensure service is available
+            if (!this.overrideService) {
+                this.overrideService = new PayrollOverrideService();
+            }
+
             const result = await this.overrideService.bulkCreateAllowanceOverrides(overrides, userId);
 
             if (result.success) {
@@ -502,6 +599,11 @@ class PayrollConfigController {
 
             if (!overrides || !Array.isArray(overrides)) {
                 return errorResponse(res, 'Invalid overrides data', 400);
+            }
+
+            // Ensure service is available
+            if (!this.overrideService) {
+                this.overrideService = new PayrollOverrideService();
             }
 
             const result = await this.overrideService.bulkCreateDeductionOverrides(overrides, userId);
