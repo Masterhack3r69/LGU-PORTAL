@@ -177,6 +177,15 @@ export interface PayrollFilter {
   limit?: number;
 }
 
+export interface EmployeeOverridesResponse {
+  overrides: EmployeeOverride[];
+  pagination: {
+    total: number;
+    limit: number;
+    offset: number;
+  };
+}
+
 export interface PayrollResponse<T> {
   success: boolean;
   data: T;

@@ -5,6 +5,7 @@ import type {
   DeductionType,
   PayrollItem,
   EmployeeOverride,
+  EmployeeOverridesResponse,
   PayrollCalculationRequest,
   PayrollCalculationResult,
   PayslipData,
@@ -86,9 +87,9 @@ class PayrollService {
   }
 
   // Employee Overrides
-  async getEmployeeOverrides(employeeId?: number): Promise<PayrollResponse<EmployeeOverride[]>> {
+  async getEmployeeOverrides(employeeId?: number): Promise<PayrollResponse<EmployeeOverridesResponse>> {
     const url = employeeId ? `/payroll/overrides?employee_id=${employeeId}` : '/payroll/overrides';
-    return api.get<PayrollResponse<EmployeeOverride[]>>(url);
+    return api.get<PayrollResponse<EmployeeOverridesResponse>>(url);
   }
 
   async createAllowanceOverride(data: Partial<EmployeeOverride>): Promise<PayrollResponse<EmployeeOverride>> {

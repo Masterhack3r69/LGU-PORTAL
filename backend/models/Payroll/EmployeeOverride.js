@@ -14,6 +14,11 @@ class EmployeeOverride {
         this.created_at = data.created_at || null;
         this.updated_at = data.updated_at || null;
         this.created_by = data.created_by || null;
+
+        // Handle joined data
+        this.employee = data.employee || null;
+        this.allowance_type = data.allowance_type || null;
+        this.deduction_type = data.deduction_type || null;
     }
 }
 

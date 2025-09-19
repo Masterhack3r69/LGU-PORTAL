@@ -76,7 +76,25 @@ class PayrollOverrideService {
             const limit = parseInt(filters.limit) || 50;
             const paginatedOverrides = allOverrides.slice(start, start + limit);
 
-            results.overrides = paginatedOverrides;
+            // Transform data to match frontend expectations
+            results.overrides = paginatedOverrides.map(override => ({
+                id: override.id,
+                employee_id: override.employee_id,
+                type: override.type,
+                type_id: override.type === 'allowance' ? override.allowance_type_id : override.deduction_type_id,
+                amount: parseFloat(override.override_amount) || 0,
+                effective_from: override.effective_date ? new Date(override.effective_date).toISOString().split('T')[0] : null,
+                effective_to: override.end_date ? new Date(override.end_date).toISOString().split('T')[0] : null,
+                is_active: Boolean(override.is_active),
+                created_at: override.created_at,
+                updated_at: override.updated_at,
+                created_by: override.created_by,
+                // Include joined data
+                employee: override.employee,
+                allowance_type: override.allowance_type,
+                deduction_type: override.deduction_type
+            }));
+
             results.pagination.total = allOverrides.length;
 
             return {

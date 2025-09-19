@@ -66,8 +66,10 @@ export function EmployeeOverridesManagement() {
         payrollService.getDeductionTypes()
       ]);
 
+      // Debug logging removed
+
       if (overridesRes.success) {
-        const overridesData = Array.isArray(overridesRes.data) ? overridesRes.data : [];
+        const overridesData = overridesRes.data?.overrides || [];
         setOverrides(overridesData);
       }
 
@@ -100,8 +102,8 @@ export function EmployeeOverridesManagement() {
 
       const response = await payrollService.getEmployeeOverrides();
       if (response.success) {
-        let overridesData = Array.isArray(response.data) ? response.data : [];
-        
+        let overridesData = response.data?.overrides || [];
+
         // Apply client-side filtering if needed
         if (filters.employee_id) {
           overridesData = overridesData.filter(o => o.employee_id.toString() === filters.employee_id);
@@ -110,13 +112,13 @@ export function EmployeeOverridesManagement() {
           overridesData = overridesData.filter(o => o.type === filters.type);
         }
         if (filters.search) {
-          overridesData = overridesData.filter(o => 
+          overridesData = overridesData.filter(o =>
             o.employee?.full_name?.toLowerCase().includes(filters.search.toLowerCase()) ||
             o.allowance_type?.name?.toLowerCase().includes(filters.search.toLowerCase()) ||
             o.deduction_type?.name?.toLowerCase().includes(filters.search.toLowerCase())
           );
         }
-        
+
         setOverrides(overridesData);
       }
     } catch (error) {
