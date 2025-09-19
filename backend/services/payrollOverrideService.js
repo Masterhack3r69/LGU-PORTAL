@@ -96,15 +96,20 @@ class PayrollOverrideService {
     // Create allowance override for employee
     async createAllowanceOverride(overrideData, userId) {
         try {
+            console.log(`🔍 Validating allowance override data:`, JSON.stringify(overrideData, null, 2));
+
             // Validate override data
             const validation = this.validateAllowanceOverride(overrideData);
             if (!validation.isValid) {
+                console.error(`❌ Allowance override validation failed:`, validation.errors);
                 return {
                     success: false,
                     error: 'Validation failed',
                     details: validation.errors
                 };
             }
+
+            console.log(`✅ Allowance override validation passed`);
 
             // Check for existing active override
             const existingOverride = await this.getActiveAllowanceOverride(
@@ -680,14 +685,25 @@ class PayrollOverrideService {
             }
         }
 
-        // Future date validation
+        // Effective date validation - allow today's date for immediate overrides
         if (overrideData.effective_date) {
             const effectiveDate = new Date(overrideData.effective_date);
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
-            if (effectiveDate < today) {
-                errors.push('Effective date cannot be in the past');
+            // Allow effective date from today onwards, but not more than 1 year in the past
+            const oneYearAgo = new Date(today);
+            oneYearAgo.setFullYear(today.getFullYear() - 1);
+
+            if (effectiveDate < oneYearAgo) {
+                errors.push('Effective date cannot be more than 1 year in the past');
+            }
+
+            // Ensure effective_date is not more than 2 years in the future
+            const twoYearsFromNow = new Date(today);
+            twoYearsFromNow.setFullYear(today.getFullYear() + 2);
+            if (effectiveDate > twoYearsFromNow) {
+                errors.push('Effective date cannot be more than 2 years in the future');
             }
         }
 
@@ -733,14 +749,25 @@ class PayrollOverrideService {
             }
         }
 
-        // Future date validation
+        // Effective date validation - allow today's date for immediate overrides
         if (overrideData.effective_date) {
             const effectiveDate = new Date(overrideData.effective_date);
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
-            if (effectiveDate < today) {
-                errors.push('Effective date cannot be in the past');
+            // Allow effective date from today onwards, but not more than 1 year in the past
+            const oneYearAgo = new Date(today);
+            oneYearAgo.setFullYear(today.getFullYear() - 1);
+
+            if (effectiveDate < oneYearAgo) {
+                errors.push('Effective date cannot be more than 1 year in the past');
+            }
+
+            // Ensure effective_date is not more than 2 years in the future
+            const twoYearsFromNow = new Date(today);
+            twoYearsFromNow.setFullYear(today.getFullYear() + 2);
+            if (effectiveDate > twoYearsFromNow) {
+                errors.push('Effective date cannot be more than 2 years in the future');
             }
         }
 

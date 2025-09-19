@@ -201,17 +201,19 @@ class EmployeeAllowanceOverride extends EmployeeOverride {
         }
     }
 
-    static async getActiveOverride(employeeId, allowanceTypeId) {
+    static async getActiveOverride(employeeId, allowanceTypeId, date = new Date()) {
+        const dateStr = date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
         const query = `
-            SELECT * FROM employee_overrides 
-            WHERE employee_id = ? AND type = 'allowance' AND type_id = ? 
-            AND is_active = 1 
-            AND (effective_to IS NULL OR effective_to >= CURDATE())
-            ORDER BY created_at DESC 
+            SELECT * FROM employee_allowance_overrides
+            WHERE employee_id = ? AND allowance_type_id = ?
+            AND is_active = 1
+            AND effective_date <= ?
+            AND (end_date IS NULL OR end_date >= ?)
+            ORDER BY created_at DESC
             LIMIT 1
         `;
-        
-        const result = await executeQuery(query, [employeeId, allowanceTypeId]);
+
+        const result = await executeQuery(query, [employeeId, allowanceTypeId, dateStr, dateStr]);
         if (result.success && result.data.length > 0) {
             return {
                 success: true,
@@ -406,17 +408,19 @@ class EmployeeDeductionOverride extends EmployeeOverride {
         }
     }
 
-    static async getActiveOverride(employeeId, deductionTypeId) {
+    static async getActiveOverride(employeeId, deductionTypeId, date = new Date()) {
+        const dateStr = date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
         const query = `
-            SELECT * FROM employee_overrides 
-            WHERE employee_id = ? AND type = 'deduction' AND type_id = ? 
-            AND is_active = 1 
-            AND (effective_to IS NULL OR effective_to >= CURDATE())
-            ORDER BY created_at DESC 
+            SELECT * FROM employee_deduction_overrides
+            WHERE employee_id = ? AND deduction_type_id = ?
+            AND is_active = 1
+            AND effective_date <= ?
+            AND (end_date IS NULL OR end_date >= ?)
+            ORDER BY created_at DESC
             LIMIT 1
         `;
-        
-        const result = await executeQuery(query, [employeeId, deductionTypeId]);
+
+        const result = await executeQuery(query, [employeeId, deductionTypeId, dateStr, dateStr]);
         if (result.success && result.data.length > 0) {
             return {
                 success: true,

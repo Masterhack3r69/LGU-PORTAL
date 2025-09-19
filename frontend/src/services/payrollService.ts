@@ -92,19 +92,63 @@ class PayrollService {
   }
 
   async createAllowanceOverride(data: Partial<EmployeeOverride>): Promise<PayrollResponse<EmployeeOverride>> {
-    return api.post<PayrollResponse<EmployeeOverride>>('/payroll/overrides/allowances', data);
+    // Map frontend field names to backend expected field names
+    const payload = {
+      employee_id: data.employee_id,
+      allowance_type_id: data.type_id,
+      override_amount: data.amount,
+      effective_date: data.effective_from,
+      end_date: data.effective_to,
+      is_active: data.is_active ?? true,
+      created_by: data.created_by
+    };
+
+    return api.post<PayrollResponse<EmployeeOverride>>('/payroll/overrides/allowances', payload);
   }
 
   async createDeductionOverride(data: Partial<EmployeeOverride>): Promise<PayrollResponse<EmployeeOverride>> {
-    return api.post<PayrollResponse<EmployeeOverride>>('/payroll/overrides/deductions', data);
+    // Map frontend field names to backend expected field names
+    const payload = {
+      employee_id: data.employee_id,
+      deduction_type_id: data.type_id,
+      override_amount: data.amount,
+      effective_date: data.effective_from,
+      end_date: data.effective_to,
+      is_active: data.is_active ?? true,
+      created_by: data.created_by
+    };
+
+    return api.post<PayrollResponse<EmployeeOverride>>('/payroll/overrides/deductions', payload);
   }
 
   async updateAllowanceOverride(id: number, data: Partial<EmployeeOverride>): Promise<PayrollResponse<EmployeeOverride>> {
-    return api.put<PayrollResponse<EmployeeOverride>>(`/payroll/overrides/allowances/${id}`, data);
+    // Map frontend field names to backend expected field names
+    const payload = {
+      employee_id: data.employee_id,
+      allowance_type_id: data.type_id,
+      override_amount: data.amount,
+      effective_date: data.effective_from,
+      end_date: data.effective_to,
+      is_active: data.is_active,
+      created_by: data.created_by
+    };
+
+    return api.put<PayrollResponse<EmployeeOverride>>(`/payroll/overrides/allowances/${id}`, payload);
   }
 
   async updateDeductionOverride(id: number, data: Partial<EmployeeOverride>): Promise<PayrollResponse<EmployeeOverride>> {
-    return api.put<PayrollResponse<EmployeeOverride>>(`/payroll/overrides/deductions/${id}`, data);
+    // Map frontend field names to backend expected field names
+    const payload = {
+      employee_id: data.employee_id,
+      deduction_type_id: data.type_id,
+      override_amount: data.amount,
+      effective_date: data.effective_from,
+      end_date: data.effective_to,
+      is_active: data.is_active,
+      created_by: data.created_by
+    };
+
+    return api.put<PayrollResponse<EmployeeOverride>>(`/payroll/overrides/deductions/${id}`, payload);
   }
 
   async deleteAllowanceOverride(id: number): Promise<PayrollResponse<void>> {

@@ -392,6 +392,11 @@ class PayrollConfigController {
             const overrideData = req.body;
             const userId = req.session.user.id;
 
+            // Diagnostic logging
+            console.log(`🔧 Creating allowance override: User=${userId}, Time=${new Date().toISOString()}`);
+            console.log(`   Request data:`, JSON.stringify(overrideData, null, 2));
+            console.log(`   Session info: User=${req.session.user.username}, Role=${req.session.user.role}`);
+
             // Ensure service is available
             if (!this.overrideService) {
                 this.overrideService = new PayrollOverrideService();
@@ -400,13 +405,20 @@ class PayrollConfigController {
             const result = await this.overrideService.createAllowanceOverride(overrideData, userId);
 
             if (result.success) {
+                console.log(`✅ Allowance override created successfully: ID=${result.data.id}`);
                 return successResponse(res, result.data, result.message, 201);
+            }
+
+            console.error(`❌ Allowance override creation failed: ${result.error}`);
+            if (result.details) {
+                console.error(`   Validation details:`, result.details);
             }
 
             return errorResponse(res, result.error, 400, result.details);
 
         } catch (error) {
             console.error('Create allowance override error:', error);
+            console.error('   Stack trace:', error.stack);
             return errorResponse(res, 'Internal server error', 500);
         }
     }

@@ -23,7 +23,7 @@ const TEST_DATA = {
     employee_id: 37,
     allowance_type_id: 5,
     override_amount: 5000.00,
-    effective_date: effectiveDate.toISOString().split('T')[0], // Format as YYYY-MM-DD
+    effective_date: new Date().toISOString().split('T')[0], // Today's date
     end_date: endDate.toISOString().split('T')[0],
     reason: 'Performance bonus - overtime pay increase',
     is_active: true

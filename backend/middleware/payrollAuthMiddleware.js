@@ -337,7 +337,7 @@ const rateLimitPayroll = (req, res, next) => {
     next();
 };
 
-// Middleware to validate request timing (business hours check)
+// Middleware to validate request timing (business hours check) - No longer blocking
 const validateBusinessHours = (req, res, next) => {
     // Skip validation for read operations
     if (req.method === 'GET') {
@@ -350,10 +350,12 @@ const validateBusinessHours = (req, res, next) => {
 
     // Business hours: Monday-Friday, 6 AM - 10 PM
     const isBusinessHours = day >= 1 && day <= 5 && hour >= 6 && hour <= 22;
-    
+
     if (!isBusinessHours) {
-        // Allow but log warning for operations outside business hours
-        console.warn(`⚠️ Payroll operation outside business hours: ${req.method} ${req.originalUrl} at ${now.toISOString()}`);
+        // Log for monitoring but allow all operations (including employee overrides)
+        console.log(`📝 Payroll operation outside business hours: ${req.method} ${req.originalUrl} at ${now.toISOString()}`);
+        console.log(`   Request details: User=${req.session?.user?.id || 'unknown'}, IP=${req.ip}, User-Agent=${req.get('User-Agent')}`);
+        console.log(`   Request body keys: ${Object.keys(req.body || {}).join(', ')}`);
     }
 
     next();
