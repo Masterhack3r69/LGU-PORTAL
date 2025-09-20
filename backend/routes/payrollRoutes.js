@@ -119,6 +119,9 @@ router.get('/items/:id/calculation-details', requirePayrollAccess, validateItemA
 // GET /api/payroll/items/:id/payslip - Generate payslip for payroll item
 router.get('/items/:id/payslip', requirePayrollAccess, validateItemAccess, payrollItemController.generatePayslip);
 
+// POST /api/payroll/items/:id/download-payslip - Download payslip as PDF blob
+router.post('/items/:id/download-payslip', requirePayrollAccess, validateItemAccess, payrollItemController.downloadPayslip);
+
 // ===== EMPLOYEE PAYROLL ROUTES =====
 
 // GET /api/payroll/employees/:employeeId/items - Get payroll items for employee

@@ -20,6 +20,106 @@ class EmployeeOverride {
         this.allowance_type = data.allowance_type || null;
         this.deduction_type = data.deduction_type || null;
     }
+
+    // Static method to get all active overrides for an employee
+    static async getActiveOverridesForEmployee(employeeId, date = new Date()) {
+        try {
+            const dateStr = date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+
+            // Get active allowance overrides
+            const allowanceQuery = `
+                SELECT
+                    'allowance' as override_type,
+                    eao.allowance_type_id,
+                    eao.override_amount,
+                    eao.effective_date,
+                    eao.end_date,
+                    at.name as type_name,
+                    at.code as type_code
+                FROM employee_allowance_overrides eao
+                LEFT JOIN allowance_types at ON eao.allowance_type_id = at.id
+                WHERE eao.employee_id = ?
+                AND eao.is_active = 1
+                AND eao.effective_date <= ?
+                AND (eao.end_date IS NULL OR eao.end_date >= ?)
+            `;
+
+            // Get active deduction overrides
+            const deductionQuery = `
+                SELECT
+                    'deduction' as override_type,
+                    edo.deduction_type_id,
+                    edo.override_amount,
+                    edo.effective_date,
+                    edo.end_date,
+                    dt.name as type_name,
+                    dt.code as type_code
+                FROM employee_deduction_overrides edo
+                LEFT JOIN deduction_types dt ON edo.deduction_type_id = dt.id
+                WHERE edo.employee_id = ?
+                AND edo.is_active = 1
+                AND edo.effective_date <= ?
+                AND (edo.end_date IS NULL OR edo.end_date >= ?)
+            `;
+
+            const [allowanceResult, deductionResult] = await Promise.all([
+                executeQuery(allowanceQuery, [employeeId, dateStr, dateStr]),
+                executeQuery(deductionQuery, [employeeId, dateStr, dateStr])
+            ]);
+
+            if (!allowanceResult.success || !deductionResult.success) {
+                return {
+                    success: false,
+                    error: 'Failed to fetch employee overrides'
+                };
+            }
+
+            // Combine and format the results
+            const overrides = [];
+
+            // Add allowance overrides
+            if (allowanceResult.data) {
+                allowanceResult.data.forEach(row => {
+                    overrides.push({
+                        override_type: 'allowance',
+                        allowance_type_id: row.allowance_type_id,
+                        override_amount: parseFloat(row.override_amount),
+                        effective_date: row.effective_date,
+                        end_date: row.end_date,
+                        type_name: row.type_name,
+                        type_code: row.type_code
+                    });
+                });
+            }
+
+            // Add deduction overrides
+            if (deductionResult.data) {
+                deductionResult.data.forEach(row => {
+                    overrides.push({
+                        override_type: 'deduction',
+                        deduction_type_id: row.deduction_type_id,
+                        override_amount: parseFloat(row.override_amount),
+                        effective_date: row.effective_date,
+                        end_date: row.end_date,
+                        type_name: row.type_name,
+                        type_code: row.type_code
+                    });
+                });
+            }
+
+            return {
+                success: true,
+                data: overrides
+            };
+
+        } catch (error) {
+            console.error('Error fetching active overrides for employee:', error);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
 }
 
 class EmployeeAllowanceOverride extends EmployeeOverride {

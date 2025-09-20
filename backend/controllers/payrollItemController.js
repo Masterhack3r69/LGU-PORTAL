@@ -25,6 +25,7 @@ class PayrollItemController {
         this.addManualAdjustment = this.addManualAdjustment.bind(this);
         this.getCalculationDetails = this.getCalculationDetails.bind(this);
         this.generatePayslip = this.generatePayslip.bind(this);
+        this.downloadPayslip = this.downloadPayslip.bind(this);
     }
 
     // Get all payroll items with filters
@@ -510,17 +511,112 @@ class PayrollItemController {
                 return detailsResult;
             }
 
-            // For now, return the calculation details as the payslip
-            // In a full implementation, this would generate a PDF or formatted document
-            return successResponse(res, {
+            // Generate PDF payslip
+            const payslipData = {
                 payslip_id: id,
                 generated_at: new Date().toISOString(),
                 generated_by: userId,
                 ...detailsResult.data
-            }, 'Payslip generated successfully');
+            };
+
+            // Import PDF service
+            const payslipPdfService = require('../services/payslipPdfService');
+
+            try {
+                const pdfBuffer = await payslipPdfService.generatePayslipPDF(payslipData);
+
+                // Set response headers for PDF download
+                const fileName = `payslip_${payslipData.employee.employee_number}_${Date.now()}.pdf`;
+                res.setHeader('Content-Type', 'application/pdf');
+                res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+                res.setHeader('Content-Length', pdfBuffer.length);
+
+                // Send PDF buffer
+                res.send(pdfBuffer);
+
+                // Log audit
+                await logPayrollAudit({
+                    userId: userId,
+                    action: 'GENERATE_PAYSLIP_PDF',
+                    tableName: 'payroll_items',
+                    recordId: id,
+                    ipAddress: req.ip,
+                    userAgent: req.get('User-Agent')
+                });
+
+            } catch (pdfError) {
+                console.error('PDF generation error:', pdfError);
+                return errorResponse(res, 'Failed to generate PDF payslip', 500);
+            }
 
         } catch (error) {
             console.error('Generate payslip error:', error);
+            return errorResponse(res, 'Internal server error', 500);
+        }
+    }
+
+    // Download payslip as PDF blob (returns JSON with base64 PDF data)
+    async downloadPayslip(req, res) {
+        try {
+            const { id } = req.params;
+            const userId = req.session.user.id;
+            const userRole = req.session.user.role;
+
+            const itemResult = await PayrollItem.findById(id);
+            if (!itemResult.success || !itemResult.data) {
+                return errorResponse(res, 'Payroll item not found', 404);
+            }
+
+            const payrollItem = itemResult.data;
+
+            // Check authorization - employees can only view their own payslips
+            if (userRole === 'employee') {
+                const employeeResult = await Employee.findByUserId(userId);
+                if (!employeeResult.success || employeeResult.data.id !== payrollItem.employee_id) {
+                    return errorResponse(res, 'Unauthorized access to payslip', 403);
+                }
+            }
+
+            // Get complete calculation details
+            const detailsResult = await this.getCalculationDetails(req, res);
+            if (!detailsResult.success) {
+                return detailsResult;
+            }
+
+            // Generate PDF payslip
+            const payslipData = {
+                payslip_id: id,
+                generated_at: new Date().toISOString(),
+                generated_by: userId,
+                ...detailsResult.data
+            };
+
+            // Import PDF service
+            const payslipPdfService = require('../services/payslipPdfService');
+
+            try {
+                const pdfBuffer = await payslipPdfService.generatePayslipPDF(payslipData);
+
+                // Convert PDF buffer to base64 for JSON response
+                const pdfBase64 = pdfBuffer.toString('base64');
+
+                // Return JSON with PDF data
+                return successResponse(res, {
+                    payslip_id: id,
+                    generated_at: new Date().toISOString(),
+                    generated_by: userId,
+                    pdf_data: pdfBase64,
+                    file_name: `payslip_${payslipData.employee.employee_number}_${Date.now()}.pdf`,
+                    mime_type: 'application/pdf'
+                }, 'Payslip PDF generated successfully');
+
+            } catch (pdfError) {
+                console.error('PDF generation error:', pdfError);
+                return errorResponse(res, 'Failed to generate PDF payslip', 500);
+            }
+
+        } catch (error) {
+            console.error('Download payslip error:', error);
             return errorResponse(res, 'Internal server error', 500);
         }
     }

@@ -12,7 +12,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:payroll": "jest tests/payrollSystem.test.js",
-    "test:benefits": "jest tests/compensationBenefits.test.js", 
+    "test:benefits": "jest tests/compensationBenefits.test.js",
     "test:integration": "jest tests/systemIntegration.test.js",
     "test:restructure": "jest tests/payrollSystem.test.js tests/compensationBenefits.test.js tests/systemIntegration.test.js",
     "validate:migration": "node scripts/validate-migration.js",
@@ -53,6 +53,7 @@
     "multer": "^1.4.5-lts.1",
     "mysql2": "^3.6.5",
     "node-cron": "^4.2.1",
+    "pdfkit": "^0.17.2",
     "uuid": "^9.0.1"
   },
   "devDependencies": {

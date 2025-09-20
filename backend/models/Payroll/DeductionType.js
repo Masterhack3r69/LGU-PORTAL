@@ -8,10 +8,10 @@ class DeductionType {
         this.code = data.code || null;
         this.description = data.description || null;
         this.default_amount = data.default_amount || null;
-        this.calculation_type = data.calculation_type || 'fixed';
+        this.calculation_type = data.calculation_type || 'Fixed';
         this.percentage_base = data.percentage_base || null;
         this.is_mandatory = data.is_mandatory || false;
-        this.frequency = data.frequency || 'monthly';
+        this.frequency = data.frequency || 'Monthly';
         this.is_active = data.is_active !== undefined ? data.is_active : true;
         this.created_at = data.created_at || null;
         this.updated_at = data.updated_at || null;

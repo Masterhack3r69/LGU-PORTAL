@@ -52,6 +52,8 @@ export interface PayrollItem {
   id: number;
   period_id: number;
   employee_id: number;
+  working_days?: number;
+  daily_rate?: number;
   basic_pay: number;
   status: 'draft' | 'calculated' | 'approved' | 'paid';
   total_allowances: number;
@@ -65,6 +67,9 @@ export interface PayrollItem {
   approved_at?: string;
   approved_by?: number;
   paid_at?: string;
+  notes?: string;
+  processed_by?: number;
+  processed_at?: string;
   // Related data
   employee?: {
     id: number;

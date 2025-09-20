@@ -154,7 +154,8 @@ class PayrollPeriod {
     async finalize(userId) {
         this.status = 'Completed';
         this.finalized_by = userId;
-        this.finalized_at = new Date().toISOString();
+        // Convert to MySQL datetime format (YYYY-MM-DD HH:MM:SS)
+        this.finalized_at = new Date().toISOString().slice(0, 19).replace('T', ' ');
 
         return await this.update();
     }

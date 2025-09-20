@@ -190,7 +190,24 @@ class PayrollService {
 
   // Payroll Calculations
   async calculatePayroll(data: PayrollCalculationRequest): Promise<PayrollResponse<PayrollCalculationResult>> {
-    return api.post<PayrollResponse<PayrollCalculationResult>>('/payroll/calculate', data);
+    const { period_id, employee_ids } = data;
+
+    // If employee_ids are provided, use the process employees endpoint
+    if (employee_ids && employee_ids.length > 0) {
+      const employees = employee_ids.map(employee_id => ({
+        employee_id,
+        working_days: 22 // Default working days, can be customized later
+      }));
+
+      return api.post<PayrollResponse<PayrollCalculationResult>>(`/payroll/periods/${period_id}/employees`, {
+        employees
+      });
+    }
+
+    // Otherwise, process all employees for the period
+    return api.post<PayrollResponse<PayrollCalculationResult>>(`/payroll/periods/${period_id}/employees`, {
+      employees: [] // Empty array means process all employees
+    });
   }
 
   async recalculatePayroll(data: PayrollCalculationRequest): Promise<PayrollResponse<PayrollCalculationResult>> {
@@ -206,10 +223,35 @@ class PayrollService {
   }
 
   async downloadPayslip(periodId: number, employeeId?: number): Promise<Blob> {
-    const url = employeeId 
+    const url = employeeId
       ? `/payroll/payslips/${periodId}/${employeeId}/download`
       : `/payroll/payslips/${periodId}/me/download`;
     return api.get<Blob>(url, { responseType: 'blob' });
+  }
+
+  // New PDF payslip generation methods
+  async generatePayslipPDF(payrollItemId: number): Promise<Blob> {
+    return api.get<Blob>(`/payroll/items/${payrollItemId}/payslip`, {
+      responseType: 'blob'
+    });
+  }
+
+  async downloadPayslipAsBase64(payrollItemId: number): Promise<PayrollResponse<{
+    payslip_id: string;
+    generated_at: string;
+    generated_by: string;
+    pdf_data: string;
+    file_name: string;
+    mime_type: string;
+  }>> {
+    return api.post<PayrollResponse<{
+      payslip_id: string;
+      generated_at: string;
+      generated_by: string;
+      pdf_data: string;
+      file_name: string;
+      mime_type: string;
+    }>>(`/payroll/items/${payrollItemId}/download-payslip`);
   }
 
   // Payroll Summary
@@ -234,10 +276,33 @@ class PayrollService {
   }
 
   async generatePayslipBatch(periodId: number, employeeIds?: number[]): Promise<Blob> {
-    return api.post<Blob>(`/payroll/periods/${periodId}/payslips/batch`, 
+    return api.post<Blob>(`/payroll/periods/${periodId}/payslips/batch`,
       { employee_ids: employeeIds },
       { responseType: 'blob' }
     );
+  }
+
+  // Payroll Adjustments
+  async adjustWorkingDays(payrollItemId: number, workingDays: number, reason?: string): Promise<PayrollResponse<PayrollItem>> {
+    return api.post<PayrollResponse<PayrollItem>>(`/payroll/items/${payrollItemId}/adjust-working-days`, {
+      working_days: workingDays,
+      reason: reason
+    });
+  }
+
+  async addManualAdjustment(
+    payrollItemId: number,
+    adjustmentType: 'Allowance' | 'Deduction' | 'Adjustment',
+    description: string,
+    amount: number,
+    reason?: string
+  ): Promise<PayrollResponse<PayrollItem>> {
+    return api.post<PayrollResponse<PayrollItem>>(`/payroll/items/${payrollItemId}/manual-adjustment`, {
+      adjustment_type: adjustmentType,
+      description: description,
+      amount: amount,
+      reason: reason
+    });
   }
 }
 

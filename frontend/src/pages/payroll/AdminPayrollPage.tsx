@@ -10,23 +10,28 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { 
-  Plus, 
-  Calendar, 
-  Calculator, 
-  FileText, 
-  Settings, 
-  Users, 
+import {
+  Plus,
+  Calendar,
+  Calculator,
+  FileText,
+  Settings,
+  Users,
   DollarSign,
   Play,
   Lock,
   Unlock,
   Check,
-  Eye
+  Eye,
+  Wrench
 } from 'lucide-react';
 import payrollService from '@/services/payrollService';
 import { PayrollConfiguration } from '@/components/payroll/PayrollConfiguration';
+import { EmployeeSelectionProcessing } from '@/components/payroll/EmployeeSelectionProcessing';
+import { PayrollAdjustments } from '@/components/payroll/PayrollAdjustments';
+import { PeriodDetailsDialog } from '@/components/payroll/PeriodDetailsDialog';
 import type { PayrollPeriod, PayrollSummary, PayrollItem } from '@/types/payroll';
+import type { Employee } from '@/types/employee';
 
 export function AdminPayrollPage() {
   const [periods, setPeriods] = useState<PayrollPeriod[]>([]);
@@ -35,6 +40,10 @@ export function AdminPayrollPage() {
   const [payrollItems, setPayrollItems] = useState<PayrollItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('periods');
+
+  // Employee Selection states
+  const [selectedEmployees, setSelectedEmployees] = useState<any[]>([]);
+  const [useEmployeeSelection, setUseEmployeeSelection] = useState(false);
 
   // Form states
   const [newPeriodData, setNewPeriodData] = useState({
@@ -150,16 +159,39 @@ export function AdminPayrollPage() {
 
   const handleCalculatePayroll = async () => {
     if (!selectedPeriod) return;
-    
+
     try {
+      // Use selected employees if available, otherwise use all employees
+      let employeesToProcess = [];
+
+      if (selectedEmployees.length > 0) {
+        // Use selected employees with their custom working days
+        employeesToProcess = selectedEmployees.map(emp => ({
+          employee_id: emp.employee.id,
+          working_days: emp.workingDays
+        }));
+      }
+      // If no employees selected, process all employees (empty array means all)
+
       const response = await payrollService.calculatePayroll({
-        period_id: selectedPeriod.id
+        period_id: selectedPeriod.id,
+        employee_ids: selectedEmployees.length > 0
+          ? selectedEmployees.map(emp => emp.employee.id)
+          : undefined
       });
-      
+
       if (response.success) {
-        toast.success(`Processed ${response.data.processed_count} employees`);
+        const processedCount = response.data.processed_count;
+        const employeeText = selectedEmployees.length > 0
+          ? `${processedCount} selected employees`
+          : `${processedCount} employees`;
+
+        toast.success(`Processed ${employeeText}`);
         loadSummary(selectedPeriod.id);
         loadPayrollItems(selectedPeriod.id);
+
+        // Reset employee selection after successful processing
+        setSelectedEmployees([]);
       }
     } catch (error) {
       console.error('Failed to calculate payroll:', error);
@@ -200,17 +232,32 @@ export function AdminPayrollPage() {
   const getStatusBadge = (status: string) => {
     const statusLower = status.toLowerCase();
     const variants = {
-      draft: 'default',
-      processing: 'secondary', 
-      completed: 'outline',
+      draft: 'secondary',
+      processing: 'default', 
+      completed: 'outline', // Use outline for completed status
       finalized: 'outline',
-      paid: 'outline',
-      open: 'default',
-      calculating: 'secondary',
+      paid: 'destructive',
+      open: 'secondary',
+      calculating: 'default',
       locked: 'destructive'
     } as const;
     
-    return <Badge variant={variants[statusLower as keyof typeof variants] || 'default'}>{status}</Badge>;
+    // Map status display names
+    const displayNames: { [key: string]: string } = {
+      draft: 'Draft',
+      processing: 'Processing',
+      completed: 'Completed',
+      finalized: 'Finalized',
+      paid: 'Paid',
+      open: 'Open',
+      calculating: 'Calculating',
+      locked: 'Locked'
+    };
+    
+    const displayName = displayNames[statusLower] || status;
+    const variant = variants[statusLower as keyof typeof variants] || 'default';
+    
+    return <Badge variant={variant}>{displayName}</Badge>;
   };
 
   const formatDate = (dateString: string | Date) => {
@@ -227,6 +274,63 @@ export function AdminPayrollPage() {
       style: 'currency',
       currency: 'PHP'
     }).format(amount);
+  };
+
+  const handleGeneratePayslip = async (payrollItemId: number) => {
+    try {
+      const response = await payrollService.generatePayslipPDF(payrollItemId);
+
+      // Create download link
+      const url = window.URL.createObjectURL(response);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `payslip_${payrollItemId}_${Date.now()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast.success('Payslip PDF downloaded successfully');
+    } catch (error) {
+      console.error('Failed to generate payslip PDF:', error);
+      toast.error('Failed to generate payslip PDF');
+    }
+  };
+
+  const handleDownloadPayslip = async (payrollItemId: number) => {
+    try {
+      const response = await payrollService.downloadPayslipAsBase64(payrollItemId);
+
+      if (response.success) {
+        const { pdf_data, file_name } = response.data;
+
+        // Convert base64 to blob
+        const byteCharacters = atob(pdf_data);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'application/pdf' });
+
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = file_name;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        toast.success('Payslip downloaded successfully');
+      } else {
+        toast.error('Failed to download payslip');
+      }
+    } catch (error) {
+      console.error('Failed to download payslip:', error);
+      toast.error('Failed to download payslip');
+    }
   };
 
   if (loading) {
@@ -361,9 +465,17 @@ export function AdminPayrollPage() {
             <Calendar className="mr-2 h-4 w-4" />
             Periods
           </TabsTrigger>
+          <TabsTrigger value="selection">
+            <Users className="mr-2 h-4 w-4" />
+            Employee Selection & Processing
+          </TabsTrigger>
           <TabsTrigger value="processing">
             <Calculator className="mr-2 h-4 w-4" />
-            Processing
+            Payroll Processing
+          </TabsTrigger>
+          <TabsTrigger value="adjustments">
+            <Wrench className="mr-2 h-4 w-4" />
+            Adjustments
           </TabsTrigger>
           <TabsTrigger value="reports">
             <FileText className="mr-2 h-4 w-4" />
@@ -425,13 +537,19 @@ export function AdminPayrollPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setSelectedPeriod(period)}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
+                          <PeriodDetailsDialog
+                            period={period}
+                            summary={selectedPeriod?.id === period.id ? summary : null}
+                            trigger={
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setSelectedPeriod(period)}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            }
+                          />
                           {(period.status?.toLowerCase() === 'completed' || period.status?.toLowerCase() === 'finalized') && (
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
@@ -465,165 +583,113 @@ export function AdminPayrollPage() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="selection" className="space-y-4">
+          {selectedPeriod && (
+            <EmployeeSelectionProcessing
+              selectedPeriod={selectedPeriod}
+              onEmployeesSelected={setSelectedEmployees}
+              onCalculatePayroll={handleCalculatePayroll}
+            />
+          )}
+        </TabsContent>
+
         <TabsContent value="processing" className="space-y-4">
           {selectedPeriod && (
-            <>
-              <div className="grid gap-4 md:grid-cols-4">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Employees</CardTitle>
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{summary?.total_employees || 0}</div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Gross Pay</CardTitle>
-                    <DollarSign className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">
-                      {summary ? formatCurrency(summary.total_gross_pay) : '-'}
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Deductions</CardTitle>
-                    <DollarSign className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">
-                      {summary ? formatCurrency(summary.total_deductions) : '-'}
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Net Pay</CardTitle>
-                    <DollarSign className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">
-                      {summary ? formatCurrency(summary.total_net_pay) : '-'}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+            <EmployeeSelectionProcessing
+              selectedPeriod={selectedPeriod}
+              onEmployeesSelected={setSelectedEmployees}
+              onCalculatePayroll={handleCalculatePayroll}
+            />
+          )}
+        </TabsContent>
 
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle>
-                        Processing: {selectedPeriod.year} - {new Date(selectedPeriod.year, selectedPeriod.month - 1).toLocaleString('default', { month: 'long' })} (Period {selectedPeriod.period_number})
-                      </CardTitle>
-                      <CardDescription>
-                        Status: {getStatusBadge(selectedPeriod.status)}
-                      </CardDescription>
-                    </div>
-                    <div className="flex gap-2">
-                      {(selectedPeriod.status?.toLowerCase() === 'draft' || selectedPeriod.status?.toLowerCase() === 'open') && (
-                        <Button onClick={handleCalculatePayroll}>
-                          <Play className="mr-2 h-4 w-4" />
-                          Calculate Payroll
-                        </Button>
-                      )}
-                      {(selectedPeriod.status?.toLowerCase() === 'processing' || selectedPeriod.status?.toLowerCase() === 'calculating') && (
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button>
-                              <Lock className="mr-2 h-4 w-4" />
-                              Finalize Period
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Finalize Payroll Period</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This will finalize the payroll period and prevent further modifications. Are you sure?
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={handleFinalizePeriod}>
-                                Finalize
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      )}
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Employee</TableHead>
-                        <TableHead>Department</TableHead>
-                        <TableHead>Basic Pay</TableHead>
-                        <TableHead>Allowances</TableHead>
-                        <TableHead>Deductions</TableHead>
-                        <TableHead>Net Pay</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {payrollItems.map((item) => (
-                        <TableRow key={item.id}>
-                          <TableCell className="font-medium">
-                            {item.employee?.full_name}
-                          </TableCell>
-                          <TableCell>{item.employee?.department}</TableCell>
-                          <TableCell>{formatCurrency(item.basic_pay)}</TableCell>
-                          <TableCell>{formatCurrency(item.total_allowances)}</TableCell>
-                          <TableCell>{formatCurrency(item.total_deductions)}</TableCell>
-                          <TableCell className="font-medium">{formatCurrency(item.net_pay)}</TableCell>
-                          <TableCell>{getStatusBadge(item.status)}</TableCell>
-                          <TableCell>
-                            <div className="flex gap-2">
-                              <Button variant="outline" size="sm">
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              {(item.status?.toLowerCase() === 'calculated' || item.status?.toLowerCase() === 'processed') && (
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => payrollService.approvePayrollItem(item.id)}
-                                >
-                                  <Check className="h-4 w-4" />
-                                </Button>
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </>
+        <TabsContent value="adjustments" className="space-y-4">
+          {selectedPeriod && (
+            <PayrollAdjustments
+              selectedPeriod={selectedPeriod}
+              summary={summary}
+              onSummaryUpdate={setSummary}
+              onPayrollItemsUpdate={setPayrollItems}
+            />
           )}
         </TabsContent>
 
         <TabsContent value="reports" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Payroll Reports</CardTitle>
-              <CardDescription>
-                Generate and download payroll reports
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                Reports functionality coming soon...
-              </div>
-            </CardContent>
-          </Card>
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Payroll Reports</CardTitle>
+                <CardDescription>
+                  Generate and download payroll reports
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8 text-muted-foreground">
+                  Reports functionality coming soon...
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Payslip Generation</CardTitle>
+                <CardDescription>
+                  Generate and download employee payslips as PDF
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {selectedPeriod && (
+                  <div className="space-y-4">
+                    <div className="text-sm text-muted-foreground">
+                      Generate payslips for employees in the selected period
+                    </div>
+
+                    {payrollItems.length > 0 ? (
+                      <div className="space-y-2">
+                        <div className="font-medium">Available Payslips:</div>
+                        <div className="max-h-60 overflow-y-auto space-y-1">
+                          {payrollItems.map((item) => (
+                            <div key={item.id} className="flex items-center justify-between p-2 border rounded">
+                              <div className="flex-1">
+                                <div className="font-medium">{item.employee?.full_name}</div>
+                                <div className="text-sm text-muted-foreground">
+                                  {formatCurrency(item.net_pay)} • {getStatusBadge(item.status)}
+                                </div>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleGeneratePayslip(item.id)}
+                                  disabled={item.status?.toLowerCase() !== 'processed' && item.status?.toLowerCase() !== 'finalized'}
+                                >
+                                  <FileText className="h-4 w-4 mr-1" />
+                                  PDF
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleDownloadPayslip(item.id)}
+                                  disabled={item.status?.toLowerCase() !== 'processed' && item.status?.toLowerCase() !== 'finalized'}
+                                >
+                                  <Eye className="h-4 w-4 mr-1" />
+                                  View
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-4 text-muted-foreground">
+                        No payroll items available. Process payroll first.
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="configuration" className="space-y-4">
