@@ -9,11 +9,9 @@ import {
   Users,
   UserCheck,
   Calculator,
-  DollarSign,
   Play,
   Lock,
   Eye,
-  Check,
   UserPlus
 } from 'lucide-react';
 import payrollService from '@/services/payrollService';
@@ -21,7 +19,7 @@ import employeeService from '@/services/employeeService';
 import { EmployeeSelectionDialog } from './EmployeeSelectionDialog';
 import { EmployeeDetailsDialog } from './EmployeeDetailsDialog';
 import type { Employee } from '@/types/employee';
-import type { PayrollPeriod, PayrollSummary, PayrollItem } from '@/types/payroll';
+import type { PayrollPeriod, PayrollItem } from '@/types/payroll';
 
 interface EmployeeSelectionData {
   employee: Employee;
@@ -49,13 +47,11 @@ export function EmployeeSelectionProcessing({
   const [selectedPayrollItem, setSelectedPayrollItem] = useState<PayrollItem | null>(null);
 
   // Processing States
-  const [summary, setSummary] = useState<PayrollSummary | null>(null);
   const [payrollItems, setPayrollItems] = useState<PayrollItem[]>([]);
   const [processingLoading, setProcessingLoading] = useState(false);
 
   useEffect(() => {
     if (selectedPeriod) {
-      loadSummary(selectedPeriod.id);
       loadPayrollItems(selectedPeriod.id);
     }
   }, [selectedPeriod]);
@@ -63,17 +59,6 @@ export function EmployeeSelectionProcessing({
   useEffect(() => {
     onEmployeesSelected(selectedEmployees);
   }, [selectedEmployees, onEmployeesSelected]);
-
-  const loadSummary = async (periodId: number) => {
-    try {
-      const response = await payrollService.getPayrollSummary(periodId);
-      if (response.success) {
-        setSummary(response.data);
-      }
-    } catch (error) {
-      console.error('Failed to load summary:', error);
-    }
-  };
 
   const loadPayrollItems = async (periodId: number) => {
     try {
@@ -122,7 +107,6 @@ export function EmployeeSelectionProcessing({
           : `${processedCount} employees`;
 
         toast.success(`Processed ${employeeText}`);
-        loadSummary(selectedPeriod.id);
         loadPayrollItems(selectedPeriod.id);
       }
     } catch (error) {
@@ -140,7 +124,6 @@ export function EmployeeSelectionProcessing({
       const response = await payrollService.finalizePeriod(selectedPeriod.id);
       if (response.success) {
         toast.success('Payroll period finalized');
-        loadSummary(selectedPeriod.id);
         loadPayrollItems(selectedPeriod.id);
       }
     } catch (error) {
@@ -350,23 +333,12 @@ export function EmployeeSelectionProcessing({
                       <Button
                         variant="outline"
                         size="sm"
-                        className="flex-1"
+                        className="w-full"
                         onClick={() => handleViewEmployeeDetails(item.employee?.id || 0, item)}
                       >
                         <Eye className="h-4 w-4 mr-2" />
                         View Details
                       </Button>
-                      {(item.status?.toLowerCase() === 'calculated' || item.status?.toLowerCase() === 'processed') && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => payrollService.approvePayrollItem(item.id)}
-                        >
-                          <Check className="h-4 w-4 mr-2" />
-                          Approve
-                        </Button>
-                      )}
                     </div>
                   </div>
                 </Card>
@@ -407,15 +379,6 @@ export function EmployeeSelectionProcessing({
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          {(item.status?.toLowerCase() === 'calculated' || item.status?.toLowerCase() === 'processed') && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => payrollService.approvePayrollItem(item.id)}
-                            >
-                              <Check className="h-4 w-4" />
-                            </Button>
-                          )}
                         </div>
                       </TableCell>
                     </TableRow>

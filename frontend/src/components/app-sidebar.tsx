@@ -111,12 +111,33 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     ],
   });
 
-  // Payroll Management - Show for all users
+  // Payroll Management - Show for all users with dropdown
   navMain.push({
     title: "Payroll Management",
-    url: user?.role === 'admin' ? "/payroll" : "/payroll/employee",
+    url: user?.role === 'admin' ? "/payroll/periods" : "/payroll/employee",
     icon: DollarSign,
-    items: [], // No dropdown items since everything is in tabs
+    items: user?.role === 'admin' ? [
+      {
+        title: "Periods",
+        url: "/payroll/periods",
+      },
+      {
+        title: "Processing",
+        url: "/payroll/processing",
+      },
+      {
+        title: "Adjustments",
+        url: "/payroll/adjustments",
+      },
+      {
+        title: "Reports",
+        url: "/payroll/reports",
+      },
+      {
+        title: "Configuration",
+        url: "/payroll/configuration",
+      },
+    ] : [], // Employee users don't get dropdown items
   });
 
   // Terminal Leave Benefits - Admin only

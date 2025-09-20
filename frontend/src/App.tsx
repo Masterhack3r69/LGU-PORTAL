@@ -31,8 +31,12 @@ import EmployeeCertificatesPage from '@/pages/training/EmployeeCertificatesPage'
 import AuditLogsPage from '@/pages/admin/AuditLogsPage';
 
 // Payroll Management Pages
-import { AdminPayrollPage } from '@/pages/payroll/AdminPayrollPage';
 import { EmployeePayrollPage } from '@/pages/payroll/EmployeePayrollPage';
+import { PayrollPeriodsPage } from '@/pages/payroll/PayrollPeriodsPage';
+import { PayrollProcessingPage } from '@/pages/payroll/PayrollProcessingPage';
+import { PayrollAdjustmentsPage } from '@/pages/payroll/PayrollAdjustmentsPage';
+import { PayrollReportsPage } from '@/pages/payroll/PayrollReportsPage';
+import { PayrollConfigurationPage } from '@/pages/payroll/PayrollConfigurationPage';
 
 function App() {
   return (
@@ -209,22 +213,62 @@ function App() {
         {/* Payroll Management - accessible to all authenticated users */}
         <Route path="payroll">
           {/* Admin Payroll Routes */}
-          <Route 
-            index 
+          <Route
+            index
             element={
               <ProtectedRoute allowedRoles={['admin']}>
-                <AdminPayrollPage />
+                <PayrollPeriodsPage />
               </ProtectedRoute>
-            } 
+            }
+          />
+          <Route
+            path="periods"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <PayrollPeriodsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="processing"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <PayrollProcessingPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="adjustments"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <PayrollAdjustmentsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="reports"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <PayrollReportsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="configuration"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <PayrollConfigurationPage />
+              </ProtectedRoute>
+            }
           />
           {/* Employee Payroll Routes */}
-          <Route 
-            path="employee" 
+          <Route
+            path="employee"
             element={
               <ProtectedRoute allowedRoles={['employee']}>
                 <EmployeePayrollPage />
               </ProtectedRoute>
-            } 
+            }
           />
         </Route>
 

@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Settings, DollarSign, Minus, Users } from 'lucide-react';
-import { AllowanceTypesManagement } from './AllowanceTypesManagement.tsx';
-import { DeductionTypesManagement } from './DeductionTypesManagement.tsx';
-import { EmployeeOverridesManagement } from './EmployeeOverridesManagement.tsx';
+import { AllowanceTypesManagement } from './AllowanceTypesManagement';
+import { DeductionTypesManagement } from './DeductionTypesManagement';
+import { EmployeeOverridesManagement } from './EmployeeOverridesManagement';
 
 export function PayrollConfiguration() {
   const [activeConfigTab, setActiveConfigTab] = useState('allowances');

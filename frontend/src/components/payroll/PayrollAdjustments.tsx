@@ -3,11 +3,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
-import { Eye, RefreshCw, Plus, Edit, Users, DollarSign } from 'lucide-react';
+import { RefreshCw, Plus, Edit, MoreHorizontal, Eye, Calendar, Settings } from 'lucide-react';
 import payrollService from '@/services/payrollService';
 import { ManualAdjustmentDialog } from './ManualAdjustmentDialog';
 import { WorkingDaysAdjustmentDialog } from './WorkingDaysAdjustmentDialog';
+import { PayrollItemDetailsDialog } from './PayrollItemDetailsDialog';
 import type { PayrollPeriod, PayrollItem, PayrollSummary } from '@/types/payroll';
 
 interface PayrollAdjustmentsProps {
@@ -17,9 +26,11 @@ interface PayrollAdjustmentsProps {
   onPayrollItemsUpdate: (items: PayrollItem[]) => void;
 }
 
-export function PayrollAdjustments({ selectedPeriod, summary, onSummaryUpdate, onPayrollItemsUpdate }: PayrollAdjustmentsProps) {
+export function PayrollAdjustments({ selectedPeriod, onSummaryUpdate, onPayrollItemsUpdate }: PayrollAdjustmentsProps) {
   const [payrollItems, setPayrollItems] = useState<PayrollItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedItemForDetails, setSelectedItemForDetails] = useState<PayrollItem | null>(null);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
 
   useEffect(() => {
     loadPayrollItems();
@@ -67,6 +78,19 @@ export function PayrollAdjustments({ selectedPeriod, summary, onSummaryUpdate, o
     }
   };
 
+  const handleViewDetails = (item: PayrollItem) => {
+    setSelectedItemForDetails(item);
+    setShowDetailsDialog(true);
+  };
+
+  const handleChangeWorkingDays = (item: PayrollItem) => {
+    toast.info(`Use the edit button next to working days for ${item.employee?.full_name}`);
+  };
+
+  const handleManualAdjustment = (item: PayrollItem) => {
+    toast.info(`Use the Manual button to add manual adjustments for ${item.employee?.full_name}`);
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-PH', {
       style: 'currency',
@@ -95,52 +119,6 @@ export function PayrollAdjustments({ selectedPeriod, summary, onSummaryUpdate, o
 
   return (
     <div className="space-y-6">
-      {/* Summary Cards */}
-      <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Employees</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{summary?.total_employees || 0}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Gross Pay</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl sm:text-2xl font-bold">
-              {summary ? formatCurrency(summary.total_gross_pay) : '-'}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Deductions</CardTitle>
-            <div className="h-4 w-4 text-muted-foreground">📉</div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl sm:text-2xl font-bold text-red-600">
-              {summary ? formatCurrency(summary.total_deductions) : '-'}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Net Pay</CardTitle>
-            <div className="h-4 w-4 text-muted-foreground">💵</div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl sm:text-2xl font-bold text-green-600">
-              {summary ? formatCurrency(summary.total_net_pay) : '-'}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Payroll Items Table */}
       <Card>
         <CardHeader>
@@ -203,39 +181,69 @@ export function PayrollAdjustments({ selectedPeriod, summary, onSummaryUpdate, o
                   </div>
 
                   <div className="flex gap-2 pt-2">
-                    <WorkingDaysAdjustmentDialog
-                      payrollItem={item}
-                      onAdjustmentComplete={handleWorkingDaysAdjusted}
-                      trigger={
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1"
+                    <div className="flex-1">
+                      <WorkingDaysAdjustmentDialog
+                        payrollItem={item}
+                        onAdjustmentComplete={handleWorkingDaysAdjusted}
+                        trigger={
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full"
+                            disabled={item.status?.toLowerCase() === 'finalized' || item.status?.toLowerCase() === 'paid'}
+                          >
+                            <Edit className="h-4 w-4 mr-2" />
+                            Adjust Days
+                          </Button>
+                        }
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <ManualAdjustmentDialog
+                        payrollItem={item}
+                        onAdjustmentAdded={handleAdjustmentAdded}
+                        trigger={
+                          <Button
+                            size="sm"
+                            className="w-full"
+                            disabled={item.status?.toLowerCase() === 'finalized' || item.status?.toLowerCase() === 'paid'}
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Manual
+                          </Button>
+                        }
+                      />
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <span className="sr-only">Open menu</span>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuItem onClick={() => handleViewDetails(item)}>
+                          <Eye className="mr-2 h-4 w-4" />
+                          View Details
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem 
+                          onClick={() => handleChangeWorkingDays(item)}
                           disabled={item.status?.toLowerCase() === 'finalized' || item.status?.toLowerCase() === 'paid'}
                         >
-                          <Edit className="h-4 w-4 mr-2" />
-                          Adjust Days
-                        </Button>
-                      }
-                    />
-                    <Button variant="outline" size="sm" className="flex-1">
-                      <Eye className="h-4 w-4 mr-2" />
-                      View
-                    </Button>
-                    <ManualAdjustmentDialog
-                      payrollItem={item}
-                      onAdjustmentAdded={handleAdjustmentAdded}
-                      trigger={
-                        <Button
-                          size="sm"
-                          className="flex-1"
+                          <Calendar className="mr-2 h-4 w-4" />
+                          Change Working Days
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => handleManualAdjustment(item)}
                           disabled={item.status?.toLowerCase() === 'finalized' || item.status?.toLowerCase() === 'paid'}
                         >
-                          <Plus className="h-4 w-4 mr-2" />
-                          Add
-                        </Button>
-                      }
-                    />
+                          <Settings className="mr-2 h-4 w-4" />
+                          Manual Adjustment
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               </Card>
@@ -269,22 +277,7 @@ export function PayrollAdjustments({ selectedPeriod, summary, onSummaryUpdate, o
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{item.working_days || 22} days</span>
-                        <WorkingDaysAdjustmentDialog
-                          payrollItem={item}
-                          onAdjustmentComplete={handleWorkingDaysAdjusted}
-                          trigger={
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              disabled={item.status?.toLowerCase() === 'finalized' || item.status?.toLowerCase() === 'paid'}
-                            >
-                              <Edit className="h-3 w-3" />
-                            </Button>
-                          }
-                        />
-                      </div>
+                      <span className="font-medium">{item.working_days || 22} days</span>
                     </TableCell>
                     <TableCell>{formatCurrency(item.basic_pay)}</TableCell>
                     <TableCell className="text-green-600">+{formatCurrency(item.total_allowances)}</TableCell>
@@ -292,23 +285,50 @@ export function PayrollAdjustments({ selectedPeriod, summary, onSummaryUpdate, o
                     <TableCell className="font-bold">{formatCurrency(item.net_pay)}</TableCell>
                     <TableCell>{getStatusBadge(item.status)}</TableCell>
                     <TableCell>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <ManualAdjustmentDialog
-                          payrollItem={item}
-                          onAdjustmentAdded={handleAdjustmentAdded}
-                          trigger={
-                            <Button
-                              size="sm"
-                              disabled={item.status?.toLowerCase() === 'finalized' || item.status?.toLowerCase() === 'paid'}
-                            >
-                              <Plus className="h-4 w-4" />
-                            </Button>
-                          }
-                        />
-                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Open menu</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => handleViewDetails(item)}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem asChild>
+                            <WorkingDaysAdjustmentDialog
+                              payrollItem={item}
+                              onAdjustmentComplete={handleWorkingDaysAdjusted}
+                              trigger={
+                                <div className="flex items-center w-full cursor-pointer px-2 py-1.5 text-sm" 
+                                     style={{ pointerEvents: item.status?.toLowerCase() === 'finalized' || item.status?.toLowerCase() === 'paid' ? 'none' : 'auto',
+                                             opacity: item.status?.toLowerCase() === 'finalized' || item.status?.toLowerCase() === 'paid' ? 0.5 : 1 }}>
+                                  <Edit className="mr-2 h-4 w-4" />
+                                  Adjust Working Days
+                                </div>
+                              }
+                            />
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <ManualAdjustmentDialog
+                              payrollItem={item}
+                              onAdjustmentAdded={handleAdjustmentAdded}
+                              trigger={
+                                <div className="flex items-center w-full cursor-pointer px-2 py-1.5 text-sm"
+                                     style={{ pointerEvents: item.status?.toLowerCase() === 'finalized' || item.status?.toLowerCase() === 'paid' ? 'none' : 'auto',
+                                             opacity: item.status?.toLowerCase() === 'finalized' || item.status?.toLowerCase() === 'paid' ? 0.5 : 1 }}>
+                                  <Plus className="mr-2 h-4 w-4" />
+                                  Manual Adjustment
+                                </div>
+                              }
+                            />
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -323,6 +343,13 @@ export function PayrollAdjustments({ selectedPeriod, summary, onSummaryUpdate, o
           )}
         </CardContent>
       </Card>
+
+      {/* PayrollItemDetailsDialog */}
+      <PayrollItemDetailsDialog
+        open={showDetailsDialog}
+        onOpenChange={setShowDetailsDialog}
+        payrollItem={selectedItemForDetails}
+      />
     </div>
   );
 }

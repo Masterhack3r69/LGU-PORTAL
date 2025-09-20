@@ -6,13 +6,15 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import {
   Search,
   Users,
   CheckSquare,
   Square,
   UserCheck,
-  Calendar
+  Calendar,
+  Settings
 } from 'lucide-react';
 import employeeService from '@/services/employeeService';
 import type { Employee } from '@/types/employee';
@@ -240,26 +242,46 @@ export function EmployeeSelectionDialog({
                       </div>
 
                       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+                        {/* Working Days Display */}
                         {empData.selected && (
-                          <div className="flex items-center gap-2 w-full sm:w-auto">
-                            <Label htmlFor={`working-days-${empData.employee.id}`} className="text-sm whitespace-nowrap">
-                              Working Days:
-                            </Label>
-                            <Input
-                              id={`working-days-${empData.employee.id}`}
-                              type="number"
-                              min="1"
-                              max="31"
-                              value={empData.workingDays}
-                              onChange={(e) => handleWorkingDaysChange(originalIndex, parseInt(e.target.value) || 22)}
-                              className="w-20 h-8"
-                            />
+                          <div className="flex items-center gap-2 text-sm">
+                            <Calendar className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-medium">{empData.workingDays} days</span>
                           </div>
                         )}
 
                         <Badge variant={empData.employee.status === 'active' ? 'default' : 'secondary'} className="w-fit">
                           {empData.employee.status}
                         </Badge>
+
+                        {/* Actions Column */}
+                        {empData.selected && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" size="sm" className="h-8 w-8 p-0">
+                                <Settings className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  const newDays = prompt(`Enter working days for ${empData.employee.first_name} ${empData.employee.last_name} (1-31):`, empData.workingDays.toString());
+                                  if (newDays !== null) {
+                                    const days = parseInt(newDays);
+                                    if (!isNaN(days) && days >= 1 && days <= 31) {
+                                      handleWorkingDaysChange(originalIndex, days);
+                                    } else {
+                                      alert('Please enter a valid number between 1 and 31');
+                                    }
+                                  }
+                                }}
+                              >
+                                <Calendar className="mr-2 h-4 w-4" />
+                                Adjust Working Days
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
                       </div>
                     </div>
                   );

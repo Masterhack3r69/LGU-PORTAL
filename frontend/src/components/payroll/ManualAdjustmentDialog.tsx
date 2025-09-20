@@ -97,7 +97,7 @@ export function ManualAdjustmentDialog({ payrollItem, onAdjustmentAdded, trigger
             <Label htmlFor="adjustmentType">Adjustment Type *</Label>
             <Select
               value={formData.adjustmentType}
-              onValueChange={(value) => setFormData({ ...formData, adjustmentType: value as any })}
+              onValueChange={(value) => setFormData({ ...formData, adjustmentType: value as 'Allowance' | 'Deduction' | 'Adjustment' })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select adjustment type" />
