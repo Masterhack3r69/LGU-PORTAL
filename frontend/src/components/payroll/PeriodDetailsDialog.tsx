@@ -139,7 +139,7 @@ export function PeriodDetailsDialog({ period, summary, trigger }: PeriodDetailsD
       <DialogTrigger asChild>
         {trigger || defaultTrigger}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
@@ -149,6 +149,28 @@ export function PeriodDetailsDialog({ period, summary, trigger }: PeriodDetailsD
             Detailed information for Period {period.period_number} - {getMonthName(period.month)} {period.year}
           </DialogDescription>
         </DialogHeader>
+
+        {/* Quick Status Overview */}
+        <div className="bg-muted/50 p-4 rounded-lg mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="text-sm">
+                <span className="text-muted-foreground">Period:</span>
+                <div className="font-medium">{getPeriodDescription()}</div>
+              </div>
+              <div className="text-sm">
+                <span className="text-muted-foreground">Status:</span>
+                <div className="mt-1">{getStatusBadge(period.status)}</div>
+              </div>
+            </div>
+            {summary && (
+              <div className="text-sm">
+                <span className="text-muted-foreground">Total Net Pay:</span>
+                <div className="font-bold text-green-600">{formatCurrency(summary.total_net_pay || 0)}</div>
+              </div>
+            )}
+          </div>
+        </div>
 
         <div className="space-y-6">
           {/* Status and Basic Info */}

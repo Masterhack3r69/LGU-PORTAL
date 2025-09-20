@@ -339,18 +339,18 @@ export function AdminPayrollPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Payroll Management</h1>
-          <p className="text-muted-foreground">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-1">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Payroll Management</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Manage payroll periods, calculations, and employee payments
           </p>
         </div>
-        
+
         <div className="flex gap-2">
           <Dialog>
             <DialogTrigger asChild>
-              <Button>
+              <Button className="w-full sm:w-auto">
                 <Plus className="mr-2 h-4 w-4" />
                 New Period
               </Button>
@@ -460,30 +460,31 @@ export function AdminPayrollPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="periods">
-            <Calendar className="mr-2 h-4 w-4" />
-            Periods
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 h-auto p-1">
+          <TabsTrigger value="periods" className="text-xs sm:text-sm px-2 sm:px-4 py-2">
+            <Calendar className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Periods</span>
+            <span className="sm:hidden">Periods</span>
           </TabsTrigger>
-          <TabsTrigger value="selection">
-            <Users className="mr-2 h-4 w-4" />
-            Employee Selection & Processing
+          <TabsTrigger value="selection" className="text-xs sm:text-sm px-2 sm:px-4 py-2">
+            <Users className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Payroll Processing</span>
+            <span className="sm:hidden">Processing</span>
           </TabsTrigger>
-          <TabsTrigger value="processing">
-            <Calculator className="mr-2 h-4 w-4" />
-            Payroll Processing
+          <TabsTrigger value="adjustments" className="text-xs sm:text-sm px-2 sm:px-4 py-2">
+            <Wrench className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Adjustments</span>
+            <span className="sm:hidden">Adjust</span>
           </TabsTrigger>
-          <TabsTrigger value="adjustments">
-            <Wrench className="mr-2 h-4 w-4" />
-            Adjustments
+          <TabsTrigger value="reports" className="text-xs sm:text-sm px-2 sm:px-4 py-2">
+            <FileText className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Reports</span>
+            <span className="sm:hidden">Reports</span>
           </TabsTrigger>
-          <TabsTrigger value="reports">
-            <FileText className="mr-2 h-4 w-4" />
-            Reports
-          </TabsTrigger>
-          <TabsTrigger value="configuration">
-            <Settings className="mr-2 h-4 w-4" />
-            Configuration
+          <TabsTrigger value="configuration" className="text-xs sm:text-sm px-2 sm:px-4 py-2">
+            <Settings className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Configuration</span>
+            <span className="sm:hidden">Config</span>
           </TabsTrigger>
         </TabsList>
 
@@ -496,104 +497,181 @@ export function AdminPayrollPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Period</TableHead>
-                    <TableHead>Year</TableHead>
-                    <TableHead>Month</TableHead>
-                    <TableHead>Dates</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Total Employees</TableHead>
-                    <TableHead>Net Pay</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {periods.map((period) => (
-                    <TableRow 
-                      key={period.id}
-                      className={selectedPeriod?.id === period.id ? 'bg-muted' : ''}
-                    >
-                      <TableCell className="font-medium">
-                        Period {period.period_number}
-                      </TableCell>
-                      <TableCell>{period.year}</TableCell>
-                      <TableCell>
-                        {new Date(period.year, period.month - 1).toLocaleString('default', { month: 'long' })}
-                      </TableCell>
-                      <TableCell>
-                        {period.start_date && period.end_date 
-                          ? `${formatDate(period.start_date)} - ${formatDate(period.end_date)}`
-                          : 'Not set'
-                        }
-                      </TableCell>
-                      <TableCell>{getStatusBadge(period.status)}</TableCell>
-                      <TableCell>
-                        {period.status?.toLowerCase() === 'draft' ? '-' : (summary?.total_employees || '-')}
-                      </TableCell>
-                      <TableCell>
-                        {period.total_net_pay ? formatCurrency(period.total_net_pay) : '-'}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <PeriodDetailsDialog
-                            period={period}
-                            summary={selectedPeriod?.id === period.id ? summary : null}
-                            trigger={
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setSelectedPeriod(period)}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                            }
-                          />
-                          {(period.status?.toLowerCase() === 'completed' || period.status?.toLowerCase() === 'finalized') && (
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button variant="outline" size="sm">
-                                  <Unlock className="h-4 w-4" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Reopen Payroll Period</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    This will reopen the payroll period for modifications. Are you sure?
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction onClick={handleReopenPeriod}>
-                                    Reopen
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          )}
+              {/* Mobile View */}
+              <div className="block md:hidden space-y-4">
+                {periods.map((period) => (
+                  <Card key={period.id} className={`p-4 ${selectedPeriod?.id === period.id ? 'ring-2 ring-primary' : ''}`}>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="font-medium">
+                          Period {period.period_number} - {period.year}
                         </div>
-                      </TableCell>
+                        {getStatusBadge(period.status)}
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="text-muted-foreground">Month:</span>
+                          <div>{new Date(period.year, period.month - 1).toLocaleString('default', { month: 'long' })}</div>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Employees:</span>
+                          <div>{period.status?.toLowerCase() === 'draft' ? '-' : (summary?.total_employees || '-')}</div>
+                        </div>
+                        <div className="col-span-2">
+                          <span className="text-muted-foreground">Dates:</span>
+                          <div>
+                            {period.start_date && period.end_date
+                              ? `${formatDate(period.start_date)} - ${formatDate(period.end_date)}`
+                              : 'Not set'
+                            }
+                          </div>
+                        </div>
+                        <div className="col-span-2">
+                          <span className="text-muted-foreground">Net Pay:</span>
+                          <div className="font-medium">
+                            {period.total_net_pay ? formatCurrency(period.total_net_pay) : '-'}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2 pt-2">
+                        <PeriodDetailsDialog
+                          period={period}
+                          summary={selectedPeriod?.id === period.id ? summary : null}
+                          trigger={
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex-1"
+                              onClick={() => setSelectedPeriod(period)}
+                            >
+                              <Eye className="h-4 w-4 mr-2" />
+                              View
+                            </Button>
+                          }
+                        />
+                        {(period.status?.toLowerCase() === 'completed' || period.status?.toLowerCase() === 'finalized') && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="outline" size="sm" className="flex-1">
+                                <Unlock className="h-4 w-4 mr-2" />
+                                Reopen
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Reopen Payroll Period</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This will reopen the payroll period for modifications. Are you sure?
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleReopenPeriod}>
+                                  Reopen
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Desktop Table View */}
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Period</TableHead>
+                      <TableHead>Year</TableHead>
+                      <TableHead>Month</TableHead>
+                      <TableHead>Dates</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Total Employees</TableHead>
+                      <TableHead>Net Pay</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {periods.map((period) => (
+                      <TableRow
+                        key={period.id}
+                        className={selectedPeriod?.id === period.id ? 'bg-muted' : ''}
+                      >
+                        <TableCell className="font-medium">
+                          Period {period.period_number}
+                        </TableCell>
+                        <TableCell>{period.year}</TableCell>
+                        <TableCell>
+                          {new Date(period.year, period.month - 1).toLocaleString('default', { month: 'long' })}
+                        </TableCell>
+                        <TableCell>
+                          {period.start_date && period.end_date
+                            ? `${formatDate(period.start_date)} - ${formatDate(period.end_date)}`
+                            : 'Not set'
+                          }
+                        </TableCell>
+                        <TableCell>{getStatusBadge(period.status)}</TableCell>
+                        <TableCell>
+                          {period.status?.toLowerCase() === 'draft' ? '-' : (summary?.total_employees || '-')}
+                        </TableCell>
+                        <TableCell>
+                          {period.total_net_pay ? formatCurrency(period.total_net_pay) : '-'}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <PeriodDetailsDialog
+                              period={period}
+                              summary={selectedPeriod?.id === period.id ? summary : null}
+                              trigger={
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setSelectedPeriod(period)}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                              }
+                            />
+                            {(period.status?.toLowerCase() === 'completed' || period.status?.toLowerCase() === 'finalized') && (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="outline" size="sm">
+                                    <Unlock className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Reopen Payroll Period</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      This will reopen the payroll period for modifications. Are you sure?
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={handleReopenPeriod}>
+                                      Reopen
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="selection" className="space-y-4">
-          {selectedPeriod && (
-            <EmployeeSelectionProcessing
-              selectedPeriod={selectedPeriod}
-              onEmployeesSelected={setSelectedEmployees}
-              onCalculatePayroll={handleCalculatePayroll}
-            />
-          )}
-        </TabsContent>
-
-        <TabsContent value="processing" className="space-y-4">
           {selectedPeriod && (
             <EmployeeSelectionProcessing
               selectedPeriod={selectedPeriod}
