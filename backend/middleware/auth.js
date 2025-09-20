@@ -10,6 +10,9 @@ const requireAuth = (req, res, next) => {
             message: 'Please log in to access this resource'
         });
     }
+    
+    // Set req.user for controller access
+    req.user = req.session.user;
     next();
 };
 
@@ -28,6 +31,9 @@ const requireAdmin = (req, res, next) => {
             message: 'Administrator privileges required'
         });
     }
+    
+    // Set req.user for controller access
+    req.user = req.session.user;
     next();
 };
 
@@ -67,11 +73,13 @@ const requireAdminOrOwner = (req, res, next) => {
 
     // Admin can access any data
     if (currentUser.role === 'admin') {
+        req.user = req.session.user;
         return next();
     }
 
     // Employee can only access their own data
     if (currentUser.employee_id === requestedEmployeeId) {
+        req.user = req.session.user;
         return next();
     }
 

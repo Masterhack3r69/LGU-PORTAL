@@ -127,7 +127,7 @@ class PayslipPdfService {
             { label: 'Employee ID:', value: data.employee.employee_number },
             { label: 'Name:', value: data.employee.name },
             { label: 'Position:', value: data.employee.position },
-            { label: 'Department:', value: data.employee.department || 'N/A' }
+            { label: 'Department:', value: data.employee.plantilla_position || 'N/A' }
         ];
 
         let currentY = startY + 25;
