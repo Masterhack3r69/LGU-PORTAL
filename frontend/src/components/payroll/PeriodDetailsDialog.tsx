@@ -16,7 +16,6 @@ import {
   Clock,
   Users,
   DollarSign,
-  FileText,
   Eye,
   CheckCircle,
   Info,

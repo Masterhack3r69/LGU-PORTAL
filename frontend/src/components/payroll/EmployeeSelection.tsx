@@ -9,7 +9,6 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import {
   Search,
-  Users,
   CheckSquare,
   Square,
   UserCheck
@@ -24,12 +23,12 @@ interface EmployeeSelectionData {
 }
 
 interface EmployeeSelectionProps {
-  selectedPeriod: any;
+  selectedPeriod?: string | null;
   onEmployeesSelected: (employees: EmployeeSelectionData[]) => void;
-  onCalculatePayroll: () => void;
+  onCalculatePayroll?: () => void;
 }
 
-export function EmployeeSelection({ selectedPeriod, onEmployeesSelected, onCalculatePayroll }: EmployeeSelectionProps) {
+export function EmployeeSelection({ onEmployeesSelected }: EmployeeSelectionProps) {
   const [employees, setEmployees] = useState<EmployeeSelectionData[]>([]);
   const [filteredEmployees, setFilteredEmployees] = useState<EmployeeSelectionData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,7 +41,7 @@ export function EmployeeSelection({ selectedPeriod, onEmployeesSelected, onCalcu
 
   useEffect(() => {
     filterEmployees();
-  }, [employees, searchTerm]);
+  }, [employees, searchTerm]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     onEmployeesSelected(employees);
@@ -213,7 +212,7 @@ export function EmployeeSelection({ selectedPeriod, onEmployeesSelected, onCalcu
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredEmployees.map((empData, index) => {
+              {filteredEmployees.map((empData) => {
                 const originalIndex = employees.findIndex(e => e.employee.id === empData.employee.id);
                 return (
                   <TableRow key={empData.employee.id}>

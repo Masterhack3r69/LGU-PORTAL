@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Play } from 'lucide-react';
 import payrollService from '@/services/payrollService';
 import { EmployeeSelectionProcessing } from '@/components/payroll/EmployeeSelectionProcessing';
 import type { PayrollPeriod } from '@/types/payroll';
@@ -13,9 +11,9 @@ export function PayrollProcessingPage() {
   const [selectedPeriod, setSelectedPeriod] = useState<PayrollPeriod | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Employee Selection states
-  const [selectedEmployees, setSelectedEmployees] = useState<any[]>([]);
-  const [useEmployeeSelection, setUseEmployeeSelection] = useState(false);
+  // Employee Selection states - commented out for now as functionality is not implemented
+  // const [selectedEmployees, setSelectedEmployees] = useState<any[]>([]);
+  // const [useEmployeeSelection, setUseEmployeeSelection] = useState(false);
 
   useEffect(() => {
     loadPeriods();
@@ -49,35 +47,21 @@ export function PayrollProcessingPage() {
 
     try {
       // Use selected employees if available, otherwise use all employees
-      let employeesToProcess = [];
-
-      if (selectedEmployees.length > 0) {
-        // Use selected employees with their custom working days
-        employeesToProcess = selectedEmployees.map(emp => ({
-          employee_id: emp.employee.id,
-          working_days: emp.workingDays
-        }));
-      }
-      // If no employees selected, process all employees (empty array means all)
-
+      // For now, process all employees (empty array means all)
       const response = await payrollService.calculatePayroll({
         period_id: selectedPeriod.id,
-        employee_ids: selectedEmployees.length > 0
-          ? selectedEmployees.map(emp => emp.employee.id)
-          : undefined
+        employee_ids: undefined
       });
 
       if (response.success) {
         const processedCount = response.data.processed_count;
-        const employeeText = selectedEmployees.length > 0
-          ? `${processedCount} selected employees`
-          : `${processedCount} employees`;
+        const employeeText = `${processedCount} employees`;
 
         toast.success(`Processed ${employeeText}`);
         loadPeriods();
 
         // Reset employee selection after successful processing
-        setSelectedEmployees([]);
+        // setSelectedEmployees([]);
       }
     } catch (error) {
       console.error('Failed to calculate payroll:', error);
@@ -192,7 +176,7 @@ export function PayrollProcessingPage() {
             {selectedPeriod ? (
               <EmployeeSelectionProcessing
                 selectedPeriod={selectedPeriod}
-                onEmployeesSelected={setSelectedEmployees}
+                onEmployeesSelected={() => {}}
                 onCalculatePayroll={handleCalculatePayroll}
               />
             ) : (

@@ -5,8 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import {
   FileText,
-  Eye,
-  Download
+  Eye
 } from 'lucide-react';
 import payrollService from '@/services/payrollService';
 import type { PayrollPeriod, PayrollItem } from '@/types/payroll';

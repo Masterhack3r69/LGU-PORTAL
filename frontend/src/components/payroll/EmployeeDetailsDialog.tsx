@@ -1,15 +1,10 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   User,
   Phone,
-  Mail,
-  MapPin,
-  Calendar,
   DollarSign,
-  Building,
   Briefcase,
   CreditCard,
   FileText

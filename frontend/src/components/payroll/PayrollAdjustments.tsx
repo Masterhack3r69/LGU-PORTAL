@@ -34,7 +34,7 @@ export function PayrollAdjustments({ selectedPeriod, onSummaryUpdate, onPayrollI
 
   useEffect(() => {
     loadPayrollItems();
-  }, [selectedPeriod]);
+  }, [selectedPeriod]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadPayrollItems = async () => {
     try {

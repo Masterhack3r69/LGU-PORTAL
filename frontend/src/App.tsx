@@ -38,6 +38,9 @@ import { PayrollAdjustmentsPage } from '@/pages/payroll/PayrollAdjustmentsPage';
 import { PayrollReportsPage } from '@/pages/payroll/PayrollReportsPage';
 import { PayrollConfigurationPage } from '@/pages/payroll/PayrollConfigurationPage';
 
+// Benefits Management Pages
+import { BenefitsManagementPage } from '@/pages/benefits/BenefitsManagementPage';
+
 function App() {
   return (
     <Routes>
@@ -267,6 +270,18 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['employee']}>
                 <EmployeePayrollPage />
+              </ProtectedRoute>
+            }
+          />
+        </Route>
+
+        {/* Benefits Management - accessible to all authenticated users */}
+        <Route path="benefits">
+          <Route
+            index
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'employee']}>
+                <BenefitsManagementPage />
               </ProtectedRoute>
             }
           />

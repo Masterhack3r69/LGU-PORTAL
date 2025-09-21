@@ -150,6 +150,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     });
   }
 
+  // Compensation & Benefits - Admin only
+  if (user?.role === 'admin') {
+    navMain.push({
+      title: "Compensation & Benefits",
+      url: "/benefits",
+      icon: DollarSign,
+      items: [], // No dropdown items since everything is in tabs
+    });
+  }
+
   // Reports - Only show for admins, hide completely for employees
   if (user?.role === 'admin') {
     navMain.push({
