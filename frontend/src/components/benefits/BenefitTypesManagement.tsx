@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { toast } from 'sonner';
 import {
   DropdownMenu,
@@ -19,7 +20,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Plus, Edit, Trash2, Power, PowerOff, MoreHorizontal } from 'lucide-react';
+import { Plus, Edit, Trash2, Power, PowerOff, MoreHorizontal, Info, ChevronDown, ChevronUp, Copy } from 'lucide-react';
 import benefitsService from '@/services/benefitsService';
 import type { BenefitType, BENEFIT_CATEGORIES } from '@/types/benefits';
 
@@ -28,6 +29,7 @@ const BenefitTypesManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingType, setEditingType] = useState<BenefitType | null>(null);
+  const [formulaHelpOpen, setFormulaHelpOpen] = useState(false);
 
   const [formData, setFormData] = useState<{
     code: string;
@@ -94,6 +96,11 @@ const BenefitTypesManagement: React.FC = () => {
     setEditingType(null);
   };
 
+  const insertFormula = (formula: string) => {
+    setFormData({ ...formData, calculation_formula: formula });
+    toast.success('Formula inserted!');
+  };
+
   const openCreateDialog = () => {
     resetForm();
     setDialogOpen(true);
@@ -119,12 +126,47 @@ const BenefitTypesManagement: React.FC = () => {
 
   const handleSubmit = async () => {
     try {
+      // Clean and validate form data before submission
       const submitData: Partial<BenefitType> = {
-        ...formData,
-        default_amount: formData.default_amount ? parseFloat(formData.default_amount) : undefined,
-        minimum_service_months: formData.minimum_service_months ? parseInt(formData.minimum_service_months) : undefined,
-        calculation_formula: formData.calculation_type === 'Formula' ? formData.calculation_formula : undefined
+        code: formData.code.trim(),
+        name: formData.name.trim(),
+        category: formData.category,
+        calculation_type: formData.calculation_type,
+        is_prorated: formData.is_prorated,
+        is_active: formData.is_active,
+        description: formData.description?.trim() || undefined
       };
+
+      // Only include calculation_formula for Formula type
+      if (formData.calculation_type === 'Formula') {
+        if (!formData.calculation_formula?.trim()) {
+          toast.error('Calculation formula is required for Formula type');
+          return;
+        }
+        submitData.calculation_formula = formData.calculation_formula.trim();
+      }
+
+      // Only include default_amount if provided and valid
+      if (formData.default_amount && formData.default_amount.trim()) {
+        const amount = parseFloat(formData.default_amount);
+        if (isNaN(amount)) {
+          toast.error('Default amount must be a valid number');
+          return;
+        }
+        submitData.default_amount = amount;
+      }
+
+      // Only include minimum_service_months if provided and valid
+      if (formData.minimum_service_months && formData.minimum_service_months.trim()) {
+        const months = parseInt(formData.minimum_service_months);
+        if (isNaN(months) || months < 0) {
+          toast.error('Minimum service months must be a valid positive number');
+          return;
+        }
+        submitData.minimum_service_months = months;
+      }
+
+      console.log('Submitting benefit type data:', submitData);
 
       let response;
       if (editingType) {
@@ -139,11 +181,12 @@ const BenefitTypesManagement: React.FC = () => {
         resetForm();
         loadBenefitTypes();
       } else {
-        toast.error('Failed to save benefit type');
+        console.error('API error response:', response);
+        toast.error(`Failed to save benefit type: ${response.error || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Failed to save benefit type:', error);
-      toast.error('Failed to save benefit type');
+      toast.error('Failed to save benefit type: Network or server error');
     }
   };
 
@@ -419,14 +462,212 @@ const BenefitTypesManagement: React.FC = () => {
               </div>
 
               {formData.calculation_type === 'Formula' && (
-                <div className="space-y-2">
-                  <Label htmlFor="calculation_formula">Calculation Formula</Label>
-                  <Input
-                    id="calculation_formula"
-                    value={formData.calculation_formula}
-                    onChange={(e) => setFormData({ ...formData, calculation_formula: e.target.value })}
-                    placeholder="basic_salary / 12 * (service_months / 12)"
-                  />
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="calculation_formula">Calculation Formula</Label>
+                    <Input
+                      id="calculation_formula"
+                      value={formData.calculation_formula}
+                      onChange={(e) => setFormData({ ...formData, calculation_formula: e.target.value })}
+                      placeholder="basic_salary / 12 * (service_months / 12)"
+                    />
+                  </div>
+                  
+                  <Collapsible open={formulaHelpOpen} onOpenChange={setFormulaHelpOpen}>
+                    <CollapsibleTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full justify-between"
+                        type="button"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Info className="h-4 w-4" />
+                          Formula Help & Examples
+                        </div>
+                        {formulaHelpOpen ? (
+                          <ChevronUp className="h-4 w-4" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="pt-4">
+                      <div className="bg-muted/50 rounded-lg p-4 space-y-4">
+                        <div>
+                          <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
+                            📊 Available Variables
+                          </h4>
+                          <div className="grid grid-cols-1 gap-2 text-xs">
+                            <div className="flex justify-between items-center p-2 bg-background rounded border">
+                              <span><code className="bg-muted px-1 rounded">basic_salary</code> - Employee's monthly basic salary</span>
+                            </div>
+                            <div className="flex justify-between items-center p-2 bg-background rounded border">
+                              <span><code className="bg-muted px-1 rounded">service_months</code> - Employee's total months of service</span>
+                            </div>
+                            <div className="flex justify-between items-center p-2 bg-background rounded border">
+                              <span><code className="bg-muted px-1 rounded">daily_rate</code> - Employee's daily rate (basic_salary / 22)</span>
+                            </div>
+                            <div className="flex justify-between items-center p-2 bg-background rounded border">
+                              <span><code className="bg-muted px-1 rounded">monthly_salary</code> - Employee's current monthly salary</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div>
+                          <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
+                            🧮 Formula Examples
+                          </h4>
+                          <div className="space-y-2">
+                            <div className="p-3 bg-background rounded border">
+                              <div className="flex justify-between items-start mb-1">
+                                <div>
+                                  <span className="font-medium text-sm">13th Month Bonus</span>
+                                  <p className="text-xs text-muted-foreground mt-1">One month equivalent based on service</p>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => insertFormula('basic_salary / 12 * (service_months / 12)')}
+                                  className="text-xs h-6 px-2"
+                                  type="button"
+                                >
+                                  <Copy className="h-3 w-3 mr-1" />
+                                  Use
+                                </Button>
+                              </div>
+                              <code className="text-xs bg-muted px-2 py-1 rounded block">
+                                basic_salary / 12 * (service_months / 12)
+                              </code>
+                            </div>
+
+                            <div className="p-3 bg-background rounded border">
+                              <div className="flex justify-between items-start mb-1">
+                                <div>
+                                  <span className="font-medium text-sm">Performance Bonus (1 Month)</span>
+                                  <p className="text-xs text-muted-foreground mt-1">One month basic salary</p>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => insertFormula('basic_salary * 1.0')}
+                                  className="text-xs h-6 px-2"
+                                  type="button"
+                                >
+                                  <Copy className="h-3 w-3 mr-1" />
+                                  Use
+                                </Button>
+                              </div>
+                              <code className="text-xs bg-muted px-2 py-1 rounded block">
+                                basic_salary * 1.0
+                              </code>
+                            </div>
+
+                            <div className="p-3 bg-background rounded border">
+                              <div className="flex justify-between items-start mb-1">
+                                <div>
+                                  <span className="font-medium text-sm">Service Years Bonus</span>
+                                  <p className="text-xs text-muted-foreground mt-1">10% of salary per year of service</p>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => insertFormula('basic_salary * (service_months / 12) * 0.1')}
+                                  className="text-xs h-6 px-2"
+                                  type="button"
+                                >
+                                  <Copy className="h-3 w-3 mr-1" />
+                                  Use
+                                </Button>
+                              </div>
+                              <code className="text-xs bg-muted px-2 py-1 rounded block">
+                                basic_salary * (service_months / 12) * 0.1
+                              </code>
+                            </div>
+
+                            <div className="p-3 bg-background rounded border">
+                              <div className="flex justify-between items-start mb-1">
+                                <div>
+                                  <span className="font-medium text-sm">Daily Rate Bonus</span>
+                                  <p className="text-xs text-muted-foreground mt-1">30 days worth of daily rate</p>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => insertFormula('daily_rate * 30')}
+                                  className="text-xs h-6 px-2"
+                                  type="button"
+                                >
+                                  <Copy className="h-3 w-3 mr-1" />
+                                  Use
+                                </Button>
+                              </div>
+                              <code className="text-xs bg-muted px-2 py-1 rounded block">
+                                daily_rate * 30
+                              </code>
+                            </div>
+
+                            <div className="p-3 bg-background rounded border">
+                              <div className="flex justify-between items-start mb-1">
+                                <div>
+                                  <span className="font-medium text-sm">Percentage Bonus</span>
+                                  <p className="text-xs text-muted-foreground mt-1">5% of basic salary</p>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => insertFormula('basic_salary * 0.05')}
+                                  className="text-xs h-6 px-2"
+                                  type="button"
+                                >
+                                  <Copy className="h-3 w-3 mr-1" />
+                                  Use
+                                </Button>
+                              </div>
+                              <code className="text-xs bg-muted px-2 py-1 rounded block">
+                                basic_salary * 0.05
+                              </code>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div>
+                          <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
+                            ⚙️ Supported Operations
+                          </h4>
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div className="p-2 bg-background rounded border text-center">
+                              <code>+</code> Addition
+                            </div>
+                            <div className="p-2 bg-background rounded border text-center">
+                              <code>-</code> Subtraction
+                            </div>
+                            <div className="p-2 bg-background rounded border text-center">
+                              <code>*</code> Multiplication
+                            </div>
+                            <div className="p-2 bg-background rounded border text-center">
+                              <code>/</code> Division
+                            </div>
+                            <div className="p-2 bg-background rounded border text-center col-span-2">
+                              <code>( )</code> Parentheses for grouping
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                          <h4 className="font-medium text-sm text-blue-800 mb-1 flex items-center gap-2">
+                            💡 Tips
+                          </h4>
+                          <ul className="text-xs text-blue-700 space-y-1">
+                            <li>• Use parentheses to control calculation order</li>
+                            <li>• Test formulas with sample employees before finalizing</li>
+                            <li>• Consider proration settings for new employees</li>
+                            <li>• Variables are automatically replaced during calculation</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
                 </div>
               )}
 

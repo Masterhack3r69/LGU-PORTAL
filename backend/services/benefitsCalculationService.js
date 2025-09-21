@@ -273,15 +273,16 @@ class BenefitsCalculationService {
             notes: ''
         };
 
-        // Check employment status
-        if (employee.employment_status !== 'Active') {
+        // Check employment status - default to Active if undefined
+        const employmentStatus = employee.employment_status || 'Active';
+        if (employmentStatus !== 'Active') {
             eligibility.is_eligible = false;
-            eligibility.notes = `Employee status is ${employee.employment_status}`;
+            eligibility.notes = `Employee status is ${employmentStatus}`;
             return eligibility;
         }
 
         // Check minimum service months
-        if (serviceMonths < benefitType.minimum_service_months) {
+        if (benefitType.minimum_service_months && serviceMonths < benefitType.minimum_service_months) {
             eligibility.is_eligible = false;
             eligibility.notes = `Insufficient service months: ${serviceMonths} (minimum: ${benefitType.minimum_service_months})`;
             return eligibility;
@@ -358,6 +359,14 @@ class BenefitsCalculationService {
     }
 
     /**
+     * Calculate years of service for an employee
+     */
+    calculateServiceYears(employee, cutoffDate = null) {
+        const serviceMonths = this.calculateServiceMonths(employee, cutoffDate);
+        return Math.floor(serviceMonths / 12);
+    }
+
+    /**
      * Get base salary for calculation
      */
     getBaseSalary(employee) {
@@ -421,23 +430,30 @@ class BenefitsCalculationService {
                 throw new Error('Failed to retrieve employees');
             }
 
-            const eligibleEmployees = [];
+            const allEmployees = [];
             
             for (const employee of employeesResult.data) {
+                const serviceYears = this.calculateServiceYears(employee, cutoffDate);
                 const serviceMonths = this.calculateServiceMonths(employee, cutoffDate);
                 const eligibility = this.checkEligibility(employee, benefitType, serviceMonths);
                 
-                if (eligibility.is_eligible) {
-                    eligibleEmployees.push({
-                        ...employee,
-                        service_months: serviceMonths
-                    });
-                }
+                allEmployees.push({
+                    id: employee.id,
+                    employee_id: employee.employee_number || employee.employee_id,
+                    full_name: employee.full_name || employee.getFullName(),
+                    department: employee.department || employee.plantilla_position || 'Not Assigned',
+                    position: employee.position || employee.plantilla_position || 'Not Assigned',
+                    hire_date: employee.appointment_date,
+                    service_years: serviceYears,
+                    service_months: serviceMonths,
+                    is_eligible: eligibility.is_eligible,
+                    eligibility_reason: eligibility.is_eligible ? null : eligibility.notes
+                });
             }
 
             return {
                 success: true,
-                data: eligibleEmployees
+                data: allEmployees
             };
 
         } catch (error) {

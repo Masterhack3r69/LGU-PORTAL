@@ -1,5 +1,6 @@
 // controllers/benefitsController.js - Benefits management controller
 const { asyncHandler } = require('../middleware/errorHandler');
+const { executeQuery } = require('../config/database');
 const { BenefitType, BenefitCycle, BenefitItem } = require('../models/Benefits');
 const Employee = require('../models/Employee');
 const benefitsCalculationService = require('../services/benefitsCalculationService');
@@ -56,7 +57,36 @@ class BenefitsController {
     // Create benefit type
     createBenefitType = asyncHandler(async (req, res) => {
         const benefitTypeData = req.body;
-        const benefitType = new BenefitType(benefitTypeData);
+        
+        // Validate required fields
+        if (!benefitTypeData.name || !benefitTypeData.name.trim()) {
+            return errorResponse(res, 'Benefit type name is required', 400);
+        }
+        
+        if (!benefitTypeData.code || !benefitTypeData.code.trim()) {
+            return errorResponse(res, 'Benefit type code is required', 400);
+        }
+        
+        // Clean the data before creating the object
+        const cleanData = {
+            name: benefitTypeData.name.trim(),
+            code: benefitTypeData.code.trim(),
+            description: benefitTypeData.description?.trim() || null,
+            category: benefitTypeData.category || 'ANNUAL',
+            calculation_type: benefitTypeData.calculation_type || 'Formula',
+            calculation_formula: benefitTypeData.calculation_formula?.trim() || null,
+            is_prorated: benefitTypeData.is_prorated !== undefined ? benefitTypeData.is_prorated : true,
+            is_active: benefitTypeData.is_active !== undefined ? benefitTypeData.is_active : true,
+            minimum_service_months: benefitTypeData.minimum_service_months || null,
+            default_amount: benefitTypeData.default_amount || null
+        };
+        
+        const benefitType = new BenefitType(cleanData);
+
+        const validation = benefitType.validate();
+        if (!validation.isValid) {
+            return errorResponse(res, 'Validation failed', 400, validation.errors);
+        }
 
         const result = await benefitType.save();
 
@@ -457,7 +487,7 @@ class BenefitsController {
     // Calculate benefits for cycle
     calculateCycleBenefits = asyncHandler(async (req, res) => {
         const { cycleId } = req.params;
-        const { employee_ids } = req.body; // Optional: specific employees
+        const { employee_ids, manual_amounts } = req.body; // Optional: specific employees and manual amounts
 
         // Get benefit cycle
         const benefitCycleResult = await BenefitCycle.findById(cycleId);
@@ -510,26 +540,80 @@ class BenefitsController {
             const benefitItems = [];
             for (const calc of calculations) {
                 if (calc.success && calc.calculation) {
-                    const benefitItemData = {
-                        benefit_cycle_id: benefitCycle.id,
-                        employee_id: calc.employee_id,
-                        base_salary: calc.calculation.base_salary,
-                        service_months: calc.calculation.service_months,
-                        calculated_amount: calc.calculation.calculated_amount,
-                        final_amount: calc.calculation.final_amount,
-                        tax_amount: calc.calculation.tax_amount,
-                        net_amount: calc.calculation.net_amount,
-                        calculation_basis: calc.calculation.calculation_basis,
-                        status: 'Calculated',
-                        is_eligible: calc.calculation.is_eligible,
-                        eligibility_notes: calc.calculation.eligibility_notes
-                    };
+                    let calculatedAmount = calc.calculation.calculated_amount;
+                    let finalAmount = calc.calculation.final_amount;
+                    let netAmount = calc.calculation.net_amount;
+                    let taxAmount = calc.calculation.tax_amount;
+                    let calculationBasis = calc.calculation.calculation_basis;
 
-                    const benefitItem = new BenefitItem(benefitItemData);
+                    // Override with manual amounts if provided (for Manual calculation types)
+                    if (manual_amounts && manual_amounts[calc.employee_id]) {
+                        const manualAmount = parseFloat(manual_amounts[calc.employee_id]);
+                        if (!isNaN(manualAmount) && manualAmount > 0) {
+                            calculatedAmount = manualAmount;
+                            finalAmount = manualAmount;
+                            // Recalculate tax if applicable
+                            taxAmount = benefitType.is_taxable ? 
+                                benefitsCalculationService.calculateTax(manualAmount) : 0;
+                            netAmount = finalAmount - taxAmount;
+                            calculationBasis = `Manual entry: ₱${manualAmount.toLocaleString()}`;
+                        }
+                    }
+
+                    // Check if benefit item already exists for this employee and cycle
+                    const existingItemQuery = `
+                        SELECT * FROM benefit_items 
+                        WHERE benefit_cycle_id = ? AND employee_id = ?
+                    `;
+                    const existingResult = await executeQuery(existingItemQuery, [benefitCycle.id, calc.employee_id]);
+                    
+                    let benefitItem;
+                    if (existingResult.success && existingResult.data.length > 0) {
+                        // Update existing item
+                        const existing = existingResult.data[0];
+                        benefitItem = new BenefitItem(existing);
+                        
+                        // Update with new calculation
+                        benefitItem.base_salary = calc.calculation.base_salary;
+                        benefitItem.service_months = calc.calculation.service_months;
+                        benefitItem.calculated_amount = calculatedAmount;
+                        benefitItem.final_amount = finalAmount;
+                        benefitItem.tax_amount = taxAmount;
+                        benefitItem.net_amount = netAmount;
+                        benefitItem.calculation_basis = calculationBasis;
+                        benefitItem.status = 'Calculated';
+                        benefitItem.is_eligible = calc.calculation.is_eligible;
+                        benefitItem.eligibility_notes = calc.calculation.eligibility_notes;
+                        
+                        console.log(`Updating existing benefit item ID ${benefitItem.id} for employee ${calc.employee_id}`);
+                    } else {
+                        // Create new item
+                        const benefitItemData = {
+                            benefit_cycle_id: benefitCycle.id,
+                            employee_id: calc.employee_id,
+                            base_salary: calc.calculation.base_salary,
+                            service_months: calc.calculation.service_months,
+                            calculated_amount: calculatedAmount,
+                            final_amount: finalAmount,
+                            tax_amount: taxAmount,
+                            net_amount: netAmount,
+                            calculation_basis: calculationBasis,
+                            status: 'Calculated',
+                            is_eligible: calc.calculation.is_eligible,
+                            eligibility_notes: calc.calculation.eligibility_notes
+                        };
+
+                        benefitItem = new BenefitItem(benefitItemData);
+                        console.log(`Creating new benefit item for employee ${calc.employee_id}`);
+                    }
+                    
                     const saveResult = await benefitItem.save();
                     
                     if (saveResult.success) {
                         benefitItems.push(saveResult.data);
+                        console.log(`✅ Benefit item saved successfully for employee ${calc.employee_id}`);
+                    } else {
+                        console.error(`❌ Failed to save benefit item for employee ${calc.employee_id}:`, saveResult.error);
                     }
                 }
             }
@@ -749,7 +833,7 @@ class BenefitsController {
 
         if (result.success) {
             return successResponse(res, {
-                eligible_employees: result.data,
+                employees: result.data,
                 count: result.data.length
             }, 'Eligible employees retrieved successfully');
         }
@@ -760,10 +844,16 @@ class BenefitsController {
     // Preview benefit calculation
     previewBenefitCalculation = asyncHandler(async (req, res) => {
         const { benefitTypeId } = req.params;
-        const { employee_id, cutoff_date } = req.body;
+        const { employee_id, employee_ids, cutoff_date, applicable_date } = req.body;
 
-        if (!employee_id) {
-            return errorResponse(res, 'Employee ID is required', 400);
+        // Support both single employee (legacy) and multiple employees (new)
+        let employeeIdList = [];
+        if (employee_ids && Array.isArray(employee_ids)) {
+            employeeIdList = employee_ids;
+        } else if (employee_id) {
+            employeeIdList = [employee_id];
+        } else {
+            return errorResponse(res, 'Employee ID or employee IDs are required', 400);
         }
 
         // Get benefit type
@@ -772,24 +862,47 @@ class BenefitsController {
             return errorResponse(res, 'Benefit type not found', 404);
         }
 
-        // Get employee
-        const employeeResult = await Employee.findById(employee_id);
-        if (!employeeResult.success || !employeeResult.data) {
-            return errorResponse(res, 'Employee not found', 404);
+        const benefitType = benefitTypeResult.data;
+        const effectiveCutoffDate = applicable_date || cutoff_date;
+
+        try {
+            // Get employees
+            const employeePromises = employeeIdList.map(id => Employee.findById(id));
+            const employeeResults = await Promise.all(employeePromises);
+            const employees = employeeResults
+                .filter(result => result.success && result.data)
+                .map(result => result.data);
+
+            if (employees.length === 0) {
+                return errorResponse(res, 'No valid employees found', 404);
+            }
+
+            // Calculate benefits for all employees
+            const calculations = await benefitsCalculationService.bulkCalculateBenefits(
+                employees,
+                benefitType,
+                { cutoffDate: effectiveCutoffDate }
+            );
+
+            // Format response for frontend
+            const previewResults = calculations.map(calc => {
+                const employee = employees.find(emp => emp.id === calc.employee_id);
+                return {
+                    employee_id: calc.employee_id,
+                    employee_name: employee ? employee.full_name : 'Unknown',
+                    calculated_amount: calc.calculation?.calculated_amount || 0,
+                    calculation_breakdown: calc.calculation?.calculation_basis || 'No calculation available',
+                    is_eligible: calc.calculation?.is_eligible || false,
+                    eligibility_notes: calc.calculation?.eligibility_notes || (calc.error || 'Calculation failed')
+                };
+            });
+
+            return successResponse(res, previewResults, 'Benefit calculation preview generated');
+
+        } catch (error) {
+            console.error('Preview calculation error:', error);
+            return errorResponse(res, 'Failed to calculate benefit preview', 500);
         }
-
-        // Calculate benefit
-        const calculation = await benefitsCalculationService.calculateBenefitAmount(
-            employeeResult.data,
-            benefitTypeResult.data,
-            { cutoffDate: cutoff_date }
-        );
-
-        if (calculation.success) {
-            return successResponse(res, calculation.data, 'Benefit calculation preview generated');
-        }
-
-        return errorResponse(res, calculation.error, 500);
     });
 }
 

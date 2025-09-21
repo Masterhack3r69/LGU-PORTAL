@@ -8,17 +8,18 @@ import {
 } from '@/components/ui/tooltip';
 import BenefitTypesManagement from './BenefitTypesManagement';
 import BenefitCyclesManagement from './BenefitCyclesManagement';
-import BenefitProcessing from './BenefitProcessing';
+
+import SimplifiedBenefitProcessing from './SimplifiedBenefitProcessing';
 import BenefitsReports from './BenefitsReports';
 import {
   Settings,
   Calendar,
-  Calculator,
+  Zap,
   BarChart3
 } from 'lucide-react';
 
 const AdminBenefitsManagement: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('types');
+  const [activeTab, setActiveTab] = useState('simplified');
 
   return (
     <div className="container mx-auto space-y-6">
@@ -38,7 +39,7 @@ const AdminBenefitsManagement: React.FC = () => {
               <TooltipTrigger asChild>
                 <TabsTrigger value="types" className="flex items-center justify-center space-x-2 transition-all duration-200 hover:scale-105">
                   <Settings className="h-5 w-5 md:h-4 md:w-4" />
-                  <span className="hidden sm:inline">Benefit Types</span>
+                  <span className="hidden sm:inline">Types</span>
                 </TabsTrigger>
               </TooltipTrigger>
               <TooltipContent className="sm:hidden">
@@ -50,7 +51,7 @@ const AdminBenefitsManagement: React.FC = () => {
               <TooltipTrigger asChild>
                 <TabsTrigger value="cycles" className="flex items-center justify-center space-x-2 transition-all duration-200 hover:scale-105">
                   <Calendar className="h-5 w-5 md:h-4 md:w-4" />
-                  <span className="hidden sm:inline">Benefit Cycles</span>
+                  <span className="hidden sm:inline">Cycles</span>
                 </TabsTrigger>
               </TooltipTrigger>
               <TooltipContent className="sm:hidden">
@@ -60,13 +61,13 @@ const AdminBenefitsManagement: React.FC = () => {
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <TabsTrigger value="processing" className="flex items-center justify-center space-x-2 transition-all duration-200 hover:scale-105">
-                  <Calculator className="h-5 w-5 md:h-4 md:w-4" />
+                <TabsTrigger value="simplified" className="flex items-center justify-center space-x-2 transition-all duration-200 hover:scale-105">
+                  <Zap className="h-5 w-5 md:h-4 md:w-4" />
                   <span className="hidden sm:inline">Processing</span>
                 </TabsTrigger>
               </TooltipTrigger>
               <TooltipContent className="sm:hidden">
-                <p>Process Benefits</p>
+                <p>Benefit Processing</p>
               </TooltipContent>
             </Tooltip>
 
@@ -92,8 +93,8 @@ const AdminBenefitsManagement: React.FC = () => {
           <BenefitCyclesManagement />
         </TabsContent>
 
-        <TabsContent value="processing" className="space-y-4">
-          <BenefitProcessing />
+        <TabsContent value="simplified" className="space-y-4">
+          <SimplifiedBenefitProcessing />
         </TabsContent>
 
         <TabsContent value="reports" className="space-y-4">

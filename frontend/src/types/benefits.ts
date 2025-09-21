@@ -5,12 +5,16 @@ export interface BenefitType {
   code: string;
   name: string;
   category: 'ANNUAL' | 'PERFORMANCE' | 'LOYALTY' | 'TERMINAL' | 'SPECIAL';
-  calculation_type: 'Formula' | 'Fixed' | 'Manual';
+  calculation_type: 'Formula' | 'Fixed' | 'Manual' | 'Percentage';
   calculation_formula?: string;
-  default_amount?: number;
+  percentage_rate?: number;
+  fixed_amount?: number;
+  default_amount?: number; // For frontend compatibility
+  is_taxable?: boolean;
   is_prorated: boolean;
   minimum_service_months?: number;
-  is_recurring: boolean;
+  frequency?: 'Annual' | 'Biannual' | 'Event-Based';
+  is_recurring?: boolean; // For frontend compatibility, not in DB
   is_active: boolean;
   description?: string;
   created_at: string;
@@ -46,28 +50,42 @@ export interface BenefitCycle {
 
 export interface BenefitItem {
   id: number;
-  cycle_id: number;
+  benefit_cycle_id: number;
   employee_id: number;
-  benefit_type_id: number;
-  amount: number;
+  base_salary: number;
+  service_months: number;
+  calculated_amount: number;
+  final_amount: number;
+  tax_amount: number;
+  net_amount: number;
+  calculation_basis?: string;
   status: 'Draft' | 'Calculated' | 'Approved' | 'Paid' | 'Cancelled';
-  calculation_breakdown?: string;
+  is_eligible: boolean;
+  eligibility_notes?: string;
   notes?: string;
   created_at: string;
   updated_at: string;
-  calculated_at?: string;
-  approved_at?: string;
-  approved_by?: number;
-  paid_at?: string;
+  processed_by?: number;
+  processed_at?: string;
   paid_by?: number;
+  paid_at?: string;
+  payment_reference?: string;
   // Related data
   employee?: {
     id: number;
     employee_id: string;
+    employee_number: string;
     full_name: string;
+    employee_name: string;
+    first_name: string;
+    middle_name?: string;
+    last_name: string;
     department: string;
     position: string;
     hire_date: string;
+    appointment_date: string;
+    current_monthly_salary: number;
+    current_daily_rate: number;
     service_years?: number;
     service_months?: number;
   };
@@ -113,10 +131,18 @@ export interface BenefitSlipData extends BenefitItem {
   employee: {
     id: number;
     employee_id: string;
+    employee_number: string;
     full_name: string;
+    employee_name: string;
+    first_name: string;
+    middle_name?: string;
+    last_name: string;
     department: string;
     position: string;
     hire_date: string;
+    appointment_date: string;
+    current_monthly_salary: number;
+    current_daily_rate: number;
     service_years: number;
     service_months: number;
   };

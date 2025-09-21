@@ -7,16 +7,33 @@ class BenefitType {
         this.name = data.name || null;
         this.code = data.code || null;
         this.description = data.description || null;
-        this.category = data.category || 'Annual';
+        
+        // Handle category mapping - frontend sends uppercase, DB expects titlecase
+        const categoryMap = {
+            'ANNUAL': 'Annual',
+            'PERFORMANCE': 'Performance', 
+            'LOYALTY': 'Loyalty',
+            'TERMINAL': 'Terminal',
+            'SPECIAL': 'Special'
+        };
+        this.category = categoryMap[data.category] || data.category || 'Annual';
+        
         this.calculation_type = data.calculation_type || 'Formula';
         this.calculation_formula = data.calculation_formula || null;
         this.percentage_rate = data.percentage_rate || null;
-        this.fixed_amount = data.fixed_amount || null;
+        
+        // Handle default_amount from frontend mapping to fixed_amount in DB
+        this.fixed_amount = data.fixed_amount || data.default_amount || null;
+        
         this.is_taxable = data.is_taxable !== undefined ? data.is_taxable : true;
         this.is_prorated = data.is_prorated !== undefined ? data.is_prorated : true;
         this.minimum_service_months = data.minimum_service_months || 4;
         this.frequency = data.frequency || 'Annual';
         this.is_active = data.is_active !== undefined ? data.is_active : true;
+        
+        // Handle is_recurring field from frontend (not in DB but sent from frontend)
+        this.is_recurring = data.is_recurring !== undefined ? data.is_recurring : true;
+        
         this.created_at = data.created_at || null;
         this.updated_at = data.updated_at || null;
     }
@@ -37,12 +54,14 @@ class BenefitType {
             errors.push('Benefit type code must be 20 characters or less');
         }
 
-        if (!['Annual', 'Special', 'Terminal', 'Performance', 'Loyalty'].includes(this.category)) {
-            errors.push('Invalid benefit category');
+        const validCategories = ['Annual', 'Special', 'Terminal', 'Performance', 'Loyalty'];
+        if (!validCategories.includes(this.category)) {
+            errors.push(`Invalid benefit category. Must be one of: ${validCategories.join(', ')}`);
         }
 
-        if (!['Fixed', 'Percentage', 'Formula', 'Manual'].includes(this.calculation_type)) {
-            errors.push('Invalid calculation type');
+        const validCalculationTypes = ['Fixed', 'Percentage', 'Formula', 'Manual'];
+        if (!validCalculationTypes.includes(this.calculation_type)) {
+            errors.push(`Invalid calculation type. Must be one of: ${validCalculationTypes.join(', ')}`);
         }
 
         if (this.calculation_type === 'Fixed' && !this.fixed_amount) {
@@ -57,11 +76,12 @@ class BenefitType {
             errors.push('Calculation formula is required for Formula calculation type');
         }
 
-        if (!['Annual', 'Biannual', 'Event-Based'].includes(this.frequency)) {
-            errors.push('Invalid frequency');
+        const validFrequencies = ['Annual', 'Biannual', 'Event-Based'];
+        if (!validFrequencies.includes(this.frequency)) {
+            errors.push(`Invalid frequency. Must be one of: ${validFrequencies.join(', ')}`);
         }
 
-        if (this.minimum_service_months < 0) {
+        if (this.minimum_service_months !== null && this.minimum_service_months !== undefined && this.minimum_service_months < 0) {
             errors.push('Minimum service months cannot be negative');
         }
 

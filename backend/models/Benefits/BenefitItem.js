@@ -151,6 +151,7 @@ class BenefitItem {
         // Check for duplicate item in same cycle
         const duplicateCheck = await this.checkDuplicateItem();
         if (!duplicateCheck.isUnique) {
+            console.log('Duplicate benefit item found:', duplicateCheck.errors);
             return {
                 success: false,
                 error: 'Duplicate benefit item',
@@ -158,21 +159,29 @@ class BenefitItem {
             };
         }
 
+        // Use only the essential columns to avoid column mismatch
         const query = `
             INSERT INTO benefit_items (
                 benefit_cycle_id, employee_id, base_salary, service_months,
-                calculated_amount, adjustment_amount, final_amount, tax_amount,
-                net_amount, calculation_basis, status, is_eligible,
-                eligibility_notes, notes
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                calculated_amount, final_amount, net_amount, status, is_eligible
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
         const params = [
-            this.benefit_cycle_id, this.employee_id, this.base_salary, this.service_months,
-            this.calculated_amount, this.adjustment_amount, this.final_amount, this.tax_amount,
-            this.net_amount, this.calculation_basis, this.status, this.is_eligible,
-            this.eligibility_notes, this.notes
+            this.benefit_cycle_id, 
+            this.employee_id, 
+            parseFloat(this.base_salary) || 0, 
+            parseFloat(this.service_months) || 12,
+            parseFloat(this.calculated_amount) || 0, 
+            parseFloat(this.final_amount) || 0, 
+            parseFloat(this.net_amount) || 0, 
+            this.status || 'Calculated', 
+            this.is_eligible ? 1 : 0
         ];
+        
+        console.log('BenefitItem CREATE - SQL:', query);
+        console.log('BenefitItem CREATE - Params:', params);
+        console.log('BenefitItem CREATE - Param count:', params.length);
 
         const result = await executeQuery(query, params);
         if (result.success) {

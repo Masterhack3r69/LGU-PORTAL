@@ -93,18 +93,22 @@ class BenefitsService {
     return api.get<BenefitResponse<BenefitItem[]>>(`/benefits/cycles/${cycleId}/items?${params.toString()}`);
   }
 
-  async calculateBenefits(data: BenefitCalculationRequest): Promise<BenefitResponse<BenefitCalculationResult>> {
-    const { cycle_id, employee_ids } = data;
+  async calculateBenefits(data: BenefitCalculationRequest & { manual_amounts?: {[key: number]: string} }): Promise<BenefitResponse<BenefitCalculationResult>> {
+    const { cycle_id, employee_ids, manual_amounts } = data;
 
-    // If employee_ids are provided, use selective calculation
+    const requestData: {
+      employee_ids?: number[];
+      manual_amounts?: {[key: number]: string};
+    } = {};
+    
     if (employee_ids && employee_ids.length > 0) {
-      return api.post<BenefitResponse<BenefitCalculationResult>>(`/benefits/cycles/${cycle_id}/calculate`, {
-        employee_ids
-      });
+      requestData.employee_ids = employee_ids;
+    }
+    if (manual_amounts) {
+      requestData.manual_amounts = manual_amounts;
     }
 
-    // Otherwise, calculate for all eligible employees
-    return api.post<BenefitResponse<BenefitCalculationResult>>(`/benefits/cycles/${cycle_id}/calculate`, {});
+    return api.post<BenefitResponse<BenefitCalculationResult>>(`/benefits/cycles/${cycle_id}/calculate`, requestData);
   }
 
   // Benefit Items Management
