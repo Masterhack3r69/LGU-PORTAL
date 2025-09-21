@@ -98,10 +98,12 @@ app.use(compression({
 app.use(cors({
     origin: process.env.NODE_ENV === 'production' 
         ? (process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : ['http://10.0.0.73:5173', 'http://10.0.0.73:3000', 'http://localhost:5173', 'http://localhost:3000'])
-        : ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://10.0.0.73:5173'],
+        : ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://10.0.0.73:5173', 'http://10.0.0.73:3000'],
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+    preflightContinue: false,
+    optionsSuccessStatus: 200
 }));
 
 // Body parsing middleware

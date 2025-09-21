@@ -12,6 +12,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import trainingService from '@/services/trainingService';
+import type { TrainingTypeStatistic, TrainingTrendStatistic, EmployeeTrainingStatistic } from '@/types/training';
 
 const StatCard: React.FC<{
   title: string;
@@ -89,13 +90,6 @@ const TrainingStatistics: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h2 className="text-3xl font-bold">Training Analytics</h2>
-        <p className="text-muted-foreground">
-          Training insights and performance metrics for {currentYear}
-        </p>
-      </div>
 
       {/* Overview Stats */}
       {stats && (
@@ -103,22 +97,22 @@ const TrainingStatistics: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <StatCard
               title="Total Trainings"
-              value={stats.totalTrainings}
+              value={stats.summary?.total_trainings || 0}
               icon={Calendar}
             />
             <StatCard
               title="Total Hours"
-              value={`${stats.totalHours}h`}
+              value={`${stats.summary?.total_hours || '0.00'}h`}
               icon={Clock}
             />
             <StatCard
               title="Certificates Issued"
-              value={stats.certificatesIssued}
+              value={stats.summary?.certificates_issued || 0}
               icon={Award}
             />
             <StatCard
               title="Average Hours"
-              value={`${stats.averageHours.toFixed(1)}h`}
+              value={`${stats.summary?.avg_duration || '0.00'}h`}
               icon={BarChart3}
             />
           </div>
@@ -126,20 +120,20 @@ const TrainingStatistics: React.FC = () => {
           {/* Training by Status */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <StatCard
-              title="Completed Trainings"
-              value={stats.completedTrainings}
-              icon={Award}
+              title="Employees Trained"
+              value={stats.summary?.employees_trained || 0}
+              icon={Users}
               className="border-green-200"
             />
             <StatCard
-              title="In Progress"
-              value={stats.inProgressTrainings}
-              icon={Clock}
+              title="Training Types"
+              value={stats.by_type?.length || 0}
+              icon={BarChart3}
               className="border-blue-200"
             />
             <StatCard
-              title="Scheduled"
-              value={stats.scheduledTrainings}
+              title="Monthly Records"
+              value={stats.trends?.length || 0}
               icon={Calendar}
               className="border-yellow-200"
             />
@@ -155,18 +149,22 @@ const TrainingStatistics: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                {Object.entries(stats.byTrainingType).map(([type, data]) => (
-                  <div key={type} className="text-center p-4 border rounded-lg">
-                    <Badge variant="outline" className="mb-2">
-                      {type}
-                    </Badge>
-                    <div className="space-y-1 text-sm">
-                      <div>{data.count} trainings</div>
-                      <div className="text-muted-foreground">{data.hours}h total</div>
-                      <div className="text-muted-foreground">{data.certificates} certified</div>
+                {stats.by_type && stats.by_type.length > 0 ? (
+                  stats.by_type.map((type: TrainingTypeStatistic) => (
+                    <div key={type.training_type} className="text-center p-4 border rounded-lg">
+                      <Badge variant="outline" className="mb-2">
+                        {type.training_type}
+                      </Badge>
+                      <div className="space-y-1 text-sm">
+                        <div>{type.count} trainings</div>
+                      </div>
                     </div>
+                  ))
+                ) : (
+                  <div className="col-span-full text-center text-muted-foreground">
+                    No training type data available
                   </div>
-                ))}
+                )}
               </div>
             </CardContent>
           </Card>
@@ -181,21 +179,26 @@ const TrainingStatistics: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {stats.byMonth.map((month) => (
-                  <div key={month.month} className="flex items-center justify-between p-3 border rounded">
-                    <div className="font-medium">{month.month}</div>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span>{month.count} trainings</span>
-                      <span>{month.hours} hours</span>
+                {stats.trends && stats.trends.length > 0 ? (
+                  stats.trends.map((month: TrainingTrendStatistic) => (
+                    <div key={month.month} className="flex items-center justify-between p-3 border rounded">
+                      <div className="font-medium">{month.month}</div>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <span>{month.count} trainings</span>
+                      </div>
                     </div>
+                  ))
+                ) : (
+                  <div className="text-center text-muted-foreground">
+                    No monthly trend data available
                   </div>
-                ))}
+                )}
               </div>
             </CardContent>
           </Card>
 
           {/* Employee Training Summary */}
-          {stats.byEmployee && stats.byEmployee.length > 0 && (
+          {stats.by_employee && stats.by_employee.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -205,7 +208,7 @@ const TrainingStatistics: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {stats.byEmployee.slice(0, 10).map((employee) => (
+                  {stats.by_employee?.slice(0, 10).map((employee: EmployeeTrainingStatistic) => (
                     <div key={employee.employee_id} className="flex items-center justify-between p-3 border rounded">
                       <div>
                         <div className="font-medium">{employee.employee_name}</div>
@@ -229,7 +232,7 @@ const TrainingStatistics: React.FC = () => {
       )}
 
       {/* No Data State */}
-      {!stats || stats.totalTrainings === 0 && (
+      {!stats || (stats.summary && stats.summary.total_trainings === 0) && (
         <Card>
           <CardContent className="p-12 text-center">
             <BarChart3 className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />

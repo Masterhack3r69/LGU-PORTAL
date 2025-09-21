@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { BarChart3, Download, FileText, Filter, Calendar } from 'lucide-react';
+import { BarChart3, Download, FileText, Filter, Calendar, TrendingUp, CheckCircle, DollarSign } from 'lucide-react';
 import benefitsService from '@/services/benefitsService';
 import type { BenefitCycle, BenefitType, BenefitStatistics, BenefitReportFilter } from '@/types/benefits';
 
@@ -108,52 +108,52 @@ const BenefitsReports: React.FC = () => {
 
       {/* Statistics Overview */}
       {statistics && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2">
-                <FileText className="h-5 w-5 text-blue-500" />
-                <div>
-                  <div className="text-2xl font-bold">{statistics.total_items || 0}</div>
-                  <div className="text-sm text-muted-foreground">Total Items</div>
-                </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card className="transition-all duration-300 hover:shadow-lg hover:scale-105 border-l-4 border-l-blue-500 bg-gradient-to-r from-blue-50 to-white">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium text-gray-700">Total Items</CardTitle>
+                <FileText className="h-6 w-6 text-blue-500" />
               </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="text-3xl font-bold text-blue-700">{statistics.total_items || 0}</div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2">
-                <div className="h-5 w-5 rounded bg-green-500" />
-                <div>
-                  <div className="text-2xl font-bold">{formatCurrency(statistics.total_amount)}</div>
-                  <div className="text-sm text-muted-foreground">Total Amount</div>
-                </div>
+          <Card className="transition-all duration-300 hover:shadow-lg hover:scale-105 border-l-4 border-l-green-500 bg-gradient-to-r from-green-50 to-white">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium text-gray-700">Total Amount</CardTitle>
+                <DollarSign className="h-6 w-6 text-green-500" />
               </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="text-3xl font-bold text-green-600">{formatCurrency(statistics.total_amount)}</div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-purple-500" />
-                <div>
-                  <div className="text-2xl font-bold">{formatCurrency(safeToFixed(statistics.average_benefit_amount, 0))}</div>
-                  <div className="text-sm text-muted-foreground">Average Amount</div>
-                </div>
+          <Card className="transition-all duration-300 hover:shadow-lg hover:scale-105 border-l-4 border-l-purple-500 bg-gradient-to-r from-purple-50 to-white">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium text-gray-700">Average Amount</CardTitle>
+                <TrendingUp className="h-6 w-6 text-purple-500" />
               </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="text-3xl font-bold text-purple-600">{formatCurrency(safeToFixed(statistics.average_benefit_amount, 0))}</div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-orange-500" />
-                <div>
-                  <div className="text-2xl font-bold">{statistics.paid_count || 0}</div>
-                  <div className="text-sm text-muted-foreground">Paid Items</div>
-                </div>
+          <Card className="transition-all duration-300 hover:shadow-lg hover:scale-105 border-l-4 border-l-orange-500 bg-gradient-to-r from-orange-50 to-white">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium text-gray-700">Paid Items</CardTitle>
+                <CheckCircle className="h-6 w-6 text-orange-500" />
               </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="text-3xl font-bold text-orange-600">{statistics.paid_count || 0}</div>
             </CardContent>
           </Card>
         </div>
@@ -299,28 +299,30 @@ const BenefitsReports: React.FC = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Count</TableHead>
-                  <TableHead>Total Amount</TableHead>
-                  <TableHead>Average Amount</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {Object.entries(statistics.by_category).map(([category, data]) => (
-                  <TableRow key={category}>
-                    <TableCell>
-                      <Badge variant="outline">{category}</Badge>
-                    </TableCell>
-                    <TableCell>{data.count || 0}</TableCell>
-                    <TableCell>{formatCurrency(data.total_amount)}</TableCell>
-                    <TableCell>{formatCurrency((data.total_amount || 0) / (data.count || 1))}</TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Count</TableHead>
+                    <TableHead>Total Amount</TableHead>
+                    <TableHead>Average Amount</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {Object.entries(statistics.by_category).map(([category, data]) => (
+                    <TableRow key={category}>
+                      <TableCell>
+                        <Badge variant="outline">{category}</Badge>
+                      </TableCell>
+                      <TableCell>{data.count || 0}</TableCell>
+                      <TableCell>{formatCurrency(data.total_amount)}</TableCell>
+                      <TableCell>{formatCurrency((data.total_amount || 0) / (data.count || 1))}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
       )}

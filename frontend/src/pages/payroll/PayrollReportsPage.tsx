@@ -5,7 +5,10 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import {
   FileText,
-  Eye
+  Eye,
+  DollarSign,
+  BarChart,
+  Clock
 } from 'lucide-react';
 import payrollService from '@/services/payrollService';
 import type { PayrollPeriod, PayrollItem } from '@/types/payroll';
@@ -163,6 +166,16 @@ export function PayrollReportsPage() {
     }).format(amount);
   };
 
+  const stats = {
+    totalPayslips: payrollItems.length,
+    totalAmount: payrollItems.reduce((sum, item) => sum + (item.net_pay || 0), 0),
+    reportsGenerated: 0, // Placeholder, as summary report is coming soon
+    pendingApprovals: payrollItems.filter(item =>
+      item.status?.toLowerCase() === 'processing' ||
+      item.status?.toLowerCase() === 'calculating'
+    ).length
+  };
+
   if (loading) {
     return <div className="flex items-center justify-center h-96">Loading...</div>;
   }
@@ -176,6 +189,57 @@ export function PayrollReportsPage() {
             Generate and download payroll reports and payslips
           </p>
         </div>
+      </div>
+
+      {/* Overview Stat Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="transition-all duration-300 hover:shadow-lg hover:scale-105 border-l-4 border-l-blue-500 bg-gradient-to-r from-blue-50 to-white">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium text-gray-700">Total Payslips Generated</CardTitle>
+              <FileText className="h-6 w-6 text-blue-500" />
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="text-3xl font-bold text-blue-700">{stats.totalPayslips}</div>
+          </CardContent>
+        </Card>
+
+        <Card className="transition-all duration-300 hover:shadow-lg hover:scale-105 border-l-4 border-l-green-500 bg-gradient-to-r from-green-50 to-white">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium text-gray-700">Total Payroll Amount</CardTitle>
+              <DollarSign className="h-6 w-6 text-green-500" />
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="text-3xl font-bold text-green-600">{formatCurrency(stats.totalAmount)}</div>
+          </CardContent>
+        </Card>
+
+        <Card className="transition-all duration-300 hover:shadow-lg hover:scale-105 border-l-4 border-l-amber-500 bg-gradient-to-r from-amber-50 to-white">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium text-gray-700">Reports Generated</CardTitle>
+              <BarChart className="h-6 w-6 text-amber-500" />
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="text-3xl font-bold text-amber-600">{stats.reportsGenerated}</div>
+          </CardContent>
+        </Card>
+
+        <Card className="transition-all duration-300 hover:shadow-lg hover:scale-105 border-l-4 border-l-red-500 bg-gradient-to-r from-red-50 to-white">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium text-gray-700">Pending Approvals</CardTitle>
+              <Clock className="h-6 w-6 text-red-500" />
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="text-3xl font-bold text-red-600">{stats.pendingApprovals}</div>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">

@@ -8,7 +8,7 @@ const router = express.Router();
 router.use(authMiddleware.requireAuth);
 
 // ========================================
-// TRAINING PROGRAM ROUTES (DEFINED FIRST FOLLOWING API ROUTE CONFIGURATION BEST PRACTICE)
+// TRAINING PROGRAM ROUTES
 // ========================================
 
 // GET /api/training-programs - Get all training programs

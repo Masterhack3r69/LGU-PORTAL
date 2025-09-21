@@ -92,7 +92,41 @@ export interface TrainingProgramResponse {
 }
 
 // Statistics interfaces
+export interface TrainingStatisticsSummary {
+  total_trainings: number;
+  employees_trained: number;
+  avg_duration: string;
+  total_hours: string;
+  certificates_issued: number;
+}
+
+export interface TrainingTypeStatistic {
+  training_type: string;
+  count: number;
+}
+
+export interface TrainingTrendStatistic {
+  month: string;
+  count: number;
+}
+
+export interface EmployeeTrainingStatistic {
+  employee_id: number;
+  employee_name: string;
+  count: number;
+  hours: string;
+  certificates: number;
+}
+
 export interface TrainingStatistics {
+  summary: TrainingStatisticsSummary;
+  by_type: TrainingTypeStatistic[];
+  trends: TrainingTrendStatistic[];
+  by_employee?: EmployeeTrainingStatistic[];
+}
+
+// Legacy interface for backward compatibility
+export interface LegacyTrainingStatistics {
   totalTrainings: number;
   completedTrainings: number;
   inProgressTrainings: number;

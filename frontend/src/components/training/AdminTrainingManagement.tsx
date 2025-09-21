@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import AdminTrainingRecords from './AdminTrainingRecords.tsx';
-import AdminTrainingPrograms from './AdminTrainingPrograms.tsx';
-import TrainingStatistics from './TrainingStatistics.tsx';
+import AdminTrainingRecords from './AdminTrainingRecords';
+import AdminTrainingPrograms from './AdminTrainingPrograms';
+import TrainingStatistics from './TrainingStatistics';
 import { 
   GraduationCap, 
   BookOpen, 
