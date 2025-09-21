@@ -357,3 +357,5 @@ SELECT 'Payroll module database schema created successfully!' as Status,
        'Tables created: payroll_periods, allowance_types, deduction_types, employee_allowance_overrides, employee_deduction_overrides, payroll_items, payroll_item_lines' as TablesCreated,
        'Default data inserted for allowance and deduction types' as DefaultData,
        'Audit triggers and reporting views created' as AdditionalFeatures;
+
+
