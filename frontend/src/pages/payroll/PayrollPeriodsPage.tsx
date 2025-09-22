@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -14,7 +14,10 @@ import {
   Calendar,
   Clock,
   CheckCircle,
-  Users
+  Users,
+  Search,
+  X,
+  RotateCcw
 } from 'lucide-react';
 import payrollService from '@/services/payrollService';
 import { PeriodDetailsDialog } from '@/components/payroll/PeriodDetailsDialog';
@@ -25,6 +28,14 @@ export function PayrollPeriodsPage() {
   const [selectedPeriod, setSelectedPeriod] = useState<PayrollPeriod | null>(null);
   const [summary, setSummary] = useState<PayrollSummary | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Filter states
+  const [filters, setFilters] = useState({
+    search: '',
+    status: 'all',
+    year: 'all',
+    month: 'all'
+  });
 
   // Form states
   const [newPeriodData, setNewPeriodData] = useState({
@@ -157,6 +168,39 @@ export function PayrollPeriodsPage() {
     return <Badge variant={variant}>{displayName}</Badge>;
   };
 
+  // Filter logic
+  const filteredPeriods = periods.filter(period => {
+    const matchesSearch = filters.search === '' || 
+      `Period ${period.period_number}`.toLowerCase().includes(filters.search.toLowerCase()) ||
+      period.year.toString().includes(filters.search);
+    
+    const matchesStatus = filters.status === 'all' || period.status.toLowerCase() === filters.status;
+    
+    const matchesYear = filters.year === 'all' || period.year.toString() === filters.year;
+    
+    const matchesMonth = filters.month === 'all' || period.month.toString() === filters.month;
+    
+    return matchesSearch && matchesStatus && matchesYear && matchesMonth;
+  });
+
+  // Get unique years for filter dropdown
+  const uniqueYears = [...new Set(periods.map(period => period.year))].sort((a, b) => b - a);
+
+  // Get unique months for filter dropdown
+  const uniqueMonths = [...new Set(periods.map(period => period.month))].sort((a, b) => a - b);
+
+  // Get unique statuses for filter dropdown
+  const uniqueStatuses = [...new Set(periods.map(period => period.status.toLowerCase()))];
+
+  const clearFilters = () => {
+    setFilters({
+      search: '',
+      status: 'all',
+      year: 'all',
+      month: 'all'
+    });
+  };
+
   const formatDate = (dateString: string | Date) => {
     try {
       const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
@@ -179,15 +223,15 @@ export function PayrollPeriodsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="space-y-1">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Payroll Periods</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">
-            Manage payroll periods and their status
-          </p>
-        </div>
-
-        <div className="flex gap-2">
+      {/* header */}
+      <div className="sticky top-0 z-10 bg-background pb-4 pt-2 border-b border-border">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
+          <div>
+            <h1 className="text-xl font-semibold tracking-tight">Payroll Periods</h1>
+            <p className="text-muted-foreground text-sm sm:text-base">
+              Manage payroll periods and their status
+            </p>
+          </div>
           <Dialog>
             <DialogTrigger asChild>
               <Button className="w-full sm:w-auto">
@@ -203,7 +247,7 @@ export function PayrollPeriodsPage() {
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="year">Year</Label>
                     <Input
@@ -225,7 +269,7 @@ export function PayrollPeriodsPage() {
                         month: parseInt(value)
                       })}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className='w-full'>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -237,25 +281,26 @@ export function PayrollPeriodsPage() {
                       </SelectContent>
                     </Select>
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="period">Period Number</Label>
+                    <Select
+                      value={newPeriodData.period_number.toString()}
+                      onValueChange={(value) => setNewPeriodData({
+                        ...newPeriodData,
+                        period_number: parseInt(value)
+                      })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">1st Half (1-15)</SelectItem>
+                        <SelectItem value="2">2nd Half (16-End)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="period">Period Number</Label>
-                  <Select
-                    value={newPeriodData.period_number.toString()}
-                    onValueChange={(value) => setNewPeriodData({
-                      ...newPeriodData,
-                      period_number: parseInt(value)
-                    })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1">1st Half (1-15)</SelectItem>
-                      <SelectItem value="2">2nd Half (16-End)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                
 
                 {/* Preview of calculated dates */}
                 <div className="space-y-2">
@@ -289,9 +334,6 @@ export function PayrollPeriodsPage() {
                 </div>
               </div>
               <div className="flex justify-end gap-2">
-                <DialogTrigger asChild>
-                  <Button variant="outline">Cancel</Button>
-                </DialogTrigger>
                 <Button onClick={handleCreatePeriod}>Create Period</Button>
               </div>
             </DialogContent>
@@ -300,89 +342,197 @@ export function PayrollPeriodsPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card  className="transition-all duration-300 hover:shadow-lg hover:scale-105 border-l-4 border-l-blue-500 bg-gradient-to-r from-blue-50 to-white"  >
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium text-gray-700">
               Total Periods
             </CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <Calendar className="h-6 w-6 text-blue-500" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{periods.length}</div>
-            <p className="text-xs text-muted-foreground">
-              all payroll periods
-            </p>
+            <div className="text-3xl font-bold text-blue-700">{periods.length}</div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+        <Card className="transition-all duration-300 hover:shadow-lg hover:scale-105 border-l-4 border-l-green-500 bg-gradient-to-r from-green-50 to-white">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium text-gray-700">
               Active Periods
-            </CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+              </CardTitle>
+              <Clock className="h-6 w-6 text-green-500" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
+          <CardContent className="pt-0">
+            <div className="text-3xl font-bold text-green-600">
               {periods.filter(period =>
                 ['draft', 'open', 'processing', 'calculating'].includes(period.status?.toLowerCase() || '')
               ).length}
             </div>
-            <p className="text-xs text-muted-foreground">
-              currently active
-            </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+        <Card className="transition-all duration-300 hover:shadow-lg hover:scale-105 border-l-4 border-l-amber-500 bg-gradient-to-r from-amber-50 to-white">
+
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium text-gray-700">
               Finalized Periods
-            </CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+              </CardTitle>
+              <CheckCircle className="h-6 w-6 text-amber-500" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
+          <CardContent className="pt-0">
+            <div className="text-3xl font-bold text-amber-600">
               {periods.filter(period =>
                 ['finalized', 'paid'].includes(period.status?.toLowerCase() || '')
               ).length}
             </div>
-            <p className="text-xs text-muted-foreground">
-              completed processing
-            </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+        <Card className="transition-all duration-300 hover:shadow-lg hover:scale-105 border-l-4 border-l-red-500 bg-gradient-to-r from-red-50 to-white">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium text-gray-700">
               Total Employees
-            </CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+              </CardTitle>
+              <Users className="h-6 w-6 text-amber-500" />
+            </div>
+            
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
+          <CardContent className="pt-0">
+            <div className="text-3xl font-bold text-red-600">
               {summary?.total_employees || '-'}
             </div>
-            <p className="text-xs text-muted-foreground">
-              in current period
-            </p>
           </CardContent>
         </Card>
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Payroll Periods</CardTitle>
-          <CardDescription>
-            Manage payroll periods and their status
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+        <CardContent >
+          {/* Filter Section */}
+          <div className="mb-6 pb-4 border-b border-border">
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
+              <div className="flex-1 space-y-2">
+                <Label htmlFor="search">Search</Label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                  <Input
+                    id="search"
+                    placeholder="Search by period or year..."
+                    value={filters.search}
+                    onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="status-filter">Status</Label>
+                <Select
+                  value={filters.status}
+                  onValueChange={(value) => setFilters({ ...filters, status: value })}
+                >
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    {uniqueStatuses.map(status => (
+                      <SelectItem key={status} value={status}>
+                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="month-filter">Month</Label>
+                <Select
+                  value={filters.month}
+                  onValueChange={(value) => setFilters({ ...filters, month: value })}
+                >
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Months</SelectItem>
+                    {uniqueMonths.map(month => (
+                      <SelectItem key={month} value={month.toString()}>
+                        {new Date(2024, month - 1).toLocaleString('default', { month: 'long' })}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="year-filter">Year</Label>
+                <Select
+                  value={filters.year}
+                  onValueChange={(value) => setFilters({ ...filters, year: value })}
+                >
+                  <SelectTrigger className="w-[120px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Years</SelectItem>
+                    {uniqueYears.map(year => (
+                      <SelectItem key={year} value={year.toString()}>
+                        {year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="flex gap-2">
+                {(filters.search || filters.status !== 'all' || filters.year !== 'all' || filters.month !== 'all') && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={clearFilters}
+                    className="self-end"
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Clear
+                  </Button>
+                )}
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={clearFilters}
+                  className="self-end"
+                  title="Reset all filters"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            
+            {/* Filter Results Info */}
+            <div className="mt-3 text-sm text-muted-foreground">
+              Showing {filteredPeriods.length} of {periods.length} periods
+            </div>
+          </div>
           {/* Mobile View */}
           <div className="block md:hidden space-y-4">
-            {periods.map((period) => (
+            {filteredPeriods.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>No periods found matching your filters.</p>
+                <Button variant="outline" onClick={clearFilters} className="mt-2">
+                  Clear Filters
+                </Button>
+              </div>
+            ) : (
+              filteredPeriods.map((period) => (
               <Card key={period.id} className={`p-4 ${selectedPeriod?.id === period.id ? 'ring-2 ring-primary' : ''}`}>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
@@ -439,7 +589,8 @@ export function PayrollPeriodsPage() {
                   </div>
                 </div>
               </Card>
-            ))}
+              ))
+            )}
           </div>
 
           {/* Desktop Table View */}
@@ -458,7 +609,20 @@ export function PayrollPeriodsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {periods.map((period) => (
+                {filteredPeriods.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center py-8">
+                      <div className="text-muted-foreground">
+                        <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>No periods found matching your filters.</p>
+                        <Button variant="outline" onClick={clearFilters} className="mt-2">
+                          Clear Filters
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredPeriods.map((period) => (
                   <TableRow
                     key={period.id}
                     className={selectedPeriod?.id === period.id ? 'bg-muted' : ''}
@@ -501,7 +665,8 @@ export function PayrollPeriodsPage() {
                       </div>
                     </TableCell>
                   </TableRow>
-                ))}
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>

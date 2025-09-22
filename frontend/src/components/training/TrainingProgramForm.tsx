@@ -145,64 +145,67 @@ const TrainingProgramForm: React.FC<TrainingProgramFormProps> = ({
           )}
         </div>
 
-        {/* Training Type */}
-        <div className="space-y-2">
-          <Label htmlFor="training_type">Training Type *</Label>
-          <Select
-            value={selectedType}
-            onValueChange={(value) => form.setValue('training_type', value as TrainingType)}
-            disabled={readOnly}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select training type" />
-            </SelectTrigger>
-            <SelectContent>
-              {trainingTypes.map((type) => (
-                <SelectItem key={type.value} value={type.value}>
-                  <div className="flex items-center justify-between w-full">
-                    <div className="flex flex-col">
-                      <span>{type.label}</span>
-                      <span className="text-xs text-muted-foreground">{type.description}</span>
-                    </div>
-                    <Badge 
-                      variant="outline" 
-                      className={`ml-2 ${getTrainingTypeColor(type.value)}`}
-                    >
-                      {type.value}
-                    </Badge>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {form.formState.errors.training_type && (
-            <p className="text-sm text-red-600">{form.formState.errors.training_type.message}</p>
-          )}
-        </div>
-
-        {/* Duration */}
-        <div className="space-y-2">
-          <Label htmlFor="duration_hours">Default Duration (Hours)</Label>
-          <div className="relative">
-            <Clock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="number"
-              step="0.5"
-              min="0"
-              {...form.register('duration_hours', { valueAsNumber: true })}
-              placeholder="e.g., 8, 16, 40"
-              className="pl-10"
+        <div className='grid grid-cols-2 gap-4'>
+          {/* Training Type */}
+          <div className="space-y-2">
+            <Label htmlFor="training_type">Training Type *</Label>
+            <Select
+              value={selectedType}
+              onValueChange={(value) => form.setValue('training_type', value as TrainingType)}
               disabled={readOnly}
-            />
+            >
+              <SelectTrigger className='w-full'>
+                <SelectValue placeholder="Select training type" />
+              </SelectTrigger>
+              <SelectContent>
+                {trainingTypes.map((type) => (
+                  <SelectItem key={type.value} value={type.value}>
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex flex-col">
+                        <span>{type.label}</span>
+                        <span className="text-xs text-muted-foreground">{type.description}</span>
+                      </div>
+                      <Badge 
+                        variant="outline" 
+                        className={`ml-2 ${getTrainingTypeColor(type.value)}`}
+                      >
+                        {type.value}
+                      </Badge>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {form.formState.errors.training_type && (
+              <p className="text-sm text-red-600">{form.formState.errors.training_type.message}</p>
+            )}
           </div>
-          {form.formState.errors.duration_hours && (
-            <p className="text-sm text-red-600">{form.formState.errors.duration_hours.message}</p>
-          )}
-          <p className="text-xs text-muted-foreground">
-            Optional: Default duration that will be suggested when creating training records
-          </p>
-        </div>
 
+          {/* Duration */}
+          <div className="space-y-2">
+            <Label htmlFor="duration_hours">Default Duration (Hours)</Label>
+            <div className="relative">
+              <Clock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="number"
+                step="0.5"
+                min="0"
+                {...form.register('duration_hours', { valueAsNumber: true })}
+                placeholder="e.g., 8, 16, 40"
+                className="pl-10"
+                disabled={readOnly}
+              />
+            </div>
+            {form.formState.errors.duration_hours && (
+              <p className="text-sm text-red-600">{form.formState.errors.duration_hours.message}</p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Optional: Default duration that will be suggested when creating training records
+            </p>
+          </div>
+
+        </div>
+        
         {/* Description */}
         <div className="space-y-2">
           <Label htmlFor="description">Description</Label>

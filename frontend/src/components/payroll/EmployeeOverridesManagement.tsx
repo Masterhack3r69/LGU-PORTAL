@@ -2,13 +2,20 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { toast } from 'sonner';
-import { Plus, Edit, Trash2, X } from 'lucide-react';
+import { Plus, Edit, Trash2, X, Check, ChevronsUpDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import payrollService from '@/services/payrollService';
 import employeeService from '@/services/employeeService';
 import type { EmployeeOverride, AllowanceType, DeductionType } from '@/types/payroll';
@@ -40,6 +47,10 @@ export function EmployeeOverridesManagement() {
     notes: ''
   });
 
+  // Combobox state
+  const [employeeComboboxOpen, setEmployeeComboboxOpen] = useState(false);
+  const [employeeSearchValue, setEmployeeSearchValue] = useState('');
+
   useEffect(() => {
     loadData();
   }, []);
@@ -55,6 +66,14 @@ export function EmployeeOverridesManagement() {
       .filter(Boolean);
     return parts.join(' ');
   };
+
+  // Filter employees based on search value
+  const filteredEmployees = employees.filter(employee => {
+    const fullName = getEmployeeFullName(employee);
+    const searchTerm = employeeSearchValue.toLowerCase();
+    return fullName.toLowerCase().includes(searchTerm) || 
+           employee.employee_number?.toLowerCase().includes(searchTerm);
+  });
 
   const loadData = async () => {
     try {
@@ -137,6 +156,8 @@ export function EmployeeOverridesManagement() {
       notes: ''
     });
     setEditingOverride(null);
+    setEmployeeComboboxOpen(false);
+    setEmployeeSearchValue('');
   };
 
   const openCreateDialog = () => {
@@ -425,25 +446,78 @@ export function EmployeeOverridesManagement() {
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2 col-span-2">
                   <Label htmlFor="employee_id">Employee *</Label>
-                  <Select
-                    value={formData.employee_id}
-                    onValueChange={(value) => setFormData({ ...formData, employee_id: value })}
-                    disabled={!!editingOverride}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select employee" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {employees.map((employee) => (
-                        <SelectItem key={employee.id} value={employee.id.toString()}>
-                          {getEmployeeFullName(employee)} ({employee.employee_number})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Popover open={employeeComboboxOpen} onOpenChange={setEmployeeComboboxOpen}>
+                    <PopoverTrigger asChild className='w-full'>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={employeeComboboxOpen}
+                        className="w-full justify-between"
+                        disabled={!!editingOverride}
+                      >
+                        {formData.employee_id
+                          ? (() => {
+                              const selectedEmployee = employees.find(
+                                (employee) => employee.id.toString() === formData.employee_id
+                              );
+                              return selectedEmployee
+                                ? `${getEmployeeFullName(selectedEmployee)} (${selectedEmployee.employee_number})`
+                                : "Select employee...";
+                            })()
+                          : "Select employee..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0">
+                      <div className="flex flex-col">
+                        <div className="p-2">
+                          <Input
+                            placeholder="Search employees..."
+                            value={employeeSearchValue}
+                            onChange={(e) => setEmployeeSearchValue(e.target.value)}
+                            className="h-9"
+                          />
+                        </div>
+                        <div className="max-h-[200px] overflow-auto">
+                          {filteredEmployees.length === 0 ? (
+                            <div className="p-2 text-sm text-muted-foreground">
+                              No employee found.
+                            </div>
+                          ) : (
+                            filteredEmployees.map((employee) => (
+                              <div
+                                key={employee.id}
+                                className={cn(
+                                  "flex cursor-pointer items-center justify-between px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground",
+                                  formData.employee_id === employee.id.toString() && "bg-accent"
+                                )}
+                                onClick={() => {
+                                  setFormData({ ...formData, employee_id: employee.id.toString() });
+                                  setEmployeeComboboxOpen(false);
+                                  setEmployeeSearchValue('');
+                                }}
+                              >
+                                <span>
+                                  {getEmployeeFullName(employee)} ({employee.employee_number})
+                                </span>
+                                <Check
+                                  className={cn(
+                                    "ml-2 h-4 w-4",
+                                    formData.employee_id === employee.id.toString()
+                                      ? "opacity-100"
+                                      : "opacity-0"
+                                  )}
+                                />
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="type">Override Type *</Label>
@@ -456,7 +530,7 @@ export function EmployeeOverridesManagement() {
                     })}
                     disabled={!!editingOverride}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className='w-full'>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -467,59 +541,57 @@ export function EmployeeOverridesManagement() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="type_id">
-                  {formData.type === 'allowance' ? 'Allowance Type' : 'Deduction Type'} *
-                </Label>
-                <Select
-                  value={formData.type_id}
-                  onValueChange={(value) => setFormData({ ...formData, type_id: value })}
-                  disabled={!!editingOverride}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={`Select ${formData.type} type`} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(formData.type === 'allowance' ? allowanceTypes : deductionTypes).map((type) => (
-                      <SelectItem key={type.id} value={type.id.toString()}>
-                        {type.name} ({type.code})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="amount">Override Amount *</Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  step="0.01"
-                  value={formData.amount}
-                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                  placeholder="0.00"
-                />
+              <div className='grid grid-cols-3 gap-4'>
+                <div className="space-y-2 col-span-2">
+                  <Label htmlFor="type_id">
+                    {formData.type === 'allowance' ? 'Allowance Type' : 'Deduction Type'} *
+                  </Label>
+                  <Select
+                    value={formData.type_id}
+                    onValueChange={(value) => setFormData({ ...formData, type_id: value })}
+                    disabled={!!editingOverride}
+                  >
+                    <SelectTrigger className='w-full'>
+                      <SelectValue placeholder={`Select ${formData.type} type`} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(formData.type === 'allowance' ? allowanceTypes : deductionTypes).map((type) => (
+                        <SelectItem key={type.id} value={type.id.toString()}>
+                          {type.name} ({type.code})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="amount">Override Amount *</Label>
+                  <Input
+                    id="amount"
+                    type="number"
+                    step="0.01"
+                    value={formData.amount}
+                    onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                    placeholder="0.00"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="effective_from">Effective From *</Label>
-                  <Input
-                    id="effective_from"
-                    type="date"
-                    value={formData.effective_from}
-                    onChange={(e) => setFormData({ ...formData, effective_from: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="effective_to">Effective To</Label>
-                  <Input
-                    id="effective_to"
-                    type="date"
-                    value={formData.effective_to}
-                    onChange={(e) => setFormData({ ...formData, effective_to: e.target.value })}
-                  />
-                </div>
+                <DatePicker
+                  id="effective_from"
+                  label="Effective From"
+                  value={formData.effective_from ? new Date(formData.effective_from) : undefined}
+                  onChange={(date) => setFormData({ ...formData, effective_from: date ? date.toISOString().split('T')[0] : '' })}
+                  required
+                  placeholder="Select start date"
+                />
+                <DatePicker
+                  id="effective_to"
+                  label="Effective To"
+                  value={formData.effective_to ? new Date(formData.effective_to) : undefined}
+                  onChange={(date) => setFormData({ ...formData, effective_to: date ? date.toISOString().split('T')[0] : '' })}
+                  placeholder="Select end date (optional)"
+                />
               </div>
             </div>
             <div className="flex justify-end gap-2">

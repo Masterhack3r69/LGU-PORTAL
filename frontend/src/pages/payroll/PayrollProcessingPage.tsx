@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Clock, Users, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import payrollService from '@/services/payrollService';
-import employeeService from '@/services/employeeService';
 import { EmployeeSelectionProcessing } from '@/components/payroll/EmployeeSelectionProcessing';
 import type { PayrollPeriod } from '@/types/payroll';
 
@@ -12,7 +10,6 @@ export function PayrollProcessingPage() {
   const [periods, setPeriods] = useState<PayrollPeriod[]>([]);
   const [selectedPeriod, setSelectedPeriod] = useState<PayrollPeriod | null>(null);
   const [loading, setLoading] = useState(true);
-  const [totalEmployees, setTotalEmployees] = useState(0);
 
   // Employee Selection states - commented out for now as functionality is not implemented
   // const [selectedEmployees, setSelectedEmployees] = useState<any[]>([]);
@@ -21,18 +18,6 @@ export function PayrollProcessingPage() {
   useEffect(() => {
     loadPeriods();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    const loadEmployeeCount = async () => {
-      try {
-        const response = await employeeService.getEmployees({ limit: 1 });
-        setTotalEmployees(response.total);
-      } catch (error) {
-        console.error('Failed to load employee count:', error);
-      }
-    };
-    loadEmployeeCount();
   }, []);
 
   const loadPeriods = async () => {
@@ -123,88 +108,23 @@ export function PayrollProcessingPage() {
     }
   };
 
-  const getPayrollStats = () => {
-    const totalPeriods = periods.length;
-    const currentMonth = new Date().getMonth() + 1;
-    const currentYear = new Date().getFullYear();
-    const processedThisMonth = periods.filter(p => p.status.toLowerCase() === 'completed' && p.month === currentMonth && p.year === currentYear).length;
-    const completed = periods.filter(p => p.status.toLowerCase() === 'completed').length;
-    const pending = periods.filter(p => ['draft', 'processing', 'open', 'calculating'].includes(p.status.toLowerCase())).length;
-    const statusSummary = `${completed}/${totalPeriods}`;
-    return {
-      totalPeriods,
-      processedThisMonth,
-      totalEmployees,
-      statusSummary
-    };
-  };
-
   if (loading) {
     return <div className="flex items-center justify-center h-96">Loading...</div>;
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="space-y-1">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Payroll Processing</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">
-            Process payroll calculations for employees
-          </p>
+      <div className="sticky top-0 z-10 bg-background pb-4 pt-2 border-b border-border">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
+          <div>
+            <h1 className="text-xl font-semibold tracking-tight">Payroll Processing</h1>
+            <p className="text-muted-foreground text-sm sm:text-base">
+              Process payroll calculations for employees
+            </p>
+          </div>
         </div>
       </div>
-
-      {/* Overview Stat Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="transition-all duration-300 hover:shadow-lg hover:scale-105 border-l-4 border-l-blue-500 bg-gradient-to-r from-blue-50 to-white">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-gray-700">Total Periods</CardTitle>
-              <FileText className="h-6 w-6 text-blue-500" />
-            </div>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="text-3xl font-bold text-blue-700">{getPayrollStats().totalPeriods}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="transition-all duration-300 hover:shadow-lg hover:scale-105 border-l-4 border-l-amber-500 bg-gradient-to-r from-amber-50 to-white">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-gray-700">Periods Processed This Month</CardTitle>
-              <Clock className="h-6 w-6 text-amber-500" />
-            </div>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="text-3xl font-bold text-amber-600">{getPayrollStats().processedThisMonth}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="transition-all duration-300 hover:shadow-lg hover:scale-105 border-l-4 border-l-green-500 bg-gradient-to-r from-green-50 to-white">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-gray-700">Total Employees to Process</CardTitle>
-              <Users className="h-6 w-6 text-green-500" />
-            </div>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="text-3xl font-bold text-green-600">{getPayrollStats().totalEmployees}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="transition-all duration-300 hover:shadow-lg hover:scale-105 border-l-4 border-l-blue-500 bg-gradient-to-r from-blue-50 to-white">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-gray-700">Processing Status Summary</CardTitle>
-              <CheckCircle className="h-6 w-6 text-blue-500" />
-            </div>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="text-3xl font-bold text-blue-700">{getPayrollStats().statusSummary}</div>
-          </CardContent>
-        </Card>
-      </div>
-
+      
       <div className="grid gap-6 md:grid-cols-3">
         {/* Period Selection */}
         <Card className="md:col-span-1">

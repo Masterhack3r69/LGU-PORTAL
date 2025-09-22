@@ -3,12 +3,14 @@ import { PayrollConfiguration } from '@/components/payroll/PayrollConfiguration'
 export function PayrollConfigurationPage() {
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="space-y-1">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Payroll Configuration</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">
-            Configure payroll settings, allowances, and deductions
-          </p>
+      <div className="sticky top-0 z-10 bg-background pb-4 pt-2 border-b border-border">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
+          <div>
+            <h1 className="text-xl font-semibold tracking-tight">Payroll Configuration</h1>
+            <p className="text-muted-foreground text-sm sm:text-base">
+              Configure payroll settings, allowances, and deductions
+            </p>
+          </div>
         </div>
       </div>
 

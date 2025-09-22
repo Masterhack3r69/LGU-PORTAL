@@ -510,6 +510,27 @@ class Training {
                 throw new Error(trends.error);
             }
             
+            // Employee training statistics (Top Performers)
+            const employeeStatsQuery = `
+                SELECT 
+                    et.employee_id,
+                    CONCAT(e.first_name, ' ', e.last_name) as employee_name,
+                    COUNT(*) as count,
+                    SUM(et.duration_hours) as hours,
+                    SUM(CASE WHEN et.certificate_issued = 1 THEN 1 ELSE 0 END) as certificates
+                FROM employee_trainings et
+                JOIN employees e ON et.employee_id = e.id
+                ${whereClause}
+                GROUP BY et.employee_id, e.first_name, e.last_name
+                ORDER BY count DESC, hours DESC
+                LIMIT 20
+            `;
+            
+            const employeeStats = await executeQuery(employeeStatsQuery, queryParams);
+            if (!employeeStats.success) {
+                throw new Error(employeeStats.error);
+            }
+            
             return {
                 success: true,
                 data: {
@@ -521,7 +542,8 @@ class Training {
                         certificates_issued: basicStats.data?.certificates_issued || 0
                     },
                     by_type: typeStats.data || [],
-                    trends: (trends.data && Array.isArray(trends.data)) ? trends.data.reverse() : [] // Show oldest to newest
+                    trends: (trends.data && Array.isArray(trends.data)) ? trends.data.reverse() : [], // Show oldest to newest
+                    by_employee: employeeStats.data || []
                 }
             };
         } catch (error) {

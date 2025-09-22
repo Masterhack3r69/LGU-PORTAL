@@ -350,7 +350,7 @@ export function AllowanceTypesManagement() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-4 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="calculation_type">Calculation Type</Label>
                   <Select
@@ -361,7 +361,7 @@ export function AllowanceTypesManagement() {
                       percentage_base: value === 'Percentage' ? 'BasicPay' : undefined
                     })}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className='w-full'>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -377,7 +377,7 @@ export function AllowanceTypesManagement() {
                     value={formData.frequency}
                     onValueChange={(value: 'Monthly' | 'Annual' | 'Conditional') => setFormData({ ...formData, frequency: value })}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className='w-full'>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -387,16 +387,14 @@ export function AllowanceTypesManagement() {
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
-
-              {formData.calculation_type === 'Percentage' && (
+                {formData.calculation_type === 'Percentage' && (
                 <div className="space-y-2">
                   <Label htmlFor="percentage_base">Percentage Base</Label>
                   <Select
                     value={formData.percentage_base || ''}
                     onValueChange={(value) => setFormData({ ...formData, percentage_base: value })}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className='w-full'>
                       <SelectValue placeholder="Select percentage base" />
                     </SelectTrigger>
                     <SelectContent>
@@ -419,6 +417,9 @@ export function AllowanceTypesManagement() {
                   placeholder="0.00"
                 />
               </div>
+
+              </div>
+
 
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">

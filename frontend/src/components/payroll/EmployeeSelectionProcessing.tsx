@@ -7,7 +7,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { toast } from 'sonner';
 import {
   Users,
-  UserCheck,
   Calculator,
   Play,
   Lock,
@@ -161,19 +160,10 @@ export function EmployeeSelectionProcessing({
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <UserCheck className="h-5 w-5" />
-                Employee Selection & Processing
-              </CardTitle>
-              <CardDescription>
-                Select employees and set custom working days for payroll processing
-              </CardDescription>
-            </div>
-            <div className="flex items-center gap-4">
-              <Badge variant="outline" className="text-sm">
+            <Badge variant="outline" className="text-sm">
                 {selectedEmployees.length} employees selected
               </Badge>
+            <div className="flex items-center gap-4">
               <Button
                 onClick={() => setDialogOpen(true)}
                 variant="default"

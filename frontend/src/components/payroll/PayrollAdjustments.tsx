@@ -123,7 +123,7 @@ export function PayrollAdjustments({ selectedPeriod, onSummaryUpdate, onPayrollI
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <div>
+            <div className='space-y-2'>
               <CardTitle>
                 Payroll Adjustments: {selectedPeriod.year} - {new Date(selectedPeriod.year, selectedPeriod.month - 1).toLocaleString('default', { month: 'long' })} (Period {selectedPeriod.period_number})
               </CardTitle>

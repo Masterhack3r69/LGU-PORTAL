@@ -5,7 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
-import { BarChart3, Search, Plus, User, Loader2 } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { BarChart3, Search, Plus, User, Loader2, Check, ChevronsUpDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import leaveService from '@/services/leaveService';
 import employeeService from '@/services/employeeService';
 import LeaveBalanceCard from './LeaveBalanceCard';
@@ -24,6 +26,12 @@ const AdminLeaveBalances: React.FC = () => {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showSearchDialog, setShowSearchDialog] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  
+  // Combobox state
+  const [employeeComboboxOpen, setEmployeeComboboxOpen] = useState(false);
+  const [employeeSearchValue, setEmployeeSearchValue] = useState('');
+  const [mainEmployeeComboboxOpen, setMainEmployeeComboboxOpen] = useState(false);
+  const [mainEmployeeSearchValue, setMainEmployeeSearchValue] = useState('');
   
   // Form state for adding new balance
   const [addBalanceForm, setAddBalanceForm] = useState<CreateLeaveBalanceDTO>({
@@ -82,6 +90,29 @@ const AdminLeaveBalances: React.FC = () => {
 
   const selectedEmployeeData = employees.find(emp => emp.id.toString() === selectedEmployee && selectedEmployee !== 'all');
 
+  // Helper function to get employee full name
+  const getEmployeeFullName = (employee: Employee) => {
+    const parts = [employee.first_name, employee.middle_name, employee.last_name, employee.suffix]
+      .filter(Boolean);
+    return parts.join(' ');
+  };
+
+  // Filter employees based on search value
+  const filteredEmployees = employees.filter(employee => {
+    const fullName = getEmployeeFullName(employee);
+    const searchTerm = employeeSearchValue.toLowerCase();
+    return fullName.toLowerCase().includes(searchTerm) || 
+           employee.employee_number?.toLowerCase().includes(searchTerm);
+  });
+
+  // Filter employees for main selection
+  const filteredMainEmployees = employees.filter(employee => {
+    const fullName = getEmployeeFullName(employee);
+    const searchTerm = mainEmployeeSearchValue.toLowerCase();
+    return fullName.toLowerCase().includes(searchTerm) || 
+           employee.employee_number?.toLowerCase().includes(searchTerm);
+  });
+
   const handleCreateBalance = async () => {
     if (addBalanceForm.employee_id === 0) {
       toast.error('Please select an employee');
@@ -139,6 +170,8 @@ const AdminLeaveBalances: React.FC = () => {
         carried_forward: 0,
         reason: '',
       });
+      setEmployeeComboboxOpen(false);
+      setEmployeeSearchValue('');
     }
     setShowAddDialog(open);
   };
@@ -183,25 +216,76 @@ const AdminLeaveBalances: React.FC = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4"> 
                     <div className="space-y-2">
                       <Label htmlFor="employee">Employee *</Label>
-                      <Select 
-                        value={addBalanceForm.employee_id.toString()} 
-                        onValueChange={(value) => setAddBalanceForm(prev => ({ ...prev, employee_id: parseInt(value) }))}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select employee" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {employees.map((employee) => (
-                            <SelectItem key={employee.id} value={employee.id.toString()}>
-                              <div className="flex items-center space-x-2">
-                                <User className="h-4 w-4 flex-shrink-0" />
-                                <span className="truncate">{employee.first_name} {employee.last_name}</span>
-                                <span className="text-muted-foreground text-xs">({employee.employee_number})</span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Popover open={employeeComboboxOpen} onOpenChange={setEmployeeComboboxOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={employeeComboboxOpen}
+                            className="w-full justify-between"
+                          >
+                            {addBalanceForm.employee_id > 0
+                              ? (() => {
+                                  const selectedEmployee = employees.find(
+                                    (employee) => employee.id === addBalanceForm.employee_id
+                                  );
+                                  return selectedEmployee
+                                    ? `${getEmployeeFullName(selectedEmployee)} (${selectedEmployee.employee_number})`
+                                    : "Select employee...";
+                                })()
+                              : "Select employee..."}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-full p-0">
+                          <div className="flex flex-col">
+                            <div className="p-2">
+                              <Input
+                                placeholder="Search employees..."
+                                value={employeeSearchValue}
+                                onChange={(e) => setEmployeeSearchValue(e.target.value)}
+                                className="h-9"
+                              />
+                            </div>
+                            <div className="max-h-[200px] overflow-auto">
+                              {filteredEmployees.length === 0 ? (
+                                <div className="p-2 text-sm text-muted-foreground">
+                                  No employee found.
+                                </div>
+                              ) : (
+                                filteredEmployees.map((employee) => (
+                                  <div
+                                    key={employee.id}
+                                    className={cn(
+                                      "flex cursor-pointer items-center justify-between px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground",
+                                      addBalanceForm.employee_id === employee.id && "bg-accent"
+                                    )}
+                                    onClick={() => {
+                                      setAddBalanceForm(prev => ({ ...prev, employee_id: employee.id }));
+                                      setEmployeeComboboxOpen(false);
+                                      setEmployeeSearchValue('');
+                                    }}
+                                  >
+                                    <div className="flex items-center space-x-2">
+                                      <User className="h-4 w-4 flex-shrink-0" />
+                                      <span className="truncate">{getEmployeeFullName(employee)}</span>
+                                      <span className="text-muted-foreground text-xs">({employee.employee_number})</span>
+                                    </div>
+                                    <Check
+                                      className={cn(
+                                        "ml-2 h-4 w-4",
+                                        addBalanceForm.employee_id === employee.id
+                                          ? "opacity-100"
+                                          : "opacity-0"
+                                      )}
+                                    />
+                                  </div>
+                                ))
+                              )}
+                            </div>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
                     </div>
 
                     {/* Leave Type Selection */}
@@ -325,84 +409,77 @@ const AdminLeaveBalances: React.FC = () => {
         <CardContent>
           <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-4">
             <div className="flex-1">
-              <Dialog open={showSearchDialog} onOpenChange={setShowSearchDialog}>
-                <DialogTrigger asChild>
-                  <div className="relative cursor-pointer">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                    <Input
-                      placeholder="Search employees..."
-                      value=""
-                      readOnly
-                      className="pl-10 cursor-pointer"
-                    />
-                  </div>
-                </DialogTrigger>
-                <DialogContent className="w-[95vw] max-w-md max-h-[95vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>Search Employees</DialogTitle>
-                    <DialogDescription>
-                      Search and select an employee to view their leave balances
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4 p-4">
-                    {/* Search Input */}
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Label className="text-sm font-medium">Select Employee</Label>
+              <Popover open={mainEmployeeComboboxOpen} onOpenChange={setMainEmployeeComboboxOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={mainEmployeeComboboxOpen}
+                    className="w-full justify-between mt-1"
+                  >
+                    <div className="flex items-center">
+                      <Search className="h-4 w-4 mr-2 text-gray-400" />
+                      {selectedEmployee && selectedEmployee !== 'all'
+                        ? (() => {
+                            const emp = employees.find(e => e.id.toString() === selectedEmployee);
+                            return emp ? `${getEmployeeFullName(emp)} (${emp.employee_number})` : "Select employee...";
+                          })()
+                        : "Select employee to view balances..."}
+                    </div>
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0">
+                  <div className="flex flex-col">
+                    <div className="p-2">
                       <Input
                         placeholder="Search by name or employee ID..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10"
+                        value={mainEmployeeSearchValue}
+                        onChange={(e) => setMainEmployeeSearchValue(e.target.value)}
+                        className="h-9"
                         autoFocus
                       />
                     </div>
-
-                    {/* Search Results */}
-                    <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                      {searchTerm ? (
-                        employees
-                          .filter(emp => 
-                            emp.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            emp.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            emp.employee_number.toLowerCase().includes(searchTerm.toLowerCase())
-                          )
-                          .slice(0, 10)
-                          .map((employee) => (
-                            <div
-                              key={employee.id}
-                              className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-muted cursor-pointer transition-colors"
-                              onClick={() => {
-                                setSelectedEmployee(employee.id.toString());
-                                setShowSearchDialog(false);
-                                setSearchTerm('');
-                              }}
-                            >
-                              <User className="h-4 w-4 text-muted-foreground" />
-                              <div className="flex-1">
-                                <div className="font-medium">{employee.first_name} {employee.last_name}</div>
-                                <div className="text-sm text-muted-foreground">{employee.employee_number}</div>
-                              </div>
-                            </div>
-                          ))
+                    <div className="max-h-[300px] overflow-auto">
+                      {filteredMainEmployees.length === 0 ? (
+                        <div className="p-4 text-center text-muted-foreground">
+                          {mainEmployeeSearchValue ? 'No employees found.' : 'Start typing to search for employees...'}
+                        </div>
                       ) : (
-                        <div className="text-center text-muted-foreground py-8">
-                          Start typing to search for employees...
-                        </div>
-                      )}
-                      
-                      {searchTerm && employees.filter(emp => 
-                        emp.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        emp.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        emp.employee_number.toLowerCase().includes(searchTerm.toLowerCase())
-                      ).length === 0 && (
-                        <div className="text-center text-muted-foreground py-8">
-                          No employees found matching "{searchTerm}"
-                        </div>
+                        filteredMainEmployees.slice(0, 10).map((employee) => (
+                          <div
+                            key={employee.id}
+                            className={cn(
+                              "flex cursor-pointer items-center space-x-3 p-3 hover:bg-muted transition-colors",
+                              selectedEmployee === employee.id.toString() && "bg-accent"
+                            )}
+                            onClick={() => {
+                              setSelectedEmployee(employee.id.toString());
+                              setMainEmployeeComboboxOpen(false);
+                              setMainEmployeeSearchValue('');
+                            }}
+                          >
+                            <User className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                            <div className="flex-1">
+                              <div className="font-medium">{getEmployeeFullName(employee)}</div>
+                              <div className="text-sm text-muted-foreground">{employee.employee_number}</div>
+                            </div>
+                            <Check
+                              className={cn(
+                                "ml-2 h-4 w-4",
+                                selectedEmployee === employee.id.toString()
+                                  ? "opacity-100"
+                                  : "opacity-0"
+                              )}
+                            />
+                          </div>
+                        ))
                       )}
                     </div>
                   </div>
-                </DialogContent>
-              </Dialog>
+                </PopoverContent>
+              </Popover>
             </div>
             
             <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>

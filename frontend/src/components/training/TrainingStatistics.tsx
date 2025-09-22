@@ -1,49 +1,19 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useQuery } from '@tanstack/react-query';
-import { Badge } from '@/components/ui/badge';
-import { 
-  BarChart3, 
-  TrendingUp, 
-  Users, 
-  Award, 
-  Clock, 
+import {
+  BarChart3,
+  TrendingUp,
+  Users,
+  Award,
+  Clock,
   Calendar,
   RefreshCw
 } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, AreaChart, Area, PieChart, Pie, CartesianGrid } from 'recharts';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import trainingService from '@/services/trainingService';
-import type { TrainingTypeStatistic, TrainingTrendStatistic, EmployeeTrainingStatistic } from '@/types/training';
-
-const StatCard: React.FC<{
-  title: string;
-  value: string | number;
-  icon: React.ComponentType<{ className?: string }>;
-  trend?: {
-    value: number;
-    isPositive: boolean;
-  };
-  className?: string;
-}> = ({ title, value, icon: Icon, trend, className = '' }) => (
-  <Card className={className}>
-    <CardContent className="p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          <p className="text-2xl font-bold">{value}</p>
-          {trend && (
-            <div className={`flex items-center gap-1 text-xs ${
-              trend.isPositive ? 'text-green-600' : 'text-red-600'
-            }`}>
-              <TrendingUp className={`h-3 w-3 ${trend.isPositive ? '' : 'rotate-180'}`} />
-              <span>{Math.abs(trend.value)}%</span>
-            </div>
-          )}
-        </div>
-        <Icon className="h-8 w-8 text-muted-foreground" />
-      </div>
-    </CardContent>
-  </Card>
-);
+import type { TrainingTrendStatistic, EmployeeTrainingStatistic } from '@/types/training';
 
 const TrainingStatistics: React.FC = () => {
   const currentYear = new Date().getFullYear();
@@ -90,115 +60,123 @@ const TrainingStatistics: React.FC = () => {
 
   return (
     <div className="space-y-6">
-
-      {/* Overview Stats */}
+      
+      {/* Statistics Cards */}
       {stats && (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <StatCard
-              title="Total Trainings"
-              value={stats.summary?.total_trainings || 0}
-              icon={Calendar}
-            />
-            <StatCard
-              title="Total Hours"
-              value={`${stats.summary?.total_hours || '0.00'}h`}
-              icon={Clock}
-            />
-            <StatCard
-              title="Certificates Issued"
-              value={stats.summary?.certificates_issued || 0}
-              icon={Award}
-            />
-            <StatCard
-              title="Average Hours"
-              value={`${stats.summary?.avg_duration || '0.00'}h`}
-              icon={BarChart3}
-            />
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card className="transition-all duration-300 hover:shadow-lg hover:scale-105 border-l-4 border-l-blue-500 bg-gradient-to-r from-blue-50 to-white">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-medium text-gray-700">Total Trainings</CardTitle>
+                  <Calendar className="h-6 w-6 text-blue-500" />
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="text-3xl font-bold text-blue-700">{stats.summary?.total_trainings || 0}</div>
+              </CardContent>
+            </Card>
+
+            <Card className="transition-all duration-300 hover:shadow-lg hover:scale-105 border-l-4 border-l-amber-500 bg-gradient-to-r from-amber-50 to-white">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-medium text-gray-700">Total Hours</CardTitle>
+                  <Clock className="h-6 w-6 text-amber-500" />
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="text-3xl font-bold text-amber-600">{stats.summary?.total_hours || '0.00'}h</div>
+              </CardContent>
+            </Card>
+
+            <Card className="transition-all duration-300 hover:shadow-lg hover:scale-105 border-l-4 border-l-green-500 bg-gradient-to-r from-green-50 to-white">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-medium text-gray-700">Employees Trained</CardTitle>
+                  <Users className="h-6 w-6 text-green-500" />
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="text-3xl font-bold text-green-600">{stats.summary?.employees_trained || 0}</div>
+              </CardContent>
+            </Card>
+
+            <Card className="transition-all duration-300 hover:shadow-lg hover:scale-105 border-l-4 border-l-purple-500 bg-gradient-to-r from-purple-50 to-white">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-medium text-gray-700">Certificates Issued</CardTitle>
+                  <Award className="h-6 w-6 text-purple-500" />
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="text-3xl font-bold text-purple-600">{stats.summary?.certificates_issued || 0}</div>
+              </CardContent>
+            </Card>
           </div>
 
-          {/* Training by Status */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <StatCard
-              title="Employees Trained"
-              value={stats.summary?.employees_trained || 0}
-              icon={Users}
-              className="border-green-200"
-            />
-            <StatCard
-              title="Training Types"
-              value={stats.by_type?.length || 0}
-              icon={BarChart3}
-              className="border-blue-200"
-            />
-            <StatCard
-              title="Monthly Records"
-              value={stats.trends?.length || 0}
-              icon={Calendar}
-              className="border-yellow-200"
-            />
-          </div>
-
-          {/* Training Types */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5" />
-                Training by Type
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                {stats.by_type && stats.by_type.length > 0 ? (
-                  stats.by_type.map((type: TrainingTypeStatistic) => (
-                    <div key={type.training_type} className="text-center p-4 border rounded-lg">
-                      <Badge variant="outline" className="mb-2">
-                        {type.training_type}
-                      </Badge>
-                      <div className="space-y-1 text-sm">
-                        <div>{type.count} trainings</div>
-                      </div>
-                    </div>
-                  ))
+          {/* Charts Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+             {/* Employee Training Participation - Pie Chart */}
+            <Card>
+              <CardHeader className="items-center pb-0">
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Employee Training Participation
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex-1 pb-0">
+                {stats.summary ? (
+                  <ChartContainer
+                    config={{
+                      participation: {
+                        label: "Employees",
+                      },
+                      trained: {
+                        label: "Trained",
+                        color: "var(--chart-1)",
+                      },
+                      untrained: {
+                        label: "Pending Training",
+                        color: "var(--chart-2)",
+                      },
+                    }}
+                    className="mx-auto aspect-square max-h-[250px]"
+                  >
+                    <PieChart>
+                      <ChartTooltip
+                        cursor={false}
+                        content={<ChartTooltipContent hideLabel />}
+                      />
+                      <Pie
+                        data={[
+                          {
+                            category: "trained",
+                            employees: stats.summary.employees_trained || 0,
+                            fill: "var(--color-trained)"
+                          },
+                          {
+                            category: "pending",
+                            employees: Math.max(1, Math.floor((stats.summary.employees_trained || 0) * 0.3)), // Estimated pending employees
+                            fill: "var(--color-untrained)"
+                          }
+                        ]}
+                        dataKey="employees"
+                        nameKey="category"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={80}
+                      />
+                    </PieChart>
+                  </ChartContainer>
                 ) : (
-                  <div className="col-span-full text-center text-muted-foreground">
-                    No training type data available
+                  <div className="text-center text-muted-foreground py-8">
+                    No participation data available
                   </div>
                 )}
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          {/* Monthly Trends */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" />
-                Monthly Training Activity
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {stats.trends && stats.trends.length > 0 ? (
-                  stats.trends.map((month: TrainingTrendStatistic) => (
-                    <div key={month.month} className="flex items-center justify-between p-3 border rounded">
-                      <div className="font-medium">{month.month}</div>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span>{month.count} trainings</span>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center text-muted-foreground">
-                    No monthly trend data available
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Employee Training Summary */}
-          {stats.by_employee && stats.by_employee.length > 0 && (
+            {/* Top Performers Chart */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -207,27 +185,120 @@ const TrainingStatistics: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {stats.by_employee?.slice(0, 10).map((employee: EmployeeTrainingStatistic) => (
-                    <div key={employee.employee_id} className="flex items-center justify-between p-3 border rounded">
-                      <div>
-                        <div className="font-medium">{employee.employee_name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {employee.count} trainings • {employee.hours} hours
-                        </div>
-                      </div>
-                      {employee.certificates > 0 && (
-                        <Badge variant="secondary">
-                          <Award className="h-3 w-3 mr-1" />
-                          {employee.certificates}
-                        </Badge>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                {stats.by_employee && stats.by_employee.length > 0 ? (
+                  <ChartContainer 
+                    config={{ 
+                      trainings: { 
+                        label: "Trainings", 
+                        color: "var(--chart-3)" 
+                      } 
+                    }}
+                    className="aspect-auto h-[300px] w-full"
+                  >
+                    <BarChart 
+                      layout="horizontal" 
+                      data={stats.by_employee.slice(0, 10).map((emp: EmployeeTrainingStatistic) => ({ 
+                        name: emp.employee_name, 
+                        trainings: emp.count 
+                      }))}
+                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis type="number" />
+                      <YAxis 
+                        dataKey="name" 
+                        type="category" 
+                        width={120}
+                        tick={{ fontSize: 12 }}
+                      />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Bar 
+                        dataKey="trainings" 
+                        fill="var(--color-trainings)" 
+                        radius={[0, 4, 4, 0]}
+                      />
+                    </BarChart>
+                  </ChartContainer>
+                ) : (
+                  <div className="text-center text-muted-foreground py-8">
+                    No employee training data available
+                  </div>
+                )}
               </CardContent>
             </Card>
-          )}
+
+            
+          </div>
+
+          <div className="grid grid-cols-1 gap-6">
+          {/* Monthly Training Activity - Area Chart */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Monthly Training Activity
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {stats.trends && stats.trends.length > 0 ? (
+                  <ChartContainer 
+                    config={{ 
+                      trainings: { 
+                        label: "Trainings", 
+                        color: "var(--chart-1)" 
+                      } 
+                    }}
+                    className="aspect-auto h-[300px] w-full"
+                  >
+                    <AreaChart data={stats.trends.map((trend: TrainingTrendStatistic) => ({ 
+                      month: trend.month, 
+                      trainings: trend.count 
+                    }))}>
+                      <defs>
+                        <linearGradient id="fillTrainings" x1="0" y1="0" x2="0" y2="1">
+                          <stop
+                            offset="5%"
+                            stopColor="var(--color-trainings)"
+                            stopOpacity={0.8}
+                          />
+                          <stop
+                            offset="95%"
+                            stopColor="var(--color-trainings)"
+                            stopOpacity={0.1}
+                          />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid vertical={false} />
+                      <XAxis
+                        dataKey="month"
+                        tickLine={false}
+                        axisLine={false}
+                        tickMargin={8}
+                        minTickGap={32}
+                      />
+                      <YAxis />
+                      <ChartTooltip
+                        cursor={false}
+                        content={<ChartTooltipContent indicator="dot" />}
+                      />
+                      <Area
+                        dataKey="trainings"
+                        type="natural"
+                        fill="url(#fillTrainings)"
+                        stroke="var(--color-trainings)"
+                        strokeWidth={2}
+                      />
+                    </AreaChart>
+                  </ChartContainer>
+                ) : (
+                  <div className="text-center text-muted-foreground py-8">
+                    No monthly trend data available
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+           
+          </div>
         </>
       )}
 

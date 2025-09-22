@@ -10,9 +10,10 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Switch } from '@/components/ui/switch';
 import { format } from 'date-fns';
-import { CalendarIcon, Clock, MapPin, User } from 'lucide-react';
+import { CalendarIcon, Clock, MapPin, User, Check, ChevronsUpDown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 import trainingService from '@/services/trainingService';
 import { employeeService } from '@/services/employeeService';
 import type { 
@@ -62,6 +63,10 @@ const TrainingForm: React.FC<TrainingFormProps> = ({
   const [trainingPrograms, setTrainingPrograms] = useState<TrainingProgram[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
+  
+  // Combobox state
+  const [employeeComboboxOpen, setEmployeeComboboxOpen] = useState(false);
+  const [employeeSearchValue, setEmployeeSearchValue] = useState('');
 
   const isEditing = !!training;
   const isEmployee = !!employeeId; // Employee users are restricted to their own training
@@ -165,6 +170,21 @@ const TrainingForm: React.FC<TrainingFormProps> = ({
     return program?.training_type;
   };
 
+  // Helper function to get employee full name
+  const getEmployeeFullName = (employee: Employee) => {
+    const parts = [employee.first_name, employee.middle_name, employee.last_name, employee.suffix]
+      .filter(Boolean);
+    return parts.join(' ');
+  };
+
+  // Filter employees based on search value
+  const filteredEmployees = employees.filter(employee => {
+    const fullName = getEmployeeFullName(employee);
+    const searchTerm = employeeSearchValue.toLowerCase();
+    return fullName.toLowerCase().includes(searchTerm) || 
+           employee.employee_number?.toLowerCase().includes(searchTerm);
+  });
+
   if (isLoadingData) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -179,63 +199,117 @@ const TrainingForm: React.FC<TrainingFormProps> = ({
   return (
     <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
           {/* Employee Selection (Admin only) */}
-          {!isEmployee && (
+          <div className='grid grid-cols-2 gap-4'>
+            {!isEmployee && (
+              <div className="space-y-2">
+                <Label htmlFor="employee_id">Employee *</Label>
+                <Popover open={employeeComboboxOpen} onOpenChange={setEmployeeComboboxOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={employeeComboboxOpen}
+                      className="w-full justify-between"
+                      disabled={readOnly}
+                    >
+                      {form.watch('employee_id')
+                        ? (() => {
+                            const selectedEmployee = employees.find(
+                              (employee) => employee.id === form.watch('employee_id')
+                            );
+                            return selectedEmployee
+                              ? `${getEmployeeFullName(selectedEmployee)} (${selectedEmployee.employee_number})`
+                              : "Select employee...";
+                          })()
+                        : "Select employee..."}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0">
+                    <div className="flex flex-col">
+                      <div className="p-2">
+                        <Input
+                          placeholder="Search employees..."
+                          value={employeeSearchValue}
+                          onChange={(e) => setEmployeeSearchValue(e.target.value)}
+                          className="h-9"
+                        />
+                      </div>
+                      <div className="max-h-[200px] overflow-auto">
+                        {filteredEmployees.length === 0 ? (
+                          <div className="p-2 text-sm text-muted-foreground">
+                            No employee found.
+                          </div>
+                        ) : (
+                          filteredEmployees.map((employee) => (
+                            <div
+                              key={employee.id}
+                              className={cn(
+                                "flex cursor-pointer items-center justify-between px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground",
+                                form.watch('employee_id') === employee.id && "bg-accent"
+                              )}
+                              onClick={() => {
+                                form.setValue('employee_id', employee.id);
+                                setEmployeeComboboxOpen(false);
+                                setEmployeeSearchValue('');
+                              }}
+                            >
+                              <div className="flex items-center">
+                                <User className="h-4 w-4 mr-2" />
+                                <span>{getEmployeeFullName(employee)} ({employee.employee_number})</span>
+                              </div>
+                              <Check
+                                className={cn(
+                                  "ml-2 h-4 w-4",
+                                  form.watch('employee_id') === employee.id
+                                    ? "opacity-100"
+                                    : "opacity-0"
+                                )}
+                              />
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+                {form.formState.errors.employee_id && (
+                  <p className="text-sm text-red-600">{form.formState.errors.employee_id.message}</p>
+                )}
+              </div>
+            )}
+                      {/* Training Program Selection (Optional) */}
             <div className="space-y-2">
-              <Label htmlFor="employee_id">Employee *</Label>
+              <Label htmlFor="training_program_id">Training Program (Optional)</Label>
               <Select
-                value={form.watch('employee_id')?.toString()}
-                onValueChange={(value) => form.setValue('employee_id', parseInt(value))}
+                value={selectedProgramId?.toString() || 'none'}
+                onValueChange={(value) => form.setValue('training_program_id', value && value !== 'none' ? parseInt(value) : undefined)}
                 disabled={readOnly}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select employee" />
+                <SelectTrigger className='w-full'>
+                  <SelectValue placeholder="Select training program (optional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  {employees.map((employee) => (
-                    <SelectItem key={employee.id} value={employee.id.toString()}>
-                      <div className="flex items-center">
-                        <User className="h-4 w-4 mr-2" />
-                        <span>{`${employee.first_name} ${employee.last_name}`} ({employee.employee_number})</span>
+                  <SelectItem value="none">Custom Training</SelectItem>
+                  {trainingPrograms.map((program) => (
+                    <SelectItem key={program.id} value={program.id.toString()}>
+                      <div className="flex items-center justify-between w-full">
+                        <span>{program.title}</span>
+                        <div className="flex items-center gap-2 ml-2">
+                          <Badge variant="outline">{program.training_type}</Badge>
+                          {program.duration_hours && (
+                            <Badge variant="secondary">{program.duration_hours}h</Badge>
+                          )}
+                        </div>
                       </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {form.formState.errors.employee_id && (
-                <p className="text-sm text-red-600">{form.formState.errors.employee_id.message}</p>
-              )}
             </div>
-          )}
-
-          {/* Training Program Selection (Optional) */}
-          <div className="space-y-2">
-            <Label htmlFor="training_program_id">Training Program (Optional)</Label>
-            <Select
-              value={selectedProgramId?.toString() || 'none'}
-              onValueChange={(value) => form.setValue('training_program_id', value && value !== 'none' ? parseInt(value) : undefined)}
-              disabled={readOnly}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select training program (optional)" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Custom Training</SelectItem>
-                {trainingPrograms.map((program) => (
-                  <SelectItem key={program.id} value={program.id.toString()}>
-                    <div className="flex items-center justify-between w-full">
-                      <span>{program.title}</span>
-                      <div className="flex items-center gap-2 ml-2">
-                        <Badge variant="outline">{program.training_type}</Badge>
-                        {program.duration_hours && (
-                          <Badge variant="secondary">{program.duration_hours}h</Badge>
-                        )}
-                      </div>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
+
+
 
           {/* Training Title */}
           <div className="space-y-2">

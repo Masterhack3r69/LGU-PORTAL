@@ -94,14 +94,50 @@ app.use(compression({
     threshold: 1024
 }));
 
-// CORS configuration
+// Enhanced CORS configuration
 app.use(cors({
-    origin: process.env.NODE_ENV === 'production' 
-        ? (process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : ['http://10.0.0.73:5173', 'http://10.0.0.73:3000', 'http://localhost:5173', 'http://localhost:3000'])
-        : ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://10.0.0.73:5173', 'http://10.0.0.73:3000'],
+    origin: function (origin, callback) {
+        // Allow requests with no origin (mobile apps, Postman, etc.)
+        if (!origin) return callback(null, true);
+        
+        const allowedOrigins = process.env.CORS_ORIGINS 
+            ? process.env.CORS_ORIGINS.split(',')
+            : [
+                'http://localhost:5173',
+                'http://127.0.0.1:5173', 
+                'http://10.0.0.73:5173',
+                'http://10.0.0.73:3000',
+                'http://localhost:3000'
+            ];
+        
+        // Allow any localhost/127.0.0.1 origin in development
+        if (process.env.NODE_ENV !== 'production') {
+            if (origin.startsWith('http://localhost:') || 
+                origin.startsWith('http://127.0.0.1:') ||
+                origin.startsWith('http://10.0.0.73:')) {
+                return callback(null, true);
+            }
+        }
+        
+        if (allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            console.warn(`⚠️  CORS blocked origin: ${origin}`);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+    allowedHeaders: [
+        'Content-Type', 
+        'Authorization', 
+        'X-Requested-With', 
+        'Accept', 
+        'Origin',
+        'X-Request-ID',
+        'Cache-Control'
+    ],
+    exposedHeaders: ['X-Request-ID'],
     preflightContinue: false,
     optionsSuccessStatus: 200
 }));
@@ -141,6 +177,20 @@ app.use(session({
 // Logging middleware
 if (process.env.NODE_ENV !== 'test') {
     app.use(morgan('combined'));
+}
+
+// Explicit preflight handler for troubleshooting
+app.options('*', (req, res) => {
+    console.log(`🚀 CORS preflight: ${req.method} ${req.path} from ${req.get('Origin')}`);
+    res.status(200).end();
+});
+
+// Request debugging middleware (only in development)
+if (process.env.NODE_ENV !== 'production') {
+    app.use((req, res, next) => {
+        console.log(`🔍 ${req.method} ${req.path} - Origin: ${req.get('Origin') || 'none'} - User-Agent: ${req.get('User-Agent')?.substring(0, 50)}...`);
+        next();
+    });
 }
 
 // Static files
