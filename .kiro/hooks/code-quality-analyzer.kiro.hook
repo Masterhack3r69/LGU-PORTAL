@@ -1,0 +1,24 @@
+{
+  "enabled": true,
+  "name": "Code Quality Analyzer",
+  "description": "Monitors source code files for changes and provides automated code quality analysis including code smells, design patterns, and best practices suggestions",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "backend/**/*.js",
+      "frontend/src/**/*.ts",
+      "frontend/src/**/*.tsx",
+      "frontend/src/**/*.js",
+      "frontend/src/**/*.jsx",
+      "*.js",
+      "*.ts",
+      "*.tsx",
+      "*.jsx"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Analyze the modified code files for potential improvements. Focus on:\n\n1. **Code Smells**: Identify long methods, large classes, duplicate code, complex conditionals, and other maintainability issues\n2. **Design Patterns**: Suggest appropriate design patterns that could improve the code structure\n3. **Best Practices**: Check for adherence to JavaScript/TypeScript/React best practices including:\n   - Proper error handling\n   - Security considerations (SQL injection prevention, input validation)\n   - Performance optimizations\n   - Code readability and maintainability\n   - Proper use of async/await vs promises\n   - React hooks usage and component optimization\n   - Database query optimization\n   - Memory leak prevention\n\n4. **Architecture Alignment**: Ensure changes align with the existing MVC architecture and separation of concerns\n5. **Security Review**: Check for potential security vulnerabilities especially around authentication, authorization, and data validation\n\nProvide specific, actionable suggestions while maintaining the existing functionality. Prioritize improvements that enhance readability, maintainability, and performance."
+  }
+}

@@ -12,4 +12,3 @@ Always analyze the entire project by reviewing backend code, database design, an
 - For each **component**, explain its functionality, props/state, and UI purpose.  
 - Describe frontend–backend integration and full data flow across the system.  
 - Highlight consistency, naming conventions, and reusable patterns in the codebase.  
-
