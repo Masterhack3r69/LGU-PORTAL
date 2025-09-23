@@ -18,7 +18,7 @@ import { LeaveApplicationsPage } from '@/pages/leaves/LeaveApplicationsPage';
 import { LeaveBalancesPage } from '@/pages/leaves/LeaveBalancesPage';
 import { LeaveApprovalsPage } from '@/pages/leaves/LeaveApprovalsPage';
 import { LeaveTypesPage } from '@/pages/leaves/LeaveTypesPage';
-import { TLBManagementPage } from '@/pages/TLBManagementPage';
+
 
 // Training Management Pages
 import AdminTrainingPage from '@/pages/training/AdminTrainingPage';
@@ -39,7 +39,7 @@ import { PayrollReportsPage } from '@/pages/payroll/PayrollReportsPage';
 import { PayrollConfigurationPage } from '@/pages/payroll/PayrollConfigurationPage';
 
 // Benefits Management Pages
-import { BenefitsManagementPage } from '@/pages/benefits/BenefitsManagementPage';
+
 
 function App() {
   return (
@@ -275,27 +275,9 @@ function App() {
           />
         </Route>
 
-        {/* Benefits Management - accessible to all authenticated users */}
-        <Route path="benefits">
-          <Route
-            index
-            element={
-              <ProtectedRoute allowedRoles={['admin', 'employee']}>
-                <BenefitsManagementPage />
-              </ProtectedRoute>
-            }
-          />
-        </Route>
 
-        {/* Terminal Leave Benefits - Admin only */}
-        <Route 
-          path="tlb" 
-          element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <TLBManagementPage />
-            </ProtectedRoute>
-          } 
-        />
+
+
         
         {/* Document Management - accessible to all authenticated users */}
         <Route 

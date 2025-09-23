@@ -130,10 +130,7 @@ const getFiscalYear = (date = new Date()) => {
     return year;
 };
 
-// Calculate Terminal Leave Benefits
-const calculateTLB = (totalLeaveCredits, highestMonthlySalary, constantFactor = 1.0) => {
-    return totalLeaveCredits * highestMonthlySalary * constantFactor;
-};
+
 
 // Generate random password
 const generateRandomPassword = (length = 8) => {
@@ -298,7 +295,6 @@ module.exports = {
     
     // Employee utilities
     generateEmployeeNumber,
-    calculateTLB,
     getNextStepIncrementDate,
     calculateDailyRate,
     calculateMonthlySalary,

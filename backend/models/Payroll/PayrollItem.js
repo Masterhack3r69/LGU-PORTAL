@@ -73,6 +73,98 @@ class PayrollItem {
         return result;
     }
 
+    static async findByEmployee(employeeId, filters = {}) {
+        let query = `
+            SELECT pi.*, 
+                   e.id as employee_id, e.employee_number as employee_number, 
+                   e.first_name, e.last_name, e.plantilla_position as position,
+                   pp.year, pp.month, pp.period_number, pp.start_date, pp.end_date
+            FROM payroll_items pi
+            LEFT JOIN employees e ON pi.employee_id = e.id
+            LEFT JOIN payroll_periods pp ON pi.payroll_period_id = pp.id
+            WHERE pi.employee_id = ?
+        `;
+        const params = [employeeId];
+
+        if (filters.year) {
+            query += ' AND pp.year = ?';
+            params.push(filters.year);
+        }
+
+        if (filters.status) {
+            query += ' AND pi.status = ?';
+            params.push(filters.status);
+        }
+
+        query += ' ORDER BY pp.year DESC, pp.month DESC, pp.period_number DESC';
+
+        if (filters.limit) {
+            query += ' LIMIT ?';
+            params.push(parseInt(filters.limit));
+        }
+
+        if (filters.offset) {
+            query += ' OFFSET ?';
+            params.push(parseInt(filters.offset));
+        }
+
+        const result = await executeQuery(query, params);
+        if (result.success) {
+            return {
+                success: true,
+                data: result.data.map(row => {
+                    const item = new PayrollItem(row);
+                    item.employee = {
+                        id: row.employee_id,
+                        employee_number: row.employee_number,
+                        full_name: `${row.first_name} ${row.last_name}`,
+                        position: row.position
+                    };
+                    item.period = {
+                        year: row.year,
+                        month: row.month,
+                        period_number: row.period_number,
+                        start_date: row.start_date,
+                        end_date: row.end_date
+                    };
+                    return item;
+                })
+            };
+        }
+        return result;
+    }
+
+    static async findByPeriodAndEmployee(periodId, employeeId) {
+        const query = `
+            SELECT pi.*, 
+                   e.id as employee_id, e.employee_number as employee_number, 
+                   e.first_name, e.last_name, e.plantilla_position as position
+            FROM payroll_items pi
+            LEFT JOIN employees e ON pi.employee_id = e.id
+            WHERE pi.payroll_period_id = ? AND pi.employee_id = ?
+            ORDER BY pi.created_at DESC
+        `;
+        const params = [periodId, employeeId];
+
+        const result = await executeQuery(query, params);
+        if (result.success) {
+            return {
+                success: true,
+                data: result.data.map(row => {
+                    const item = new PayrollItem(row);
+                    item.employee = {
+                        id: row.employee_id,
+                        employee_number: row.employee_number,
+                        full_name: `${row.first_name} ${row.last_name}`,
+                        position: row.position
+                    };
+                    return item;
+                })
+            };
+        }
+        return result;
+    }
+
     static async findById(id) {
         const result = await findOneByTable('payroll_items', { id });
         if (result.success && result.data) {

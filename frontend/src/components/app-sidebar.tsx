@@ -7,7 +7,6 @@ import {
   Building2,
   Shield,
   Home,
-  Calculator,
   GraduationCap,
   DollarSign
 } from "lucide-react"
@@ -140,25 +139,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     ] : [], // Employee users don't get dropdown items
   });
 
-  // Terminal Leave Benefits - Admin only
-  if (user?.role === 'admin') {
-    navMain.push({
-      title: "Terminal Leave Benefits",
-      url: "/tlb",
-      icon: Calculator,
-      items: [], // No dropdown items since everything is in tabs
-    });
-  }
 
-  // Compensation & Benefits - Admin only
-  if (user?.role === 'admin') {
-    navMain.push({
-      title: "Compensation & Benefits",
-      url: "/benefits",
-      icon: DollarSign,
-      items: [], // No dropdown items since everything is in tabs
-    });
-  }
+
+
 
   // Reports - Only show for admins, hide completely for employees
   if (user?.role === 'admin') {

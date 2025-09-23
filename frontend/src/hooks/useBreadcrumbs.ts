@@ -34,9 +34,9 @@ export function useBreadcrumbs(): BreadcrumbItem[] {
         'training': 'Training Management',
         'payroll': 'Payroll Management',
         'my-payroll': 'My Payroll',
-        'benefits': 'Benefits',
-        'compensation': 'Compensation',
-        'tlb': 'Terminal Leave Benefits',
+
+
+
         'profile': 'Profile',
         'admin': 'Administration',
         'settings': 'Settings',

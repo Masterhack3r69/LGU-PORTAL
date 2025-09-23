@@ -20,6 +20,11 @@ class PayrollService {
     return api.get<PayrollResponse<PayrollPeriod[]>>('/payroll/periods');
   }
 
+  // Employee-specific periods (for employees to view their own payroll periods)
+  async getEmployeePayrollPeriods(): Promise<PayrollResponse<PayrollPeriod[]>> {
+    return api.get<PayrollResponse<PayrollPeriod[]>>('/payroll/employee/periods');
+  }
+
   async getPeriod(id: number): Promise<PayrollResponse<PayrollPeriod>> {
     return api.get<PayrollResponse<PayrollPeriod>>(`/payroll/periods/${id}`);
   }
@@ -172,6 +177,18 @@ class PayrollService {
     return api.get<PayrollResponse<PayrollItem[]>>(`/payroll/items?${params.toString()}`);
   }
 
+  // Employee-specific payroll items (for employees to view their own payroll items)
+  async getEmployeePayrollItems(filter: PayrollFilter = {}): Promise<PayrollResponse<PayrollItem[]>> {
+    const params = new URLSearchParams();
+    Object.entries(filter).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        params.append(key, value.toString());
+      }
+    });
+    
+    return api.get<PayrollResponse<PayrollItem[]>>(`/payroll/employee/items?${params.toString()}`);
+  }
+
   async getPayrollItem(id: number): Promise<PayrollResponse<PayrollItem>> {
     return api.get<PayrollResponse<PayrollItem>>(`/payroll/items/${id}`);
   }
@@ -218,14 +235,14 @@ class PayrollService {
   async getEmployeePayslip(periodId: number, employeeId?: number): Promise<PayrollResponse<PayslipData>> {
     const url = employeeId 
       ? `/payroll/payslips/${periodId}/${employeeId}`
-      : `/payroll/payslips/${periodId}/me`;
+      : `/payroll/employee/payslip/${periodId}`; // Use employee-specific endpoint
     return api.get<PayrollResponse<PayslipData>>(url);
   }
 
   async downloadPayslip(periodId: number, employeeId?: number): Promise<Blob> {
     const url = employeeId
       ? `/payroll/payslips/${periodId}/${employeeId}/download`
-      : `/payroll/payslips/${periodId}/me/download`;
+      : `/payroll/employee/payslip/${periodId}/download`; // Use employee-specific endpoint
     return api.get<Blob>(url, { responseType: 'blob' });
   }
 

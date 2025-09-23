@@ -69,9 +69,7 @@ const resetDatabase = async () => {
             console.log('🗑️ Deleting payroll items...');
             await connection.execute('DELETE FROM payroll_items');
             
-            // Delete all terminal leave benefits
-            console.log('🗑️ Deleting terminal leave benefits...');
-            await connection.execute('DELETE FROM terminal_leave_benefits');
+
             
             // Delete all employees
             console.log('🗑️ Deleting all employees...');

@@ -265,9 +265,22 @@ class PayrollItemController {
         try {
             const { employeeId } = req.params;
             const { year, status, limit = 20, offset = 0 } = req.query;
+            
+            // If employeeId is provided in params, use it (admin access)
+            let targetEmployeeId = employeeId;
+            
+            // If no employeeId in params, use current user's employee ID (employee self-access)
+            if (!targetEmployeeId) {
+                const user = req.session.user;
+                const employeeResult = await Employee.findByUserId(user.id);
+                if (!employeeResult.success || !employeeResult.data) {
+                    return errorResponse(res, 'Employee record not found', 403);
+                }
+                targetEmployeeId = employeeResult.data.id;
+            }
 
             const filters = { year, status, limit, offset };
-            const itemsResult = await PayrollItem.findByEmployee(employeeId, filters);
+            const itemsResult = await PayrollItem.findByEmployee(targetEmployeeId, filters);
 
             if (itemsResult.success) {
                 return successResponse(res, itemsResult.data, 'Employee payroll items retrieved successfully');

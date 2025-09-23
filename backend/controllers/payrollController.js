@@ -629,6 +629,170 @@ class PayrollController {
             return res.status(500).json(response);
         }
     }
+
+    // Get payroll periods where the current employee has payroll items
+    async getEmployeePayrollPeriods(req, res) {
+        try {
+            const user = req.session.user;
+            
+            // Get employee record for this user
+            const employeeResult = await Employee.findByUserId(user.id);
+            if (!employeeResult.success || !employeeResult.data) {
+                const response = ApiResponse.error('Employee record not found', 'EMPLOYEE_NOT_FOUND', null, 403);
+                return res.status(403).json(response);
+            }
+            
+            const employee = employeeResult.data;
+            
+            // Get all payroll items for this employee to find associated periods
+            const itemsResult = await PayrollItem.findByEmployee(employee.id);
+            if (!itemsResult.success) {
+                const response = ApiResponse.error('Failed to retrieve payroll items', 'FETCH_ERROR', null, 500);
+                return res.status(500).json(response);
+            }
+            
+            // Extract unique period IDs from payroll items
+            const periodIds = [...new Set(itemsResult.data.map(item => item.period_id))];
+            
+            if (periodIds.length === 0) {
+                const response = ApiResponse.success([], 'No payroll periods found for employee');
+                return res.status(200).json(response);
+            }
+            
+            // Get period details for these period IDs
+            const periods = [];
+            for (const periodId of periodIds) {
+                const periodResult = await PayrollPeriod.findById(periodId);
+                if (periodResult.success && periodResult.data) {
+                    periods.push(periodResult.data);
+                }
+            }
+            
+            // Sort periods by year and month (newest first)
+            periods.sort((a, b) => {
+                if (a.year !== b.year) {
+                    return b.year - a.year;
+                }
+                if (a.month !== b.month) {
+                    return b.month - a.month;
+                }
+                return b.period_number - a.period_number;
+            });
+            
+            const response = ApiResponse.success(periods, 'Employee payroll periods retrieved successfully');
+            return res.status(200).json(response);
+            
+        } catch (error) {
+            console.error('Get employee payroll periods error:', error);
+            const response = ApiResponse.serverError('Internal server error');
+            return res.status(500).json(response);
+        }
+    }
+
+    // Get payslip for current employee for specific period
+    async getEmployeePayslip(req, res) {
+        try {
+            const { periodId } = req.params;
+            const user = req.session.user;
+            
+            // Get employee record for this user
+            const employeeResult = await Employee.findByUserId(user.id);
+            if (!employeeResult.success || !employeeResult.data) {
+                const response = ApiResponse.error('Employee record not found', 'EMPLOYEE_NOT_FOUND', null, 403);
+                return res.status(403).json(response);
+            }
+            
+            const employee = employeeResult.data;
+            
+            // Get payroll item for this employee and period
+            const itemsResult = await PayrollItem.findByPeriodAndEmployee(periodId, employee.id);
+            if (!itemsResult.success || !itemsResult.data || itemsResult.data.length === 0) {
+                const response = ApiResponse.notFound('Payslip not found for this period');
+                return res.status(404).json(response);
+            }
+            
+            const payrollItem = itemsResult.data[0]; // Get first (should be only one) item
+            
+            // Get period details
+            const periodResult = await PayrollPeriod.findById(periodId);
+            if (!periodResult.success || !periodResult.data) {
+                const response = ApiResponse.notFound('Payroll period not found');
+                return res.status(404).json(response);
+            }
+            
+            // Build payslip data
+            const payslipData = {
+                ...payrollItem,
+                period: periodResult.data,
+                employee: {
+                    id: employee.id,
+                    employee_id: employee.employee_id,
+                    full_name: employee.full_name,
+                    department: employee.department,
+                    position: employee.position,
+                    hire_date: employee.hire_date
+                },
+                allowances: payrollItem.allowances || [],
+                deductions: payrollItem.deductions || []
+            };
+            
+            const response = ApiResponse.success(payslipData, 'Employee payslip retrieved successfully');
+            return res.status(200).json(response);
+            
+        } catch (error) {
+            console.error('Get employee payslip error:', error);
+            const response = ApiResponse.serverError('Internal server error');
+            return res.status(500).json(response);
+        }
+    }
+
+    // Download payslip PDF for current employee
+    async downloadEmployeePayslip(req, res) {
+        try {
+            const { periodId } = req.params;
+            const user = req.session.user;
+            
+            // Get employee record for this user
+            const employeeResult = await Employee.findByUserId(user.id);
+            if (!employeeResult.success || !employeeResult.data) {
+                const response = ApiResponse.error('Employee record not found', 'EMPLOYEE_NOT_FOUND', null, 403);
+                return res.status(403).json(response);
+            }
+            
+            const employee = employeeResult.data;
+            
+            // Get payroll item for this employee and period
+            const itemsResult = await PayrollItem.findByPeriodAndEmployee(periodId, employee.id);
+            if (!itemsResult.success || !itemsResult.data || itemsResult.data.length === 0) {
+                const response = ApiResponse.notFound('Payslip not found for this period');
+                return res.status(404).json(response);
+            }
+            
+            const payrollItem = itemsResult.data[0];
+            
+            // Use existing payslip generation service
+            const payslipPdfService = require('../services/payslipPdfService');
+            const pdfResult = await payslipPdfService.generatePayslipPDF(payrollItem.id);
+            
+            if (pdfResult.success) {
+                const { buffer, filename, mimeType } = pdfResult.data;
+                
+                res.setHeader('Content-Type', mimeType);
+                res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+                res.setHeader('Content-Length', buffer.length);
+                
+                return res.send(buffer);
+            }
+            
+            const response = ApiResponse.error('Failed to generate payslip PDF', 'PDF_GENERATION_ERROR', null, 500);
+            return res.status(500).json(response);
+            
+        } catch (error) {
+            console.error('Download employee payslip error:', error);
+            const response = ApiResponse.serverError('Internal server error');
+            return res.status(500).json(response);
+        }
+    }
 }
 
 module.exports = new PayrollController();

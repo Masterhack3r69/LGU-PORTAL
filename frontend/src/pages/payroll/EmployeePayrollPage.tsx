@@ -37,7 +37,7 @@ export function EmployeePayrollPage() {
 
   const loadPeriods = async () => {
     try {
-      const response = await payrollService.getPeriods();
+      const response = await payrollService.getEmployeePayrollPeriods();
       if (response.success) {
         // Only show finalized periods to employees
         const finalizedPeriods = response.data.filter(p => p.status === 'finalized');

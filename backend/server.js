@@ -26,9 +26,9 @@ const leaveRoutes = require('./routes/leaveRoutes');
 const documentRoutes = require('./routes/documentRoutes');
 const reportsRoutes = require('./routes/reportsRoutes');
 const jobRoutes = require('./routes/jobRoutes');
-const tlbRoutes = require('./routes/tlbRoutes');
+
 const trainingRoutes = require('./routes/trainingRoutes');
-const benefitsRoutes = require('./routes/benefitsRoutes');
+
 
 // Import job system
 const monthlyAccrualJob = require('./jobs/monthlyAccrualJob'); // Add this line
@@ -247,8 +247,8 @@ app.use('/api/payroll', authMiddleware.requireAuth, require('./routes/payrollRou
 app.use('/api/documents', authMiddleware.requireAuth, auditLogger, documentRoutes);
 app.use('/api/reports', authMiddleware.requireAuth, auditLogger, reportsRoutes);
 app.use('/api/jobs', authMiddleware.requireAuth, auditLogger, jobRoutes);
-app.use('/api/tlb', authMiddleware.requireAuth, auditLogger, tlbRoutes);
-app.use('/api/benefits', authMiddleware.requireAuth, auditLogger, benefitsRoutes);
+
+
 app.use('/api', authMiddleware.requireAuth, auditLogger, trainingRoutes);
 
 // Serve frontend application (if using server-side rendering or static files)

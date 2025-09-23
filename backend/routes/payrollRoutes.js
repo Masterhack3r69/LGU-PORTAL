@@ -124,6 +124,21 @@ router.post('/items/:id/download-payslip', requirePayrollAccess, validateItemAcc
 
 // ===== EMPLOYEE PAYROLL ROUTES =====
 
+// GET /api/payroll/employee/periods - Get payroll periods for current employee (periods where they have payroll items)
+router.get('/employee/periods', requirePayrollAccess, payrollController.getEmployeePayrollPeriods);
+
+// GET /api/payroll/employee/items - Get payroll items for current employee
+router.get('/employee/items', requirePayrollAccess, payrollItemController.getEmployeePayrollItems);
+
+// GET /api/payroll/employee/items/:id - Get specific payroll item for current employee
+router.get('/employee/items/:id', requirePayrollAccess, validateItemAccess, payrollItemController.getPayrollItem);
+
+// GET /api/payroll/employee/payslip/:periodId - Get payslip for current employee for specific period
+router.get('/employee/payslip/:periodId', requirePayrollAccess, payrollController.getEmployeePayslip);
+
+// GET /api/payroll/employee/payslip/:periodId/download - Download payslip PDF for current employee
+router.get('/employee/payslip/:periodId/download', requirePayrollAccess, payrollController.downloadEmployeePayslip);
+
 // GET /api/payroll/employees/:employeeId/items - Get payroll items for employee
 router.get('/employees/:employeeId/items', payrollItemController.getEmployeePayrollItems);
 

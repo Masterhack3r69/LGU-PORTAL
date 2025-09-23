@@ -64,17 +64,10 @@ const config = {
         annualSLCredit: 15,
         monthlyVLAccrual: 1.25,
         monthlySLAccrual: 1.25,
-        maxMonetizableWithoutClearance: 29,
-        tlbConstantFactor: 1.0
+        maxMonetizableWithoutClearance: 29
     },
 
-    // Compensation Configuration
-    compensation: {
-        loyaltyAward10Years: 10000, // First 10 years
-        loyaltyAward5Years: 5000,   // Every 5 years after
-        pbbEligibilityMonths: 4,    // Minimum months for PBB eligibility
-        stepIncrementYears: 3       // Years between step increments
-    },
+
 
     // Email Configuration (if implementing email notifications)
     email: {
