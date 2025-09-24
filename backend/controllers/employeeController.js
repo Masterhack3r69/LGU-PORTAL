@@ -78,7 +78,11 @@ const employeeCreationRules = [
     body('separation_date')
         .optional({ checkFalsy: true })
         .isISO8601()
-        .withMessage('Valid separation date is required')
+        .withMessage('Valid separation date is required'),
+    body('separation_reason')
+        .optional({ checkFalsy: true })
+        .isLength({ max: 255 })
+        .withMessage('Separation reason must not exceed 255 characters')
 ];
 
 // Validation rules for employee updates (more flexible)
@@ -230,7 +234,11 @@ const employeeUpdateRules = [
     body('separation_date')
         .optional({ checkFalsy: true })
         .isISO8601()
-        .withMessage('Valid separation date is required')
+        .withMessage('Valid separation date is required'),
+    body('separation_reason')
+        .optional({ checkFalsy: true })
+        .isLength({ max: 255 })
+        .withMessage('Separation reason must not exceed 255 characters')
 ];
 
 // GET /api/employees - Get all employees with pagination and filtering

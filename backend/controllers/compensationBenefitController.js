@@ -96,6 +96,69 @@ class CompensationBenefitController {
     }
   }
 
+  // GET /api/compensation-benefits/employee - Get compensation benefit records for current employee
+  async getEmployeeRecords(req, res) {
+    try {
+      const employeeId = req.user.employee_id;
+      
+      if (!employeeId) {
+        return res.status(400).json({
+          success: false,
+          error: "Employee ID not found in user session"
+        });
+      }
+
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 20;
+      const offset = (page - 1) * limit;
+
+      const filters = {
+        employee_id: employeeId, // Only show records for current employee
+        benefit_type: req.query.benefit_type,
+        year: req.query.year,
+        date_from: req.query.date_from,
+        date_to: req.query.date_to,
+        limit,
+        offset,
+      };
+
+      const [records, total] = await Promise.all([
+        CompensationBenefit.findAll(filters),
+        CompensationBenefit.getCount(filters),
+      ]);
+
+      if (!records.success) {
+        return res.status(500).json({
+          success: false,
+          error: "Failed to fetch compensation benefit records",
+          details: records.error,
+        });
+      }
+
+      const totalPages = Math.ceil(total / limit);
+
+      res.json({
+        success: true,
+        data: records.data,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalRecords: total,
+          recordsPerPage: limit,
+          hasNextPage: page < totalPages,
+          hasPreviousPage: page > 1,
+        },
+      });
+    } catch (error) {
+      console.error("Error fetching employee compensation benefit records:", error);
+      res.status(500).json({
+        success: false,
+        error: "Internal server error",
+        details: error.message,
+      });
+    }
+  }
+
   // GET /api/compensation-benefits/:id - Get compensation benefit record by ID
   async getRecordById(req, res) {
     try {

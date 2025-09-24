@@ -102,11 +102,11 @@ export function PayrollAdjustments({ selectedPeriod, onSummaryUpdate, onPayrollI
     const statusLower = status.toLowerCase();
     const variants = {
       draft: 'default',
-      calculated: 'secondary',
-      approved: 'outline',
-      paid: 'outline',
-      processing: 'secondary',
+      processed: 'secondary',
       finalized: 'outline',
+      paid: 'destructive',
+      processing: 'secondary',
+      completed: 'outline',
       locked: 'destructive'
     } as const;
 

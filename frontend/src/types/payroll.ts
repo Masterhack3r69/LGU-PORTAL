@@ -7,7 +7,7 @@ export interface PayrollPeriod {
   period_number: number;
   start_date: string;
   end_date: string;
-  status: 'open' | 'calculating' | 'finalized' | 'locked';
+  status: 'Draft' | 'Processing' | 'Completed' | 'Paid';
   created_at: string;
   updated_at: string;
   finalized_at?: string;
@@ -55,7 +55,7 @@ export interface PayrollItem {
   working_days?: number;
   daily_rate?: number;
   basic_pay: number;
-  status: 'draft' | 'calculated' | 'approved' | 'paid';
+  status: 'Draft' | 'Processed' | 'Finalized' | 'Paid';
   total_allowances: number;
   total_deductions: number;
   gross_pay: number;
@@ -129,6 +129,10 @@ export interface EmployeeOverride {
 export interface PayrollCalculationRequest {
   period_id: number;
   employee_ids?: number[];
+  employees_data?: Array<{
+    employee_id: number;
+    working_days: number;
+  }>;
   recalculate?: boolean;
 }
 

@@ -58,7 +58,7 @@ export function EmployeeSelectionDialog({
     try {
       setLoading(true);
       const response = await employeeService.getEmployees({
-        status: 'active',
+        status: 'active', // Only load active employees
         limit: 1000
       });
 

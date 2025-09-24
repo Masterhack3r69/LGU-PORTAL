@@ -44,6 +44,36 @@ class CompensationService {
     };
   }
 
+  // Get compensation benefit records for current employee
+  async getEmployeeRecords(filters: Partial<CompensationFilters> = {}): Promise<CompensationResponse> {
+    const params = {
+      page: filters.page || 1,
+      limit: filters.limit || 10,
+      ...(filters.benefit_type && { benefit_type: filters.benefit_type }),
+      ...(filters.start_date && { start_date: filters.start_date }),
+      ...(filters.end_date && { end_date: filters.end_date }),
+    };
+
+    const response = await apiService.get<{
+      success: boolean;
+      data: CompensationBenefit[];
+      pagination: {
+        currentPage: number;
+        pageSize: number;
+        totalRecords: number;
+        totalPages: number;
+      };
+    }>('/compensation-benefits/employee', params);
+
+    return {
+      records: response.data || [],
+      total: response.pagination?.totalRecords || 0,
+      page: response.pagination?.currentPage || 1,
+      limit: response.pagination?.pageSize || 10,
+      totalPages: response.pagination?.totalPages || 0,
+    };
+  }
+
   // Get compensation benefit record by ID
   async getRecord(id: number): Promise<CompensationBenefit> {
     const response = await apiService.get<{

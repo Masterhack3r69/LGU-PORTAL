@@ -164,6 +164,11 @@ export function EmployeeCreatePage() {
       // Debug logging
       console.log('Form data:', data);
       console.log('Processed data for API:', createData);
+      console.log('Separation fields:', {
+        separation_date: createData.separation_date,
+        separation_reason: createData.separation_reason,
+        employment_status: createData.employment_status
+      });
       
       await employeeService.createEmployee(createData);
       
@@ -580,6 +585,42 @@ export function EmployeeCreatePage() {
                       )}
                     />
                   </div>
+
+                  {/* Row 5: Separation Date and Reason - Show only when status is not Active */}
+                  {form.watch('employment_status') && 
+                   ['Resigned', 'Retired', 'Terminated', 'AWOL'].includes(form.watch('employment_status')) && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="separation_date"
+                        render={({ field }) => (
+                          <FormItem>
+                            <DatePicker
+                              id="separation_date"
+                              label="Separation Date"
+                              placeholder="Select separation date"
+                              value={field.value ? new Date(field.value) : undefined}
+                              onChange={(date) => field.onChange(date ? date.toISOString().split('T')[0] : '')}
+                            />
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="separation_reason"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Separation Reason</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Reason for separation" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

@@ -652,7 +652,7 @@ class PayrollController {
             }
             
             // Extract unique period IDs from payroll items
-            const periodIds = [...new Set(itemsResult.data.map(item => item.period_id))];
+            const periodIds = [...new Set(itemsResult.data.map(item => item.payroll_period_id))];
             
             if (periodIds.length === 0) {
                 const response = ApiResponse.success([], 'No payroll periods found for employee');

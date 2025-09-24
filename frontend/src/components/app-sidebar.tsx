@@ -128,12 +128,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               url: "/payroll/periods",
             },
             {
-              title: "Processing",
-              url: "/payroll/processing",
-            },
-            {
-              title: "Adjustments",
-              url: "/payroll/adjustments",
+              title: "Management",
+              url: "/payroll/management",
             },
             {
               title: "Reports",
@@ -147,15 +143,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         : [], // Employee users don't get dropdown items
   });
 
-  // Compensation & Benefits - Admin only
-  if (user?.role === "admin") {
-    navMain.push({
-      title: "Compensation & Benefits",
-      url: "/benefits",
-      icon: Award,
-      items: [],
-    });
-  }
+  // Compensation & Benefits - Show for all users
+  navMain.push({
+    title: "Compensation & Benefits",
+    url: user?.role === "admin" ? "/benefits" : "/benefits/employee",
+    icon: Award,
+    items: [], // No dropdown items for now
+  });
 
   // Reports - Only show for admins, hide completely for employees
   if (user?.role === "admin") {

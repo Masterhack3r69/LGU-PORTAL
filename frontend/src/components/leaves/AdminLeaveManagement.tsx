@@ -10,7 +10,7 @@ import AdminLeaveApplications from './AdminLeaveApplications';
 import AdminLeaveApprovals from './AdminLeaveApprovals';
 import AdminLeaveBalances from './AdminLeaveBalances';
 import AdminLeaveTypes from './AdminLeaveTypes';
-import { Users, CheckSquare, BarChart3, Settings } from 'lucide-react';
+import { Users, BarChart3, Settings } from 'lucide-react';
 
 const AdminLeaveManagement: React.FC = () => {
   const [activeTab, setActiveTab] = useState('applications');
@@ -26,7 +26,7 @@ const AdminLeaveManagement: React.FC = () => {
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TooltipProvider>
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-3">
             <Tooltip>
               <TooltipTrigger asChild>
                 <TabsTrigger value="applications" className="flex items-center justify-center space-x-2 transition-all duration-200 hover:scale-105">
@@ -39,7 +39,7 @@ const AdminLeaveManagement: React.FC = () => {
               </TooltipContent>
             </Tooltip>
             
-            <Tooltip>
+            {/* <Tooltip>
               <TooltipTrigger asChild>
                 <TabsTrigger value="approvals" className="flex items-center justify-center space-x-2 transition-all duration-200 hover:scale-105">
                   <CheckSquare className="h-5 w-5 md:h-4 md:w-4" />
@@ -50,7 +50,7 @@ const AdminLeaveManagement: React.FC = () => {
                 <p>Leave Approvals</p>
               </TooltipContent>
             </Tooltip>
-            
+             */}
             <Tooltip>
               <TooltipTrigger asChild>
                 <TabsTrigger value="balances" className="flex items-center justify-center space-x-2 transition-all duration-200 hover:scale-105">

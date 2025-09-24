@@ -76,8 +76,7 @@ class PayrollItem {
     static async findByEmployee(employeeId, filters = {}) {
         let query = `
             SELECT pi.*, 
-                   e.id as employee_id, e.employee_number as employee_number, 
-                   e.first_name, e.last_name, e.plantilla_position as position,
+                   e.employee_number, e.first_name, e.last_name, e.plantilla_position as position,
                    pp.year, pp.month, pp.period_number, pp.start_date, pp.end_date
             FROM payroll_items pi
             LEFT JOIN employees e ON pi.employee_id = e.id
@@ -96,16 +95,21 @@ class PayrollItem {
             params.push(filters.status);
         }
 
-        query += ' ORDER BY pp.year DESC, pp.month DESC, pp.period_number DESC';
-
-        if (filters.limit) {
-            query += ' LIMIT ?';
-            params.push(parseInt(filters.limit));
+        if (filters.period_id) {
+            query += ' AND pi.payroll_period_id = ?';
+            params.push(filters.period_id);
         }
 
-        if (filters.offset) {
-            query += ' OFFSET ?';
-            params.push(parseInt(filters.offset));
+        query += ' ORDER BY pp.year DESC, pp.month DESC, pp.period_number DESC';
+
+        if (filters.limit && parseInt(filters.limit) > 0) {
+            const limit = parseInt(filters.limit);
+            query += ` LIMIT ${limit}`;
+            
+            if (filters.offset && parseInt(filters.offset) > 0) {
+                const offset = parseInt(filters.offset);
+                query += ` OFFSET ${offset}`;
+            }
         }
 
         const result = await executeQuery(query, params);

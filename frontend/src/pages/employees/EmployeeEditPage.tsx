@@ -780,6 +780,46 @@ export function EmployeeEditPage() {
                       )}
                     />
                   </div>
+
+                  {/* Row 5: Separation Date and Reason - Show only when status is not Active */}
+                  {(() => {
+                    const employmentStatus = form.watch('employment_status');
+                    console.log('DEBUG: employment_status value:', employmentStatus, 'type:', typeof employmentStatus);
+                    return employmentStatus &&
+                      ['Resigned', 'Retired', 'Terminated', 'AWOL'].includes(employmentStatus);
+                  })() && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control as any}
+                        name="separation_date"
+                        render={({ field }) => (
+                          <FormItem>
+                            <DatePicker
+                              id="separation_date"
+                              label="Separation Date"
+                              placeholder="Select separation date"
+                              value={field.value ? new Date(field.value) : undefined}
+                              onChange={(date) => field.onChange(date ? date.toISOString().split('T')[0] : '')}
+                            />
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control as any}
+                        name="separation_reason"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Separation Reason</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Reason for separation" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

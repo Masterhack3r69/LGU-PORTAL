@@ -92,11 +92,20 @@ export function EmployeeSelectionProcessing({
 
     setProcessingLoading(true);
     try {
+      // Prepare employee data with working days
+      const employeesData = selectedEmployees.length > 0 
+        ? selectedEmployees.map(emp => ({
+            employee_id: emp.employee.id,
+            working_days: emp.workingDays
+          }))
+        : []; // Empty array means process all employees with default working days
+
       const response = await payrollService.calculatePayroll({
         period_id: selectedPeriod.id,
         employee_ids: selectedEmployees.length > 0
           ? selectedEmployees.map(emp => emp.employee.id)
-          : undefined
+          : undefined,
+        employees_data: employeesData // Pass working days data
       });
 
       if (response.success) {
@@ -131,14 +140,81 @@ export function EmployeeSelectionProcessing({
     }
   };
 
+  const handleFinalizePayrollItem = async (payrollItemId: number) => {
+    try {
+      const response = await payrollService.approvePayrollItem(payrollItemId);
+      if (response.success) {
+        toast.success('Payroll item finalized');
+        loadPayrollItems(selectedPeriod!.id);
+      }
+    } catch (error) {
+      console.error('Failed to finalize payroll item:', error);
+      toast.error('Failed to finalize payroll item');
+    }
+  };
+
+  const handleMarkAsPaid = async (payrollItemId: number) => {
+    try {
+      const response = await payrollService.markAsPaid(payrollItemId);
+      if (response.success) {
+        toast.success('Payroll item marked as paid');
+        loadPayrollItems(selectedPeriod!.id);
+      }
+    } catch (error) {
+      console.error('Failed to mark payroll item as paid:', error);
+      toast.error('Failed to mark payroll item as paid');
+    }
+  };
+
+  const handleBulkFinalize = async () => {
+    if (!selectedPeriod) return;
+
+    const processedItems = payrollItems.filter(item => item.status?.toLowerCase() === 'processed');
+    if (processedItems.length === 0) {
+      toast.error('No processed items to finalize');
+      return;
+    }
+
+    try {
+      const promises = processedItems.map(item => payrollService.approvePayrollItem(item.id));
+      await Promise.all(promises);
+      toast.success(`Finalized ${processedItems.length} payroll items`);
+      loadPayrollItems(selectedPeriod.id);
+    } catch (error) {
+      console.error('Failed to bulk finalize payroll items:', error);
+      toast.error('Failed to bulk finalize payroll items');
+    }
+  };
+
+  const handleBulkMarkAsPaid = async () => {
+    if (!selectedPeriod) return;
+
+    const finalizedItems = payrollItems.filter(item => item.status?.toLowerCase() === 'finalized');
+    if (finalizedItems.length === 0) {
+      toast.error('No finalized items to mark as paid');
+      return;
+    }
+
+    try {
+      const promises = finalizedItems.map(item => payrollService.markAsPaid(item.id));
+      await Promise.all(promises);
+      toast.success(`Marked ${finalizedItems.length} payroll items as paid`);
+      loadPayrollItems(selectedPeriod.id);
+    } catch (error) {
+      console.error('Failed to bulk mark as paid:', error);
+      toast.error('Failed to bulk mark as paid');
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     const statusLower = status.toLowerCase();
     const variants = {
       draft: 'default',
       processing: 'secondary',
+      processed: 'secondary',
       completed: 'outline',
       finalized: 'outline',
-      paid: 'outline',
+      paid: 'destructive',
       open: 'default',
       calculating: 'secondary',
       locked: 'destructive'
@@ -247,7 +323,7 @@ export function EmployeeSelectionProcessing({
                   Status: {getStatusBadge(selectedPeriod.status)}
                 </CardDescription>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 {(selectedPeriod.status?.toLowerCase() === 'draft' || selectedPeriod.status?.toLowerCase() === 'open') && (
                   <>
                     <Button
@@ -260,10 +336,34 @@ export function EmployeeSelectionProcessing({
                     </Button>
                   </>
                 )}
-                {(selectedPeriod.status?.toLowerCase() === 'processing' || selectedPeriod.status?.toLowerCase() === 'calculating') && (
+                
+                {/* Bulk Actions for Processed Items */}
+                {payrollItems.filter(item => item.status?.toLowerCase() === 'processed').length > 0 && (
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={handleBulkFinalize}
+                  >
+                    <Lock className="mr-2 h-4 w-4" />
+                    Finalize All ({payrollItems.filter(item => item.status?.toLowerCase() === 'processed').length})
+                  </Button>
+                )}
+                
+                {/* Bulk Actions for Finalized Items */}
+                {payrollItems.filter(item => item.status?.toLowerCase() === 'finalized').length > 0 && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleBulkMarkAsPaid}
+                  >
+                    Mark All Paid ({payrollItems.filter(item => item.status?.toLowerCase() === 'finalized').length})
+                  </Button>
+                )}
+
+                {(selectedPeriod.status?.toLowerCase() === 'processing' || selectedPeriod.status?.toLowerCase() === 'completed') && (
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button disabled={processingLoading}>
+                      <Button disabled={processingLoading} variant="outline">
                         <Lock className="mr-2 h-4 w-4" />
                         Finalize Period
                       </Button>
@@ -323,12 +423,33 @@ export function EmployeeSelectionProcessing({
                       <Button
                         variant="outline"
                         size="sm"
-                        className="w-full"
+                        className="flex-1"
                         onClick={() => handleViewEmployeeDetails(item.employee?.id || 0, item)}
                       >
                         <Eye className="h-4 w-4 mr-2" />
                         View Details
                       </Button>
+                      {item.status?.toLowerCase() === 'processed' && (
+                        <Button
+                          variant="default"
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => handleFinalizePayrollItem(item.id)}
+                        >
+                          <Lock className="h-4 w-4 mr-2" />
+                          Finalize
+                        </Button>
+                      )}
+                      {item.status?.toLowerCase() === 'finalized' && (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => handleMarkAsPaid(item.id)}
+                        >
+                          Mark Paid
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </Card>
@@ -369,6 +490,24 @@ export function EmployeeSelectionProcessing({
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
+                          {item.status?.toLowerCase() === 'processed' && (
+                            <Button
+                              variant="default"
+                              size="sm"
+                              onClick={() => handleFinalizePayrollItem(item.id)}
+                            >
+                              <Lock className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {item.status?.toLowerCase() === 'finalized' && (
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleMarkAsPaid(item.id)}
+                            >
+                              Mark Paid
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>

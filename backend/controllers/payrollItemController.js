@@ -272,14 +272,37 @@ class PayrollItemController {
             // If no employeeId in params, use current user's employee ID (employee self-access)
             if (!targetEmployeeId) {
                 const user = req.session.user;
-                const employeeResult = await Employee.findByUserId(user.id);
-                if (!employeeResult.success || !employeeResult.data) {
-                    return errorResponse(res, 'Employee record not found', 403);
+                
+                // For admin users, they need to specify employeeId
+                if (user.role === 'admin') {
+                    return errorResponse(res, 'Employee ID required for admin access', 400);
                 }
-                targetEmployeeId = employeeResult.data.id;
+                
+                // For employee users, get their employee record from middleware
+                if (user.role === 'employee') {
+                    if (!req.employee) {
+                        return errorResponse(res, 'Employee record not found in request', 403);
+                    }
+                    targetEmployeeId = req.employee.id;
+                } else {
+                    return errorResponse(res, 'Invalid user role', 403);
+                }
             }
 
-            const filters = { year, status, limit, offset };
+            // Add period_id filter if provided
+            const filters = { 
+                year, 
+                status, 
+                limit: parseInt(limit), 
+                offset: parseInt(offset) 
+            };
+            
+            // Add period_id filter if provided in query
+            if (req.query.period_id) {
+                filters.period_id = parseInt(req.query.period_id);
+            }
+
+            console.log(`Getting payroll items for employee ${targetEmployeeId} with filters:`, filters);
             const itemsResult = await PayrollItem.findByEmployee(targetEmployeeId, filters);
 
             if (itemsResult.success) {

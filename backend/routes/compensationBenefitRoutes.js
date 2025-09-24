@@ -29,6 +29,9 @@ router.post('/bulk-process', authMiddleware.requireAdmin, compensationBenefitCon
 // POST /api/compensation-benefits/process-monetization - Process monetization with leave balance update (admin only)
 router.post('/process-monetization', authMiddleware.requireAdmin, compensationBenefitController.processMonetization.bind(compensationBenefitController));
 
+// GET /api/compensation-benefits/employee - Get compensation benefit records for current employee
+router.get('/employee', authMiddleware.requireAuth, compensationBenefitController.getEmployeeRecords.bind(compensationBenefitController));
+
 // GET /api/compensation-benefits - Get all compensation benefit records (admin only)
 router.get('/', authMiddleware.requireAdmin, compensationBenefitController.getAllRecords.bind(compensationBenefitController));
 

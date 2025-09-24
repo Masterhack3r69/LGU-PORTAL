@@ -198,7 +198,7 @@ class PayrollService {
   }
 
   async approvePayrollItem(id: number): Promise<PayrollResponse<PayrollItem>> {
-    return api.post<PayrollResponse<PayrollItem>>(`/payroll/items/${id}/approve`);
+    return api.post<PayrollResponse<PayrollItem>>(`/payroll/items/${id}/finalize`);
   }
 
   async markAsPaid(id: number): Promise<PayrollResponse<PayrollItem>> {
@@ -207,13 +207,20 @@ class PayrollService {
 
   // Payroll Calculations
   async calculatePayroll(data: PayrollCalculationRequest): Promise<PayrollResponse<PayrollCalculationResult>> {
-    const { period_id, employee_ids } = data;
+    const { period_id, employee_ids, employees_data } = data;
 
-    // If employee_ids are provided, use the process employees endpoint
+    // If employees_data is provided (with working days), use that
+    if (employees_data && employees_data.length > 0) {
+      return api.post<PayrollResponse<PayrollCalculationResult>>(`/payroll/periods/${period_id}/employees`, {
+        employees: employees_data
+      });
+    }
+
+    // If employee_ids are provided, use the process employees endpoint with default working days
     if (employee_ids && employee_ids.length > 0) {
       const employees = employee_ids.map(employee_id => ({
         employee_id,
-        working_days: 22 // Default working days, can be customized later
+        working_days: 22 // Default working days
       }));
 
       return api.post<PayrollResponse<PayrollCalculationResult>>(`/payroll/periods/${period_id}/employees`, {

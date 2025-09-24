@@ -7,7 +7,8 @@ import {
   FileText, 
   Award, 
   User,
-  CheckCircle 
+  CheckCircle,
+  DollarSign
 } from 'lucide-react';
 
 export function DashboardPage() {
@@ -67,9 +68,9 @@ export function DashboardPage() {
             <Award className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">3</div>
+            <div className="text-2xl font-bold">₱0</div>
             <p className="text-xs text-muted-foreground">
-              active trainings
+              total benefits this year
             </p>
           </CardContent>
         </Card>
@@ -179,6 +180,32 @@ export function DashboardPage() {
                   <p className="text-xs text-muted-foreground">Edit your personal information</p>
                 </div>
               </button>
+              
+              {user?.role === 'employee' && (
+                <>
+                  <button 
+                    className="flex items-center justify-start space-x-3 rounded-lg border p-3 text-left transition-colors hover:bg-muted"
+                    onClick={() => window.location.href = '/payroll/employee'}
+                  >
+                    <DollarSign className="h-4 w-4" />
+                    <div>
+                      <p className="text-sm font-medium">View Payroll</p>
+                      <p className="text-xs text-muted-foreground">Check your payslips and salary details</p>
+                    </div>
+                  </button>
+                  
+                  <button 
+                    className="flex items-center justify-start space-x-3 rounded-lg border p-3 text-left transition-colors hover:bg-muted"
+                    onClick={() => window.location.href = '/benefits/employee'}
+                  >
+                    <Award className="h-4 w-4" />
+                    <div>
+                      <p className="text-sm font-medium">View Benefits</p>
+                      <p className="text-xs text-muted-foreground">Check your compensation and benefits</p>
+                    </div>
+                  </button>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>

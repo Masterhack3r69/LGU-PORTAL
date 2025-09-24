@@ -242,8 +242,9 @@ class Employee {
                 current_address, permanent_address, tin, gsis_number, pagibig_number,
                 philhealth_number, sss_number, appointment_date, plantilla_position,
                 plantilla_number, salary_grade, step_increment, current_monthly_salary,
-                current_daily_rate, highest_monthly_salary, highest_daily_rate, employment_status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                current_daily_rate, highest_monthly_salary, highest_daily_rate, employment_status,
+                separation_date, separation_reason
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
         const params = [
@@ -254,7 +255,8 @@ class Employee {
             this.philhealth_number, this.sss_number, this.appointment_date,
             this.plantilla_position, this.plantilla_number, this.salary_grade,
             this.step_increment, this.current_monthly_salary, this.current_daily_rate,
-            this.highest_monthly_salary, this.highest_daily_rate, this.employment_status
+            this.highest_monthly_salary, this.highest_daily_rate, this.employment_status,
+            this.separation_date, this.separation_reason
         ];
 
         const result = await executeQuery(query, params);

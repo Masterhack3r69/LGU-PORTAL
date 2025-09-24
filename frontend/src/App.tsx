@@ -34,13 +34,13 @@ import EmployeeImportPage from '@/pages/admin/EmployeeImportPage';
 // Payroll Management Pages
 import { EmployeePayrollPage } from '@/pages/payroll/EmployeePayrollPage';
 import { PayrollPeriodsPage } from '@/pages/payroll/PayrollPeriodsPage';
-import { PayrollProcessingPage } from '@/pages/payroll/PayrollProcessingPage';
-import { PayrollAdjustmentsPage } from '@/pages/payroll/PayrollAdjustmentsPage';
+import { PayrollManagementPage } from '@/pages/payroll/PayrollManagementPage';
 import { PayrollReportsPage } from '@/pages/payroll/PayrollReportsPage';
 import { PayrollConfigurationPage } from '@/pages/payroll/PayrollConfigurationPage';
 
 // Benefits Management Pages
 import { CompensationBenefitsPage } from '@/pages/benefits/CompensationBenefitsPage';
+import { EmployeeBenefitsPage } from '@/pages/benefits/EmployeeBenefitsPage';
 
 
 function App() {
@@ -235,18 +235,10 @@ function App() {
             }
           />
           <Route
-            path="processing"
+            path="management"
             element={
               <ProtectedRoute allowedRoles={['admin']}>
-                <PayrollProcessingPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="adjustments"
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <PayrollAdjustmentsPage />
+                <PayrollManagementPage />
               </ProtectedRoute>
             }
           />
@@ -277,7 +269,7 @@ function App() {
           />
         </Route>
 
-        {/* Compensation & Benefits Management - Admin only */}
+        {/* Compensation & Benefits Management */}
         <Route path="benefits">
           <Route 
             index 
@@ -286,6 +278,15 @@ function App() {
                 <CompensationBenefitsPage />
               </ProtectedRoute>
             } 
+          />
+          {/* Employee Benefits Routes */}
+          <Route
+            path="employee"
+            element={
+              <ProtectedRoute allowedRoles={['employee']}>
+                <EmployeeBenefitsPage />
+              </ProtectedRoute>
+            }
           />
         </Route>
         
