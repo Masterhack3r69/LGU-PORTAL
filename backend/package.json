@@ -10,7 +10,13 @@
     "dev": "nodemon server.js",
     "dev:intranet": "nodemon server.js",
     "setup": "node scripts/setup.js",
+    "setup:compensation": "node scripts/setup-compensation-benefits.js",
     "seed": "node scripts/seed.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:compensation": "jest tests/compensationBenefits.test.js",
+    "test:compensation:watch": "jest tests/compensationBenefits.test.js --watch",
     "test:cors": "node scripts/test-cors.js",
     "kill:port": "npx kill-port 3000",
     "restart": "npm run kill:port && npm run dev",
@@ -46,7 +52,8 @@
     "mysql2": "^3.6.5",
     "node-cron": "^4.2.1",
     "pdfkit": "^0.17.2",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@express-rate-limit/tsconfig": "^1.0.2",

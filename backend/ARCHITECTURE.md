@@ -78,7 +78,8 @@ EMS/
 │   ├── audit.js             # Audit logging middleware
 │   └── errorHandler.js      # Global error handling
 ├── models/
-│   └── Employee.js          # Employee data model
+│   ├── Employee.js          # Employee data model
+│   └── CompensationBenefit.js # Compensation & Benefits model
 ├── routes/
 │   ├── employeeRoutes.js    # Employee API endpoints
 │   ├── authRoutes.js        # Authentication endpoints
@@ -155,6 +156,31 @@ CREATE TABLE employees (
 );
 ```
 
+#### 3. Compensation & Benefits Records Table
+```sql
+CREATE TABLE comp_benefit_records (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    employee_id INT NOT NULL,
+    benefit_type ENUM(
+        'TERMINAL_LEAVE',
+        'MONETIZATION', 
+        'PBB',
+        'MID_YEAR_BONUS',
+        'YEAR_END_BONUS',
+        'EC',
+        'GSIS',
+        'LOYALTY'
+    ) NOT NULL,
+    days_used DECIMAL(6,2) DEFAULT NULL,
+    amount DECIMAL(12,2) NOT NULL,
+    notes VARCHAR(255) DEFAULT NULL,
+    processed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    processed_by INT NOT NULL,
+    FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE,
+    FOREIGN KEY (processed_by) REFERENCES users(id)
+);
+```
+
 ### Relationship Patterns
 
 1. **One-to-One**: User ↔ Employee
@@ -170,6 +196,9 @@ INDEX idx_employee_status (employment_status)
 INDEX idx_employee_search (first_name, last_name)
 INDEX idx_leave_balances (employee_id, year)
 INDEX idx_payroll_items (payroll_period_id)
+INDEX idx_comp_benefit_employee (employee_id)
+INDEX idx_comp_benefit_type (benefit_type)
+INDEX idx_comp_benefit_processed (processed_at)
 ```
 
 ## Authentication & Authorization
@@ -369,6 +398,51 @@ class Employee {
         }
         
         return await executeQuery(query, params);
+    }
+}
+
+class CompensationBenefit {
+    constructor(data = {}) {
+        this.id = data.id || null;
+        this.employee_id = data.employee_id || null;
+        this.benefit_type = data.benefit_type || null;
+        this.days_used = data.days_used || null;
+        this.amount = data.amount || null;
+        this.notes = data.notes || null;
+        this.processed_at = data.processed_at || null;
+        this.processed_by = data.processed_by || null;
+    }
+
+    // Validation with business rules
+    validate() {
+        const errors = [];
+        const validBenefitTypes = [
+            'TERMINAL_LEAVE', 'MONETIZATION', 'PBB', 'MID_YEAR_BONUS', 
+            'YEAR_END_BONUS', 'EC', 'GSIS', 'LOYALTY'
+        ];
+
+        if (!this.employee_id) errors.push('Employee ID is required');
+        if (!this.benefit_type) errors.push('Benefit type is required');
+        if (!validBenefitTypes.includes(this.benefit_type)) errors.push('Invalid benefit type');
+        if (!this.amount || this.amount <= 0) errors.push('Amount must be positive');
+
+        // Special validation for leave-based benefits
+        if (['TERMINAL_LEAVE', 'MONETIZATION'].includes(this.benefit_type)) {
+            if (!this.days_used || this.days_used <= 0) {
+                errors.push('Days used is required for this benefit type');
+            }
+        }
+
+        return { isValid: errors.length === 0, errors };
+    }
+
+    // Advanced features
+    static async getStatistics(filters = {}) {
+        // Returns benefit statistics by type, monthly summaries, and top employees
+    }
+
+    static async bulkCreate(records, processedBy) {
+        // Transaction-based bulk processing for yearly benefits
     }
 }
 ```
@@ -930,23 +1004,70 @@ const getEmployee = async (id) => {
 
 ### 4. Testing Guidelines
 
+#### Test Suite Implementation
+
+The system includes comprehensive Jest test suites for critical modules:
+
+**Compensation & Benefits Test Suite** (`backend/tests/compensationBenefits.test.js`):
+- Model validation and CRUD operations
+- Business logic calculations (PBB, GSIS, Loyalty Awards)
+- Bulk processing operations
+- Error handling and edge cases
+
 ```javascript
-// Unit test structure
-describe('Employee Model', () => {
-    describe('findById', () => {
-        it('should return employee when valid ID provided', async () => {
-            const employee = await Employee.findById(1);
-            expect(employee).toBeDefined();
-            expect(employee.id).toBe(1);
+// Example test structure
+describe('Compensation & Benefits Module', () => {
+    describe('CompensationBenefit Model', () => {
+        test('should create a valid compensation benefit record', () => {
+            const benefitData = {
+                employee_id: 1,
+                benefit_type: 'PBB',
+                amount: 50000.00,
+                processed_by: 1
+            };
+            
+            const benefit = new CompensationBenefit(benefitData);
+            const validation = benefit.validate();
+            
+            expect(validation.isValid).toBe(true);
+            expect(validation.errors).toHaveLength(0);
         });
-        
-        it('should return null when invalid ID provided', async () => {
-            const employee = await Employee.findById(999);
-            expect(employee).toBeNull();
+    });
+    
+    describe('Service Calculations', () => {
+        test('should calculate PBB correctly', async () => {
+            // Mock employee data and test calculation accuracy
+            const result = await service.calculatePBB(testEmployeeId);
+            expect(result.success).toBe(true);
+            expect(result.data.amount).toBe(600000.00);
         });
     });
 });
 ```
+
+#### Running Tests
+
+```bash
+# Run all tests
+npm test
+
+# Run specific module tests
+npm test backend/tests/compensationBenefits.test.js
+
+# Run with coverage
+npm run test:coverage
+
+# Run tests matching pattern
+npm test -- --grep "Compensation & Benefits"
+```
+
+#### Test Standards
+
+- **Unit Tests**: Test individual functions and methods
+- **Integration Tests**: Test module interactions
+- **Validation Tests**: Test business rules and data validation
+- **Error Handling Tests**: Test error scenarios and edge cases
+- **Mock Usage**: Mock external dependencies for isolated testing
 
 ### 5. Environment Configuration
 

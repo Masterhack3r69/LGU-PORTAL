@@ -1,4 +1,4 @@
-import * as React from "react"
+import * as React from "react";
 import {
   Users,
   Calendar,
@@ -8,20 +8,21 @@ import {
   Shield,
   Home,
   GraduationCap,
-  DollarSign
-} from "lucide-react"
+  DollarSign,
+  Award,
+} from "lucide-react";
 
-import { NavMain } from "@/components/nav-main"
-import { NavUser } from "@/components/nav-user"
-import { TeamSwitcher } from "@/components/team-switcher"
+import { NavMain } from "@/components/nav-main";
+import { NavUser } from "@/components/nav-user";
+import { TeamSwitcher } from "@/components/team-switcher";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
-} from "@/components/ui/sidebar"
-import { useAuth } from "@/contexts/AuthContext"
+} from "@/components/ui/sidebar";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useAuth();
@@ -38,7 +39,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const navMain = [];
 
   // Dashboard - Add for employees only
-  if (user?.role === 'employee') {
+  if (user?.role === "employee") {
     navMain.push({
       title: "Dashboard",
       url: "/dashboard",
@@ -48,7 +49,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }
 
   // Employee Management - Only show for admins
-  if (user?.role === 'admin') {
+  if (user?.role === "admin") {
     navMain.push({
       title: "Employee Management",
       url: "/employees",
@@ -75,7 +76,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   // Leave Management - Different items for different roles
   navMain.push({
     title: "Leave Management",
-    url: user?.role === 'admin' ? "/leaves" : "/leaves/employee",
+    url: user?.role === "admin" ? "/leaves" : "/leaves/employee",
     icon: Calendar,
     items: [], // No dropdown items since everything is in tabs
   });
@@ -83,68 +84,81 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   // Training Management - Show for all users with dropdown
   navMain.push({
     title: "Training Management",
-    url: user?.role === 'admin' ? "/training/records" : "/training/my-trainings",
+    url:
+      user?.role === "admin" ? "/training/records" : "/training/my-trainings",
     icon: GraduationCap,
-    items: user?.role === 'admin' ? [
-      {
-        title: "Training Records",
-        url: "/training/records",
-      },
-      {
-        title: "Training Programs",
-        url: "/training/programs",
-      },
-      {
-        title: "Training Analytics",
-        url: "/training/analytics",
-      },
-    ] : [
-      {
-        title: "My Trainings",
-        url: "/training/my-trainings",
-      },
-      {
-        title: "My Certificates",
-        url: "/training/certificates",
-      },
-    ],
+    items:
+      user?.role === "admin"
+        ? [
+            {
+              title: "Training Records",
+              url: "/training/records",
+            },
+            {
+              title: "Training Programs",
+              url: "/training/programs",
+            },
+            {
+              title: "Training Analytics",
+              url: "/training/analytics",
+            },
+          ]
+        : [
+            {
+              title: "My Trainings",
+              url: "/training/my-trainings",
+            },
+            {
+              title: "My Certificates",
+              url: "/training/certificates",
+            },
+          ],
   });
 
   // Payroll Management - Show for all users with dropdown
   navMain.push({
     title: "Payroll Management",
-    url: user?.role === 'admin' ? "/payroll/periods" : "/payroll/employee",
+    url: user?.role === "admin" ? "/payroll/periods" : "/payroll/employee",
     icon: DollarSign,
-    items: user?.role === 'admin' ? [
-      {
-        title: "Periods",
-        url: "/payroll/periods",
-      },
-      {
-        title: "Processing",
-        url: "/payroll/processing",
-      },
-      {
-        title: "Adjustments",
-        url: "/payroll/adjustments",
-      },
-      {
-        title: "Reports",
-        url: "/payroll/reports",
-      },
-      {
-        title: "Configuration",
-        url: "/payroll/configuration",
-      },
-    ] : [], // Employee users don't get dropdown items
+    items:
+      user?.role === "admin"
+        ? [
+            {
+              title: "Periods",
+              url: "/payroll/periods",
+            },
+            {
+              title: "Processing",
+              url: "/payroll/processing",
+            },
+            {
+              title: "Adjustments",
+              url: "/payroll/adjustments",
+            },
+            {
+              title: "Reports",
+              url: "/payroll/reports",
+            },
+            {
+              title: "Configuration",
+              url: "/payroll/configuration",
+            },
+          ]
+        : [], // Employee users don't get dropdown items
   });
 
-
-
-
+  // Compensation & Benefits - Admin only
+  if (user?.role === "admin") {
+    navMain.push({
+      title: "Compensation & Benefits",
+      url: "/benefits",
+      icon: Award,
+      items: [],
+    });
+  }
 
   // Reports - Only show for admins, hide completely for employees
-  if (user?.role === 'admin') {
+  if (user?.role === "admin") {
     navMain.push({
       title: "Reports & Analytics",
       url: "/reports",
@@ -167,7 +181,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }
 
   // Add admin-only sections
-  if (user?.role === 'admin') {
+  if (user?.role === "admin") {
     // Payroll and Benefits removed - no payroll system
 
     // Keep System Administration
@@ -185,6 +199,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           url: "/admin/settings",
         },
         {
+          title: "Employee Import",
+          url: "/admin/import",
+        },
+        {
           title: "Audit Logs",
           url: "/admin/audit",
         },
@@ -197,7 +215,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }
 
   // Settings for admins, direct Profile link for employees
-  if (user?.role === 'admin') {
+  if (user?.role === "admin") {
     navMain.push({
       title: "Settings",
       url: "/settings",
@@ -232,9 +250,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }
 
   const userData = {
-    name: user?.full_name || user?.username || 'User',
-    email: user?.email || '',
-    avatar: '/avatars/default.jpg',
+    name: user?.full_name || user?.username || "User",
+    email: user?.email || "",
+    avatar: "/avatars/default.jpg",
   };
 
   return (
@@ -250,5 +268,5 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
-  )
+  );
 }

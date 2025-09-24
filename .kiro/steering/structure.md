@@ -26,12 +26,14 @@ backend/
 │   ├── audit.js           # Audit logging
 │   └── errorHandler.js    # Global error handling
 ├── models/                 # Data models & business logic
-│   └── Employee.js        # Employee data model
+│   ├── Employee.js        # Employee data model
+│   └── CompensationBenefit.js # Compensation & benefits model
 ├── routes/                 # API endpoint definitions
 │   ├── authRoutes.js      # Authentication endpoints
 │   ├── employeeRoutes.js  # Employee CRUD operations
 │   ├── leaveRoutes.js     # Leave management
 │   ├── payrollRoutes.js   # Payroll processing
+│   ├── compensationRoutes.js # Compensation & benefits management
 │   ├── documentRoutes.js  # Document management
 │   ├── trainingRoutes.js  # Training management
 │   └── reportsRoutes.js   # Reporting & analytics
@@ -94,6 +96,7 @@ frontend/
 /api/employees/:id/leave-balances  # Employee-specific resources
 /api/leave/*             # Leave management
 /api/payroll/*           # Payroll processing
+/api/compensation/*      # Compensation & benefits management
 /api/documents/*         # Document management
 /api/training/*          # Training programs
 /api/reports/*           # Analytics and reporting
@@ -108,6 +111,7 @@ frontend/
 - `leave_balances` - Employee leave entitlements
 - `payroll_periods` - Payroll processing cycles
 - `payroll_items` - Individual employee payroll records
+- `comp_benefit_records` - Compensation and benefits processing history
 - `training_programs` - Training course definitions
 - `training_records` - Employee training participation
 - `audit_logs` - System activity tracking

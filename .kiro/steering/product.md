@@ -9,10 +9,11 @@ The Employee Management System (EMS) is a comprehensive Human Resource Informati
 - **Employee Management**: Complete employee lifecycle from onboarding to termination
 - **Leave Management**: Leave applications, approvals, balance tracking, and accrual processing
 - **Payroll Processing**: Salary calculations, deductions, allowances, and payslip generation
+- **Compensation & Benefits**: Terminal leave, monetization, bonuses (PBB, 13th/14th month), GSIS, loyalty awards
 - **Document Management**: Employee document uploads, approvals, and compliance tracking
 - **Training Management**: Training programs, enrollment, completion tracking, and certification
 - **Audit & Compliance**: Comprehensive audit trails for all system operations
-- **Reporting & Analytics**: Employee statistics, leave analytics, and payroll reports
+- **Reporting & Analytics**: Employee statistics, leave analytics, payroll reports, and benefit summaries
 
 ## User Roles
 
