@@ -6,11 +6,16 @@
   "scripts": {
     "dev": "vite",
     "dev:intranet": "vite --host 10.0.0.73 --port 5173",
+    "dev:https": "cross-env VITE_HTTPS=true vite",
+    "dev:intranet:https": "cross-env VITE_HTTPS=true vite --host 10.0.0.73 --port 5173",
     "build": "tsc -b && vite build",
     "build:intranet": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "preview:intranet": "vite preview --host 10.0.0.73 --port 4173"
+    "preview:intranet": "vite preview --host 10.0.0.73 --port 4173",
+    "preview:https": "cross-env VITE_HTTPS=true vite preview",
+    "preview:intranet:https": "cross-env VITE_HTTPS=true vite preview --host 10.0.0.73 --port 4173",
+    "generate-cert": "node generate-cert.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",
@@ -57,6 +62,7 @@
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
     "@vitejs/plugin-react-swc": "^4.0.0",
+    "cross-env": "^10.0.0",
     "eslint": "^9.33.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",

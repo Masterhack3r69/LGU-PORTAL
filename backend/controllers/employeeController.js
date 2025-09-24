@@ -7,8 +7,8 @@ const helpers = require('../utils/helpers');
 const { executeQuery, executeTransaction } = require('../config/database');
 const authMiddleware = require('../middleware/auth');
 
-// Validation rules for employee creation/update
-const employeeValidationRules = [
+// Validation rules for employee creation
+const employeeCreationRules = [
     body('first_name')
         .trim()
         .isLength({ min: 1, max: 100 })
@@ -25,11 +25,23 @@ const employeeValidationRules = [
         .isIn(['Male', 'Female'])
         .withMessage('Sex must be either Male or Female'),
     body('birth_date')
-        .isISO8601()
-        .withMessage('Valid birth date is required'),
+        .custom((value) => {
+            if (!value) throw new Error('Birth date is required');
+            // Allow yyyy-MM-dd format or ISO8601
+            if (/^\d{4}-\d{2}-\d{2}$/.test(value) || /^\d{4}-\d{2}-\d{2}T/.test(value)) {
+                return true;
+            }
+            throw new Error('Valid birth date is required (YYYY-MM-DD format)');
+        }),
     body('appointment_date')
-        .isISO8601()
-        .withMessage('Valid appointment date is required'),
+        .custom((value) => {
+            if (!value) throw new Error('Appointment date is required');
+            // Allow yyyy-MM-dd format or ISO8601
+            if (/^\d{4}-\d{2}-\d{2}$/.test(value) || /^\d{4}-\d{2}-\d{2}T/.test(value)) {
+                return true;
+            }
+            throw new Error('Valid appointment date is required (YYYY-MM-DD format)');
+        }),
     body('email_address')
         .optional({ checkFalsy: true })
         .isEmail()
@@ -37,8 +49,8 @@ const employeeValidationRules = [
         .withMessage('Valid email address is required'),
     body('contact_number')
         .optional({ checkFalsy: true })
-        .isMobilePhone('en-PH')
-        .withMessage('Valid Philippine mobile number is required'),
+        .isLength({ max: 20 })
+        .withMessage('Contact number must be less than 20 characters'),
     body('current_monthly_salary')
         .optional({ checkFalsy: true })
         .isFloat({ min: 0 })
@@ -46,7 +58,179 @@ const employeeValidationRules = [
     body('current_daily_rate')
         .optional({ checkFalsy: true })
         .isFloat({ min: 0 })
-        .withMessage('Daily rate must be a positive number')
+        .withMessage('Daily rate must be a positive number'),
+    body('salary_grade')
+        .optional({ checkFalsy: true })
+        .isInt({ min: 1, max: 33 })
+        .withMessage('Salary grade must be between 1 and 33'),
+    body('step_increment')
+        .optional({ checkFalsy: true })
+        .isInt({ min: 1, max: 8 })
+        .withMessage('Step increment must be between 1 and 8'),
+    body('employment_status')
+        .optional({ checkFalsy: true })
+        .isIn(['Active', 'Resigned', 'Retired', 'Terminated', 'AWOL'])
+        .withMessage('Employment status must be one of: Active, Resigned, Retired, Terminated, AWOL'),
+    body('civil_status')
+        .optional({ checkFalsy: true })
+        .isIn(['Single', 'Married', 'Widowed', 'Separated', 'Divorced'])
+        .withMessage('Civil status must be one of: Single, Married, Widowed, Separated, Divorced'),
+    body('separation_date')
+        .optional({ checkFalsy: true })
+        .isISO8601()
+        .withMessage('Valid separation date is required')
+];
+
+// Validation rules for employee updates (more flexible)
+const employeeUpdateRules = [
+    body('first_name')
+        .optional({ checkFalsy: true })
+        .trim()
+        .isLength({ min: 1, max: 100 })
+        .withMessage('First name must be less than 100 characters'),
+    body('last_name')
+        .optional({ checkFalsy: true })
+        .trim()
+        .isLength({ min: 1, max: 100 })
+        .withMessage('Last name must be less than 100 characters'),
+    body('employee_number')
+        .optional({ checkFalsy: true })
+        .trim()
+        .isLength({ min: 1, max: 20 })
+        .withMessage('Employee number must be less than 20 characters'),
+    body('sex')
+        .optional({ checkFalsy: true })
+        .isIn(['Male', 'Female'])
+        .withMessage('Sex must be either Male or Female'),
+    body('birth_date')
+        .optional({ checkFalsy: true })
+        .custom((value) => {
+            if (!value) return true;
+            // Allow yyyy-MM-dd format or ISO8601
+            if (/^\d{4}-\d{2}-\d{2}$/.test(value) || /^\d{4}-\d{2}-\d{2}T/.test(value)) {
+                return true;
+            }
+            throw new Error('Valid birth date is required (YYYY-MM-DD format)');
+        }),
+    body('appointment_date')
+        .optional({ checkFalsy: true })
+        .custom((value) => {
+            if (!value) return true;
+            // Allow yyyy-MM-dd format or ISO8601
+            if (/^\d{4}-\d{2}-\d{2}$/.test(value) || /^\d{4}-\d{2}-\d{2}T/.test(value)) {
+                return true;
+            }
+            throw new Error('Valid appointment date is required (YYYY-MM-DD format)');
+        }),
+    body('email_address')
+        .optional({ checkFalsy: true })
+        .isEmail()
+        .normalizeEmail()
+        .withMessage('Valid email address is required'),
+    body('contact_number')
+        .optional({ checkFalsy: true })
+        .isLength({ max: 20 })
+        .withMessage('Contact number must be less than 20 characters'),
+    body('current_monthly_salary')
+        .optional({ checkFalsy: true })
+        .isFloat({ min: 0 })
+        .withMessage('Salary must be a positive number'),
+    body('current_daily_rate')
+        .optional({ checkFalsy: true })
+        .isFloat({ min: 0 })
+        .withMessage('Daily rate must be a positive number'),
+    body('salary_grade')
+        .optional({ checkFalsy: true })
+        .isInt({ min: 1, max: 33 })
+        .withMessage('Salary grade must be between 1 and 33'),
+    body('step_increment')
+        .optional({ checkFalsy: true })
+        .isInt({ min: 1, max: 8 })
+        .withMessage('Step increment must be between 1 and 8'),
+    body('employment_status')
+        .optional({ checkFalsy: true })
+        .isIn(['Active', 'Resigned', 'Retired', 'Terminated', 'AWOL'])
+        .withMessage('Employment status must be one of: Active, Resigned, Retired, Terminated, AWOL'),
+    body('civil_status')
+        .optional({ checkFalsy: true })
+        .isIn(['Single', 'Married', 'Widowed', 'Separated', 'Divorced'])
+        .withMessage('Civil status must be one of: Single, Married, Widowed, Separated, Divorced'),
+    body('separation_date')
+        .optional({ checkFalsy: true })
+        .custom((value) => {
+            if (!value) return true;
+            // Allow yyyy-MM-dd format or ISO8601
+            if (/^\d{4}-\d{2}-\d{2}$/.test(value) || /^\d{4}-\d{2}-\d{2}T/.test(value)) {
+                return true;
+            }
+            throw new Error('Valid separation date is required (YYYY-MM-DD format)');
+        })
+        .withMessage('Last name is required and must be less than 100 characters'),
+    body('employee_number')
+        .trim()
+        .isLength({ min: 1, max: 20 })
+        .withMessage('Employee number is required and must be less than 20 characters'),
+    body('sex')
+        .optional({ checkFalsy: true })
+        .isIn(['Male', 'Female'])
+        .withMessage('Sex must be either Male or Female'),
+    body('birth_date')
+        .optional({ checkFalsy: true })
+        .custom((value) => {
+            if (!value) return true;
+            // Allow yyyy-MM-dd format or ISO8601
+            if (/^\d{4}-\d{2}-\d{2}$/.test(value) || /^\d{4}-\d{2}-\d{2}T/.test(value)) {
+                return true;
+            }
+            throw new Error('Valid birth date is required (YYYY-MM-DD format)');
+        }),
+    body('appointment_date')
+        .optional({ checkFalsy: true })
+        .custom((value) => {
+            if (!value) return true;
+            // Allow yyyy-MM-dd format or ISO8601
+            if (/^\d{4}-\d{2}-\d{2}$/.test(value) || /^\d{4}-\d{2}-\d{2}T/.test(value)) {
+                return true;
+            }
+            throw new Error('Valid appointment date is required (YYYY-MM-DD format)');
+        }),
+    body('email_address')
+        .optional({ checkFalsy: true })
+        .isEmail()
+        .normalizeEmail()
+        .withMessage('Valid email address is required'),
+    body('contact_number')
+        .optional({ checkFalsy: true })
+        .isLength({ max: 20 })
+        .withMessage('Contact number must be less than 20 characters'),
+    body('current_monthly_salary')
+        .optional({ checkFalsy: true })
+        .isFloat({ min: 0 })
+        .withMessage('Salary must be a positive number'),
+    body('current_daily_rate')
+        .optional({ checkFalsy: true })
+        .isFloat({ min: 0 })
+        .withMessage('Daily rate must be a positive number'),
+    body('salary_grade')
+        .optional({ checkFalsy: true })
+        .isInt({ min: 1, max: 33 })
+        .withMessage('Salary grade must be between 1 and 33'),
+    body('step_increment')
+        .optional({ checkFalsy: true })
+        .isInt({ min: 1, max: 8 })
+        .withMessage('Step increment must be between 1 and 8'),
+    body('employment_status')
+        .optional({ checkFalsy: true })
+        .isIn(['Active', 'Resigned', 'Retired', 'Terminated', 'AWOL'])
+        .withMessage('Employment status must be one of: Active, Resigned, Retired, Terminated, AWOL'),
+    body('civil_status')
+        .optional({ checkFalsy: true })
+        .isIn(['Single', 'Married', 'Widowed', 'Separated', 'Divorced'])
+        .withMessage('Civil status must be one of: Single, Married, Widowed, Separated, Divorced'),
+    body('separation_date')
+        .optional({ checkFalsy: true })
+        .isISO8601()
+        .withMessage('Valid separation date is required')
 ];
 
 // GET /api/employees - Get all employees with pagination and filtering
@@ -282,9 +466,12 @@ const createEmployee = asyncHandler(async (req, res) => {
 
 // PUT /api/employees/:id - Update employee with enhanced validation and user account creation
 const updateEmployee = asyncHandler(async (req, res) => {
+    console.log('Update employee request body:', req.body);
+    
     // Check validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+        console.log('Validation errors:', errors.array());
         throw new ValidationError('Validation failed', errors.array());
     }
     
@@ -741,5 +928,6 @@ module.exports = {
     processEmployeeSeparation,
     searchEmployees,
     getEmployeeLeaveBalances,
-    employeeValidationRules
+    employeeCreationRules,
+    employeeUpdateRules
 };

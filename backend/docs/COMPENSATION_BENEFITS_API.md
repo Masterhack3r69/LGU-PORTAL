@@ -246,12 +246,15 @@ Deletes a compensation benefit record (admin only).
 ## Benefit Type Calculations
 
 ### Terminal Leave Benefit (TLB)
+
+**Eligibility**: Only available for employees with employment status: Resigned, Terminated, or Retired
+
 ```javascript
-amount = unused_leave_days × highest_monthly_salary × TLB_FACTOR
+amount = total_leave_earned × highest_monthly_salary × TLB_FACTOR
 ```
 - Uses highest salary earned during employment
-- Calculated based on unused leave balance
-- Typically processed upon retirement/resignation
+- Calculated based on total leave earned during employment
+- Processed upon retirement/resignation/termination
 
 ### Leave Monetization
 ```javascript

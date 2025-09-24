@@ -136,14 +136,14 @@ export function BenefitRecordsTable({ onRefresh }: BenefitRecordsTableProps) {
             </div>
           </div>
           <Select
-            value={filters.benefit_type || ''}
-            onValueChange={(value) => handleFilterChange('benefit_type', value as BenefitType | undefined)}
+            value={filters.benefit_type || 'all'}
+            onValueChange={(value) => handleFilterChange('benefit_type', value === 'all' ? undefined : value as BenefitType)}
           >
             <SelectTrigger className="w-48">
               <SelectValue placeholder="Filter by benefit type" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Types</SelectItem>
+              <SelectItem value="all">All Types</SelectItem>
               {Object.entries(BENEFIT_TYPE_LABELS).map(([key, label]) => (
                 <SelectItem key={key} value={key}>
                   {label}

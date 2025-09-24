@@ -138,7 +138,7 @@ class EmployeeService {
         // Calculate monthly salary from daily rate (daily rate * 22 working days)
         current_monthly_salary: formData.current_monthly_salary || (formData.current_daily_rate ? formData.current_daily_rate * 22 : undefined),
         current_daily_rate: formData.current_daily_rate,
-        employment_status: this.mapStatusToEmploymentStatus(formData.status as string) || formData.employment_status || 'Active',
+        employment_status: formData.employment_status || 'Active',
         separation_date: formData.separation_date,
         separation_reason: formData.separation_reason,
       };
@@ -183,14 +183,16 @@ class EmployeeService {
       return this.transformEmployee(response.data);                                                                             
     }                                                                                                                           
                                                                                                                                 
-    async updateEmployee(id: string | number, employeeData: UpdateEmployeeDTO): Promise<Employee> {                             
+    async updateEmployee(id: string | number, employeeData: UpdateEmployeeDTO): Promise<Employee> {
       console.log('updateEmployee - Original data received:', employeeData);
-      const backendData = this.transformToBackendFormat(employeeData);                                                          
+      console.log('updateEmployee - Employment status from form:', employeeData.employment_status);
+      const backendData = this.transformToBackendFormat(employeeData);
       console.log('updateEmployee - Transformed backend data:', backendData);
+      console.log('updateEmployee - Final employment status being sent:', backendData.employment_status);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const response = await apiService.put<{ success: boolean; data: any }>(`/employees/${id}`, backendData);                  
-      return this.transformEmployee(response.data);                                                                             
-    }                
+      const response = await apiService.put<{ success: boolean; data: any }>(`/employees/${id}`, backendData);
+      return this.transformEmployee(response.data);
+    }
 
   async deleteEmployee(id: string | number): Promise<void> {
     await apiService.delete(`/employees/${id}`);

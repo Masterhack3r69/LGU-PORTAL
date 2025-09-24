@@ -110,7 +110,7 @@ comp_benefit_records (
 ## 🎯 **Feature Verification**
 
 ### **Benefit Types Implemented** (8/8)
-- ✅ **Terminal Leave Benefit** - `unused_leave × highest_salary × TLB_FACTOR`
+- ✅ **Terminal Leave Benefit** - `total_leave_earned × highest_salary × TLB_FACTOR`
 - ✅ **Monetization** - `days × daily_rate` with balance validation
 - ✅ **Performance-Based Bonus** - `monthly_salary × 12 × PBB_PERCENT`
 - ✅ **13th Month Bonus** - `monthly_salary`

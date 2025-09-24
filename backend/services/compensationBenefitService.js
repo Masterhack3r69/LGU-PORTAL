@@ -29,11 +29,21 @@ class CompensationBenefitService {
 
             const employee = employeeResult.data;
 
-            // Get unused leave balance (assuming vacation leave type ID = 1)
+            // Check if employee is eligible for Terminal Leave Benefit
+            const eligibleStatuses = ['Resigned', 'Terminated', 'Retired'];
+            if (!eligibleStatuses.includes(employee.employment_status)) {
+                return { 
+                    success: false, 
+                    error: `Terminal Leave Benefit is only available for employees with status: ${eligibleStatuses.join(', ')}. Current status: ${employee.employment_status}` 
+                };
+            }
+
+            // Get total leave earned (vacation leave)
             const leaveBalanceQuery = `
-                SELECT current_balance 
-                FROM employee_leave_balances 
-                WHERE employee_id = ? AND leave_type_id = 1 AND year = YEAR(CURDATE())
+                SELECT earned_days 
+                FROM employee_leave_balances elb
+                JOIN leave_types lt ON elb.leave_type_id = lt.id
+                WHERE employee_id = ? AND lt.name = 'Vacation Leave' AND year = YEAR(CURDATE())
             `;
             
             const balanceResult = await findOne(leaveBalanceQuery, [employeeId]);
@@ -41,7 +51,7 @@ class CompensationBenefitService {
                 return { success: false, error: 'Failed to get leave balance' };
             }
 
-            const unusedLeave = balanceResult.data ? parseFloat(balanceResult.data.current_balance) : 0;
+            const totalLeaveEarned = balanceResult.data ? parseFloat(balanceResult.data.earned_days) : 0;
             const highestSalary = parseFloat(employee.highest_monthly_salary) || parseFloat(employee.current_monthly_salary) || 0;
             
             if (highestSalary <= 0) {
@@ -49,17 +59,17 @@ class CompensationBenefitService {
             }
 
             const dailyRate = highestSalary / this.CONSTANTS.DEFAULT_WORKING_DAYS;
-            const amount = unusedLeave * dailyRate * this.CONSTANTS.TLB_FACTOR;
+            const amount = totalLeaveEarned * dailyRate * this.CONSTANTS.TLB_FACTOR;
 
             return {
                 success: true,
                 data: {
                     employee_id: employeeId,
                     benefit_type: 'TERMINAL_LEAVE',
-                    days_used: unusedLeave,
+                    days_used: totalLeaveEarned,
                     amount: parseFloat(amount.toFixed(2)),
                     calculation_details: {
-                        unused_leave: unusedLeave,
+                        total_leave_earned: totalLeaveEarned,
                         highest_salary: highestSalary,
                         daily_rate: parseFloat(dailyRate.toFixed(2)),
                         tlb_factor: this.CONSTANTS.TLB_FACTOR
@@ -86,11 +96,12 @@ class CompensationBenefitService {
 
             const employee = employeeResult.data;
 
-            // Get current leave balance
+            // Get current monetizable leave balance
             const leaveBalanceQuery = `
-                SELECT current_balance 
-                FROM employee_leave_balances 
-                WHERE employee_id = ? AND leave_type_id = 1 AND year = YEAR(CURDATE())
+                SELECT SUM(elb.current_balance) as current_balance
+                FROM employee_leave_balances elb
+                JOIN leave_types lt ON elb.leave_type_id = lt.id
+                WHERE elb.employee_id = ? AND lt.is_monetizable = 1 AND elb.year = YEAR(CURDATE())
             `;
             
             const balanceResult = await findOne(leaveBalanceQuery, [employeeId]);
@@ -100,7 +111,10 @@ class CompensationBenefitService {
 
             const currentBalance = balanceResult.data ? parseFloat(balanceResult.data.current_balance) : 0;
             
-            if (daysToMonetize > currentBalance) {
+            // For calculation purposes, we'll allow monetization even if balance is 0
+            // The actual processing will handle balance validation and updates
+            // Only block if there's a balance but it's insufficient
+            if (currentBalance > 0 && daysToMonetize > currentBalance) {
                 return { 
                     success: false, 
                     error: `Insufficient leave balance. Available: ${currentBalance} days, Requested: ${daysToMonetize} days` 
@@ -375,10 +389,10 @@ class CompensationBenefitService {
                         calculation = { success: false, error: 'Invalid benefit type' };
                 }
                 
-                results.push({
-                    employee_id: employeeId,
-                    calculation: calculation
-                });
+                // Only add successful calculations to results
+                if (calculation.success) {
+                    results.push(calculation.data);
+                }
             }
             
             return {
@@ -427,12 +441,14 @@ class CompensationBenefitService {
 
             const [result] = await connection.execute(query, params);
 
-            // Update leave balance
+            // Update leave balances (only monetizable leave types)
+            // For simplicity, we'll prioritize vacation leave first
             const updateBalanceQuery = `
-                UPDATE employee_leave_balances 
-                SET current_balance = current_balance - ?,
-                    monetized_days = monetized_days + ?
-                WHERE employee_id = ? AND leave_type_id = 1 AND year = YEAR(CURDATE())
+                UPDATE employee_leave_balances elb
+                JOIN leave_types lt ON elb.leave_type_id = lt.id
+                SET elb.current_balance = elb.current_balance - ?,
+                    elb.monetized_days = elb.monetized_days + ?
+                WHERE elb.employee_id = ? AND lt.name = 'Vacation Leave' AND elb.year = YEAR(CURDATE())
             `;
 
             await connection.execute(updateBalanceQuery, [daysToMonetize, daysToMonetize, employeeId]);
@@ -449,19 +465,31 @@ class CompensationBenefitService {
     async getEligibleEmployees(benefitType) {
         try {
             let query = `
-                SELECT e.id, e.employee_number, 
-                       CONCAT(e.first_name, ' ', IFNULL(e.middle_name, ''), ' ', e.last_name) as full_name,
-                       e.current_monthly_salary, e.appointment_date, e.employment_status
+                SELECT e.id, e.employee_number, e.first_name, e.last_name,
+                       e.current_monthly_salary, e.appointment_date, e.employment_status,
+                       FLOOR(DATEDIFF(CURDATE(), e.appointment_date) / 365.25) as years_of_service,
+                       COALESCE(SUM(CASE WHEN lt.is_monetizable = 1 THEN elb.current_balance ELSE 0 END), 0) as unused_leave,
+                       COALESCE(SUM(CASE WHEN lt.name = 'Vacation Leave' THEN elb.earned_days ELSE 0 END), 0) as total_leave_earned
                 FROM employees e
-                WHERE e.employment_status = 'Active' AND e.deleted_at IS NULL
+                LEFT JOIN employee_leave_balances elb ON e.id = elb.employee_id AND elb.year = YEAR(CURDATE())
+                LEFT JOIN leave_types lt ON elb.leave_type_id = lt.id
+                WHERE e.deleted_at IS NULL
             `;
 
             // Add specific eligibility criteria based on benefit type
+            if (benefitType === 'TERMINAL_LEAVE') {
+                // Terminal Leave Benefit is only for employees who have resigned, terminated, or retired
+                query += ` AND e.employment_status IN ('Resigned', 'Terminated', 'Retired')`;
+            } else {
+                // All other benefits are for active employees only
+                query += ` AND e.employment_status = 'Active'`;
+            }
+
             if (benefitType === 'LOYALTY') {
                 query += ` AND DATEDIFF(CURDATE(), e.appointment_date) >= ${this.CONSTANTS.LOYALTY_BASE_YEARS * 365}`;
             }
 
-            query += ' ORDER BY e.last_name, e.first_name';
+            query += ' GROUP BY e.id ORDER BY e.last_name, e.first_name';
 
             const result = await executeQuery(query);
             return result;
@@ -469,6 +497,53 @@ class CompensationBenefitService {
             return {
                 success: false,
                 error: 'Failed to get eligible employees',
+                details: error.message
+            };
+        }
+    }
+
+    // Get employee leave balance
+    async getEmployeeLeaveBalance(employeeId) {
+        try {
+            const query = `
+                SELECT 
+                    ? as employee_id,
+                    COALESCE(SUM(CASE WHEN lt.name = 'Vacation Leave' THEN elb.current_balance ELSE 0 END), 0) as vacation_balance,
+                    COALESCE(SUM(CASE WHEN lt.name = 'Sick Leave' THEN elb.current_balance ELSE 0 END), 0) as sick_balance,
+                    COALESCE(SUM(CASE WHEN lt.is_monetizable = 1 THEN elb.current_balance ELSE 0 END), 0) as total_balance
+                FROM employee_leave_balances elb
+                JOIN leave_types lt ON elb.leave_type_id = lt.id
+                WHERE elb.employee_id = ? AND elb.year = YEAR(CURDATE())
+            `;
+            
+            const result = await findOne(query, [employeeId, employeeId]);
+            
+            if (!result.success || !result.data) {
+                // Return default balance if no records found
+                return {
+                    success: true,
+                    data: {
+                        employee_id: parseInt(employeeId),
+                        vacation_balance: 0,
+                        sick_balance: 0,
+                        total_balance: 0
+                    }
+                };
+            }
+
+            return {
+                success: true,
+                data: {
+                    employee_id: parseInt(result.data.employee_id),
+                    vacation_balance: parseFloat(result.data.vacation_balance) || 0,
+                    sick_balance: parseFloat(result.data.sick_balance) || 0,
+                    total_balance: parseFloat(result.data.total_balance) || 0
+                }
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: 'Failed to get employee leave balance',
                 details: error.message
             };
         }

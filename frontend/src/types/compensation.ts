@@ -30,7 +30,8 @@ export interface BenefitCalculation {
   days_used?: number;
   amount: number;
   calculation_details?: {
-    unused_leave?: number;
+    unused_leave?: number; // Keep for backward compatibility
+    total_leave_earned?: number; // New field for TLB calculation
     highest_salary?: number;
     daily_rate?: number;
     tlb_factor?: number;
@@ -49,6 +50,7 @@ export interface EligibleEmployee {
   appointment_date: string;
   years_of_service?: number;
   unused_leave?: number;
+  total_leave_earned?: number;
 }
 
 export interface BulkProcessRequest {
@@ -115,7 +117,7 @@ export const BENEFIT_TYPE_LABELS: Record<BenefitType, string> = {
 };
 
 export const BENEFIT_TYPE_DESCRIPTIONS: Record<BenefitType, string> = {
-  TERMINAL_LEAVE: 'Unused leave × highest salary × TLB factor',
+  TERMINAL_LEAVE: 'Total leave earned × highest salary × TLB factor',
   MONETIZATION: 'Days × (monthly salary ÷ 22 working days)',
   PBB: 'Monthly salary × 12 × PBB percentage',
   MID_YEAR_BONUS: 'One month salary (mid-year)',

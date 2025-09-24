@@ -130,7 +130,9 @@ export function BulkProcessingPanel({ onSuccess }: BulkProcessingPanelProps) {
     try {
       setProcessing(true);
       const employeeIds = Array.from(selectedEmployees);
-      await compensationService.bulkProcess({
+      
+      // Use the compensation service with the updated API structure
+      const response = await compensationService.bulkProcess({
         benefitType: selectedBenefitType,
         employeeIds,
         notes,
@@ -148,7 +150,7 @@ export function BulkProcessingPanel({ onSuccess }: BulkProcessingPanelProps) {
       setCalculations([]);
     } catch (error) {
       console.error("Failed to process benefits:", error);
-      toast.error("Failed to process benefits");
+      toast.error(error instanceof Error ? error.message : "Failed to process benefits");
     } finally {
       setProcessing(false);
     }
@@ -318,7 +320,7 @@ export function BulkProcessingPanel({ onSuccess }: BulkProcessingPanelProps) {
                       <TableHead>Monthly Salary</TableHead>
                       <TableHead>Years of Service</TableHead>
                       {selectedBenefitType === "TERMINAL_LEAVE" && (
-                        <TableHead>Unused Leave</TableHead>
+                        <TableHead>Total Leave Earned</TableHead>
                       )}
                       <TableHead className="text-right">
                         Calculated Amount
@@ -362,8 +364,8 @@ export function BulkProcessingPanel({ onSuccess }: BulkProcessingPanelProps) {
                           </TableCell>
                           {selectedBenefitType === "TERMINAL_LEAVE" && (
                             <TableCell>
-                              {employee.unused_leave
-                                ? `${employee.unused_leave} days`
+                              {employee.total_leave_earned
+                                ? `${employee.total_leave_earned} days`
                                 : "-"}
                             </TableCell>
                           )}

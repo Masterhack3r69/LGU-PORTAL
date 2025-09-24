@@ -9,8 +9,9 @@ The Compensation & Benefits module is a standalone system for managing employee 
 ### Benefit Types Supported
 
 1. **Terminal Leave Benefit (TLB)**
-   - Formula: `unused_leave × highest_salary × TLB_FACTOR`
-   - Uses highest salary and unused leave balance
+   - Formula: `total_leave_earned × highest_salary × TLB_FACTOR`
+   - Uses highest salary and total leave earned during employment
+   - **Eligibility**: Only for employees with status: Resigned, Terminated, or Retired
    - Automatically calculated based on employee data
 
 2. **Leave Monetization**
@@ -118,7 +119,7 @@ Response:
     "days_used": 45.5,
     "amount": 125000.00,
     "calculation_details": {
-      "unused_leave": 45.5,
+      "total_leave_earned": 45.5,
       "highest_salary": 60000.00,
       "daily_rate": 2727.27,
       "tlb_factor": 1.0

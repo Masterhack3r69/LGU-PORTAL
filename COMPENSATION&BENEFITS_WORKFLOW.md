@@ -32,8 +32,8 @@ This table acts as the **history log** of all processed benefits.
 ## 2. Benefit Rules
 
 * **Terminal Leave (TLB)**
-  `unused_leave × highest_salary × TLB_FACTOR`
-  (Unused leave from `employee_leave_balances`, salary from `employees`.)
+  `total_leave_earned × highest_salary × TLB_FACTOR`
+  (Total leave earned from `employee_leave_balances.earned_days`, salary from `employees`.)
 
 * **Monetization**
   `days × (monthly_salary ÷ DEFAULT_WORKING_DAYS)`

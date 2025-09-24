@@ -45,7 +45,7 @@ export function MonetizationPanel({ onSuccess }: MonetizationPanelProps) {
   const [calculatedAmount, setCalculatedAmount] = useState<number | null>(null);
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
-  const [, setCalculating] = useState(false);
+  const [calculating, setCalculating] = useState(false);
   const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
@@ -89,15 +89,8 @@ export function MonetizationPanel({ onSuccess }: MonetizationPanelProps) {
     if (!selectedEmployeeId) return;
 
     try {
-      // This would need to be implemented in the backend
-      // For now, we'll simulate leave balance data
-      const mockBalance: LeaveBalance = {
-        employee_id: selectedEmployeeId as number,
-        vacation_balance: 15.5,
-        sick_balance: 8.0,
-        total_balance: 23.5
-      };
-      setLeaveBalance(mockBalance);
+      const balance = await compensationService.getLeaveBalance(selectedEmployeeId as number);
+      setLeaveBalance(balance);
     } catch (error) {
       console.error('Failed to load leave balance:', error);
       toast.error('Failed to load leave balance');
@@ -112,17 +105,23 @@ export function MonetizationPanel({ onSuccess }: MonetizationPanelProps) {
 
     try {
       setCalculating(true);
-      await compensationService.calculateBenefit(
+      const calculation = await compensationService.calculateBenefit(
         'MONETIZATION',
-        selectedEmployeeId as number
+        selectedEmployeeId as number,
+        { daysToMonetize: days }
       );
       
-      // Calculate based on days to monetize
-      const selectedEmployee = employees.find(emp => emp.id === selectedEmployeeId);
-      if (selectedEmployee && selectedEmployee.current_monthly_salary) {
-        const dailyRate = selectedEmployee.current_monthly_salary / 22; // 22 working days
-        const amount = days * dailyRate;
-        setCalculatedAmount(amount);
+      // Use the calculated amount from the backend
+      if (calculation && calculation.amount) {
+        setCalculatedAmount(calculation.amount);
+      } else {
+        // Fallback to manual calculation if backend doesn't return amount
+        const selectedEmployee = employees.find(emp => emp.id === selectedEmployeeId);
+        if (selectedEmployee && selectedEmployee.current_monthly_salary) {
+          const dailyRate = selectedEmployee.current_monthly_salary / 22; // 22 working days
+          const amount = days * dailyRate;
+          setCalculatedAmount(amount);
+        }
       }
     } catch (error) {
       console.error('Failed to calculate monetization:', error);

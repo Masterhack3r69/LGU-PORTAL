@@ -31,10 +31,10 @@ router.get('/:id', authMiddleware.requireEmployeeAccess, employeeController.getE
 router.get('/:id/leave-balances', authMiddleware.requireEmployeeAccess, employeeController.getEmployeeLeaveBalances);
 
 // POST /api/employees - Create new employee (admin only)
-router.post('/', authMiddleware.requireAdmin, ...employeeController.employeeValidationRules, employeeController.createEmployee);
+router.post('/', authMiddleware.requireAdmin, ...employeeController.employeeCreationRules, employeeController.createEmployee);
 
 // PUT /api/employees/:id - Update employee
-router.put('/:id', authMiddleware.requireEmployeeAccess, ...employeeController.employeeValidationRules, employeeController.updateEmployee);
+router.put('/:id', authMiddleware.requireEmployeeAccess, ...employeeController.employeeUpdateRules, employeeController.updateEmployee);
 
 // PUT /api/employees/:id/salary - Update employee salary (admin only)
 router.put('/:id/salary', authMiddleware.requireAdmin, employeeController.updateEmployeeSalary);

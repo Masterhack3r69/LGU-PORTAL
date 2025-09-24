@@ -6,8 +6,8 @@ class CompensationBenefit {
         this.id = data.id || null;
         this.employee_id = data.employee_id || null;
         this.benefit_type = data.benefit_type || null;
-        this.days_used = data.days_used || null;
-        this.amount = data.amount || null;
+        this.days_used = data.days_used !== undefined ? data.days_used : null;
+        this.amount = data.amount !== undefined ? data.amount : null;
         this.notes = data.notes || null;
         this.processed_at = data.processed_at || null;
         this.processed_by = data.processed_by || null;
@@ -39,14 +39,14 @@ class CompensationBenefit {
             errors.push('Invalid benefit type');
         }
 
-        if (!this.amount || this.amount <= 0) {
-            errors.push('Amount must be a positive number');
+        if (this.amount === null || this.amount === undefined || isNaN(this.amount) || this.amount < 0) {
+            errors.push('Amount must be a non-negative number');
         }
 
         // Validate days_used for specific benefit types
         if (['TERMINAL_LEAVE', 'MONETIZATION'].includes(this.benefit_type)) {
-            if (!this.days_used || this.days_used <= 0) {
-                errors.push('Days used is required for this benefit type');
+            if (this.days_used === null || this.days_used === undefined || isNaN(this.days_used) || this.days_used < 0) {
+                errors.push('Days used must be a non-negative number for this benefit type');
             }
         }
 

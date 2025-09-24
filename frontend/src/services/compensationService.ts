@@ -69,11 +69,16 @@ class CompensationService {
   }
 
   // Calculate specific benefit for employee
-  async calculateBenefit(benefitType: BenefitType, employeeId: number): Promise<BenefitCalculation> {
+  async calculateBenefit(benefitType: BenefitType, employeeId: number, options?: { daysToMonetize?: number }): Promise<BenefitCalculation> {
+    const params: Record<string, any> = {};
+    if (options?.daysToMonetize) {
+      params.daysToMonetize = options.daysToMonetize;
+    }
+
     const response = await apiService.get<{
       success: boolean;
       data: BenefitCalculation;
-    }>(`/compensation-benefits/calculate/${benefitType}/${employeeId}`);
+    }>(`/compensation-benefits/calculate/${benefitType}/${employeeId}`, { params });
     return response.data;
   }
 
@@ -112,7 +117,11 @@ class CompensationService {
     const response = await apiService.post<{
       success: boolean;
       data: CompensationBenefit[];
-    }>('/compensation-benefits/bulk-process', request);
+    }>('/compensation-benefits/bulk-process', {
+      benefitType: request.benefitType,
+      employeeIds: request.employeeIds,
+      notes: request.notes
+    });
     return response.data || [];
   }
 
@@ -128,6 +137,34 @@ class CompensationService {
   // Delete compensation benefit record (admin only)
   async deleteRecord(id: number): Promise<void> {
     await apiService.delete(`/compensation-benefits/${id}`);
+  }
+
+  // Helper method to format currency
+  formatCurrency(amount: number): string {
+    return new Intl.NumberFormat('en-PH', {
+      style: 'currency',
+      currency: 'PHP',
+      minimumFractionDigits: 2,
+    }).format(amount);
+  }
+
+  // Get employee leave balance
+  async getLeaveBalance(employeeId: number): Promise<{
+    employee_id: number;
+    vacation_balance: number;
+    sick_balance: number;
+    total_balance: number;
+  }> {
+    const response = await apiService.get<{
+      success: boolean;
+      data: {
+        employee_id: number;
+        vacation_balance: number;
+        sick_balance: number;
+        total_balance: number;
+      };
+    }>(`/compensation-benefits/leave-balance/${employeeId}`);
+    return response.data;
   }
 
   // Helper method to format currency

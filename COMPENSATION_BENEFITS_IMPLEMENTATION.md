@@ -76,7 +76,7 @@ npm run dev
 - **Responsive Design** - Works on desktop and mobile devices
 
 ### ✅ Benefit Types Supported
-- **Terminal Leave Benefit (TLB)** - `unused_leave × highest_salary × TLB_FACTOR`
+- **Terminal Leave Benefit (TLB)** - `total_leave_earned × highest_salary × TLB_FACTOR` (Only for Resigned/Terminated/Retired employees)
 - **Monetization** - `days × (monthly_salary ÷ 22)` with balance updates
 - **Performance-Based Bonus (PBB)** - `monthly_salary × 12 × PBB_PERCENT`
 - **13th Month Bonus (Mid-Year)** - `monthly_salary`
@@ -122,7 +122,7 @@ Response:
     "days_used": 45.5,
     "amount": 125000.00,
     "calculation_details": {
-      "unused_leave": 45.5,
+      "total_leave_earned": 45.5,
       "highest_salary": 60000.00,
       "daily_rate": 2727.27,
       "tlb_factor": 1.0

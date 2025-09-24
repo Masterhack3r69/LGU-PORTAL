@@ -55,7 +55,7 @@ export function SingleProcessingPanel({ onSuccess }: SingleProcessingPanelProps)
 
   useEffect(() => {
     loadEmployees();
-  }, []);
+  }, [selectedBenefitType]);
 
   useEffect(() => {
     if (selectedBenefitType && selectedEmployeeId) {
@@ -73,11 +73,27 @@ export function SingleProcessingPanel({ onSuccess }: SingleProcessingPanelProps)
   const loadEmployees = async () => {
     try {
       setLoading(true);
+      
+      // For Terminal Leave Benefit, load employees with resigned/terminated/retired status
+      // For other benefits, load active employees
+      const statusFilter = selectedBenefitType === 'TERMINAL_LEAVE' 
+        ? undefined // Load all employees, will filter by status in the response
+        : 'active';
+        
       const response = await employeeService.getEmployees({ 
         limit: 1000, // Get all employees
-        status: 'active' 
+        status: statusFilter
       });
-      setEmployees(response.employees);
+      
+      // Filter employees based on benefit type
+      let filteredEmployees = response.employees;
+      if (selectedBenefitType === 'TERMINAL_LEAVE') {
+        filteredEmployees = response.employees.filter(emp => 
+          ['Resigned', 'Terminated', 'Retired'].includes(emp.employment_status)
+        );
+      }
+      
+      setEmployees(filteredEmployees);
     } catch (error) {
       console.error('Failed to load employees:', error);
       toast.error('Failed to load employees');
@@ -114,9 +130,19 @@ export function SingleProcessingPanel({ onSuccess }: SingleProcessingPanelProps)
       ? parseFloat(manualAmount)
       : calculation?.amount;
 
-    if (!amount || amount <= 0) {
-      toast.error('Please provide a valid amount');
-      return;
+    // For EC (Employee Compensation), require manual amount > 0
+    // For other benefits (like TERMINAL_LEAVE), allow 0 amounts as they are valid calculations
+    if (selectedBenefitType === 'EC') {
+      if (!amount || amount <= 0) {
+        toast.error('Please provide a valid amount');
+        return;
+      }
+    } else {
+      // For calculated benefits, ensure we have a calculation result (amount can be 0)
+      if (amount === undefined || amount === null) {
+        toast.error('Please calculate the benefit first');
+        return;
+      }
     }
 
     try {

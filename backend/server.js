@@ -109,14 +109,22 @@ app.use(cors({
                 'http://127.0.0.1:5173', 
                 'http://10.0.0.73:5173',
                 'http://10.0.0.73:3000',
-                'http://localhost:3000'
+                'http://localhost:3000',
+                'https://localhost:5173',
+                'https://127.0.0.1:5173', 
+                'https://10.0.0.73:5173',
+                'https://10.0.0.73:3000',
+                'https://localhost:3000'
             ];
         
         // Allow any localhost/127.0.0.1 origin in development
         if (process.env.NODE_ENV !== 'production') {
             if (origin.startsWith('http://localhost:') || 
                 origin.startsWith('http://127.0.0.1:') ||
-                origin.startsWith('http://10.0.0.73:')) {
+                origin.startsWith('http://10.0.0.73:') ||
+                origin.startsWith('https://localhost:') || 
+                origin.startsWith('https://127.0.0.1:') ||
+                origin.startsWith('https://10.0.0.73:')) {
                 return callback(null, true);
             }
         }
@@ -249,7 +257,7 @@ app.use('/api/payroll', authMiddleware.requireAuth, require('./routes/payrollRou
 app.use('/api/documents', authMiddleware.requireAuth, auditLogger, documentRoutes);
 app.use('/api/reports', authMiddleware.requireAuth, auditLogger, reportsRoutes);
 app.use('/api/jobs', authMiddleware.requireAuth, auditLogger, jobRoutes);
-app.use('/api/compensation-benefits', compensationBenefitRoutes);
+app.use('/api/compensation-benefits', authMiddleware.requireAuth, auditLogger, compensationBenefitRoutes);
 app.use('/api/import', authMiddleware.requireAuth, auditLogger, importRoutes);
 
 app.use('/api', authMiddleware.requireAuth, auditLogger, trainingRoutes);
