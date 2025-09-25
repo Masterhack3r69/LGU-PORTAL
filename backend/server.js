@@ -28,6 +28,7 @@ const reportsRoutes = require('./routes/reportsRoutes');
 const jobRoutes = require('./routes/jobRoutes');
 const compensationBenefitRoutes = require('./routes/compensationBenefitRoutes');
 const importRoutes = require('./routes/importRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
 
 const trainingRoutes = require('./routes/trainingRoutes');
 
@@ -251,6 +252,7 @@ app.get('/health', async (req, res) => {
 
 // API Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/dashboard', authMiddleware.requireAuth, auditLogger, dashboardRoutes);
 app.use('/api/employees', authMiddleware.requireAuth, auditLogger, employeeRoutes);
 app.use('/api/leaves', authMiddleware.requireAuth, auditLogger, leaveRoutes);
 app.use('/api/payroll', authMiddleware.requireAuth, require('./routes/payrollRoutes'));

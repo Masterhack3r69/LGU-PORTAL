@@ -38,15 +38,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   // Build navigation based on user role
   const navMain = [];
 
-  // Dashboard - Add for employees only
-  if (user?.role === "employee") {
-    navMain.push({
-      title: "Dashboard",
-      url: "/dashboard",
-      icon: Home,
-      items: [],
-    });
-  }
+  // Dashboard - Add for both admin and employee roles
+  navMain.push({
+    title: "Dashboard",
+    url: "/dashboard",
+    icon: Home,
+    items: [],
+  });
 
   // Employee Management - Only show for admins
   if (user?.role === "admin") {
@@ -63,6 +61,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {
           title: "Add Employee",
           url: "/employees/new",
+        },
+        {
+          title: "Employee Import",
+          url: "/admin/import",
         },
         {
           title: "Document Approval",
@@ -192,10 +194,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: "System Settings",
           url: "/admin/settings",
         },
-        {
-          title: "Employee Import",
-          url: "/admin/import",
-        },
+        
         {
           title: "Audit Logs",
           url: "/admin/audit",

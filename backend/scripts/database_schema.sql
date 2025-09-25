@@ -24,14 +24,14 @@ DROP TABLE IF EXISTS `allowance_types`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `allowance_types` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `code` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` text COLLATE utf8mb4_unicode_ci,
+  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `code` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `default_amount` decimal(12,2) DEFAULT NULL,
-  `calculation_type` enum('Fixed','Percentage','Formula') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Fixed',
-  `percentage_base` enum('BasicPay','MonthlySalary','GrossPay') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `calculation_type` enum('Fixed','Percentage','Formula') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Fixed',
+  `percentage_base` enum('BasicPay','MonthlySalary','GrossPay') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `is_taxable` tinyint(1) NOT NULL DEFAULT '0',
-  `frequency` enum('Monthly','Annual','Conditional') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Monthly',
+  `frequency` enum('Monthly','Annual','Conditional') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Monthly',
   `is_active` tinyint(1) NOT NULL DEFAULT '1',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -51,13 +51,13 @@ DROP TABLE IF EXISTS `audit_logs`;
 CREATE TABLE `audit_logs` (
   `id` int NOT NULL AUTO_INCREMENT,
   `user_id` int NOT NULL,
-  `action` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `table_name` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `action` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `table_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `record_id` int DEFAULT NULL,
   `old_values` json DEFAULT NULL,
   `new_values` json DEFAULT NULL,
-  `ip_address` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `user_agent` text COLLATE utf8mb4_unicode_ci,
+  `ip_address` varchar(45) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `user_agent` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `idx_audit_user` (`user_id`),
@@ -65,7 +65,37 @@ CREATE TABLE `audit_logs` (
   KEY `idx_audit_table` (`table_name`),
   KEY `idx_audit_created` (`created_at`),
   CONSTRAINT `audit_logs_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=955 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1028 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `comp_benefit_records`
+--
+
+DROP TABLE IF EXISTS `comp_benefit_records`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `comp_benefit_records` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `employee_id` int NOT NULL,
+  `benefit_type` enum('TERMINAL_LEAVE','MONETIZATION','PBB','MID_YEAR_BONUS','YEAR_END_BONUS','EC','GSIS','LOYALTY') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `days_used` decimal(6,2) DEFAULT NULL COMMENT 'For TLB/Monetization benefits',
+  `amount` decimal(12,2) NOT NULL,
+  `notes` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `processed_by` int NOT NULL COMMENT 'User ID who processed the benefit',
+  `processed_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `processed_by` (`processed_by`),
+  KEY `idx_comp_benefits_employee` (`employee_id`),
+  KEY `idx_comp_benefits_type` (`benefit_type`),
+  KEY `idx_comp_benefits_processed_at` (`processed_at`),
+  KEY `idx_comp_benefits_employee_type` (`employee_id`,`benefit_type`),
+  KEY `idx_comp_benefits_year` (`processed_at`,`benefit_type`),
+  CONSTRAINT `comp_benefit_records_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `comp_benefit_records_ibfk_2` FOREIGN KEY (`processed_by`) REFERENCES `users` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Compensation and benefits processing history log';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -77,14 +107,14 @@ DROP TABLE IF EXISTS `deduction_types`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `deduction_types` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `code` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` text COLLATE utf8mb4_unicode_ci,
+  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `code` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `default_amount` decimal(12,2) DEFAULT NULL,
-  `calculation_type` enum('Fixed','Percentage','Formula') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Fixed',
-  `percentage_base` enum('BasicPay','MonthlySalary','GrossPay') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `calculation_type` enum('Fixed','Percentage','Formula') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Fixed',
+  `percentage_base` enum('BasicPay','MonthlySalary','GrossPay') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `is_mandatory` tinyint(1) NOT NULL DEFAULT '0',
-  `frequency` enum('Monthly','Annual','Conditional') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Monthly',
+  `frequency` enum('Monthly','Annual','Conditional') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Monthly',
   `is_active` tinyint(1) NOT NULL DEFAULT '1',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -103,15 +133,15 @@ DROP TABLE IF EXISTS `document_types`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `document_types` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` text COLLATE utf8mb4_unicode_ci,
+  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `is_required` tinyint(1) DEFAULT '0',
   `max_file_size` int DEFAULT '5242880',
   `allowed_extensions` json DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -183,17 +213,17 @@ CREATE TABLE `employee_documents` (
   `id` int NOT NULL AUTO_INCREMENT,
   `employee_id` int NOT NULL,
   `document_type_id` int NOT NULL,
-  `file_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `file_path` varchar(500) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `file_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `file_path` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `file_size` int NOT NULL,
-  `mime_type` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `mime_type` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `upload_date` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `uploaded_by` int NOT NULL,
-  `status` enum('Pending','Approved','Rejected') COLLATE utf8mb4_unicode_ci DEFAULT 'Pending',
+  `status` enum('Pending','Approved','Rejected') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'Pending',
   `reviewed_by` int DEFAULT NULL,
   `reviewed_at` timestamp NULL DEFAULT NULL,
-  `review_notes` text COLLATE utf8mb4_unicode_ci,
-  `description` text COLLATE utf8mb4_unicode_ci,
+  `review_notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   PRIMARY KEY (`id`),
   KEY `document_type_id` (`document_type_id`),
   KEY `uploaded_by` (`uploaded_by`),
@@ -204,7 +234,7 @@ CREATE TABLE `employee_documents` (
   CONSTRAINT `employee_documents_ibfk_2` FOREIGN KEY (`document_type_id`) REFERENCES `document_types` (`id`),
   CONSTRAINT `employee_documents_ibfk_3` FOREIGN KEY (`uploaded_by`) REFERENCES `users` (`id`),
   CONSTRAINT `employee_documents_ibfk_4` FOREIGN KEY (`reviewed_by`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -217,12 +247,12 @@ DROP TABLE IF EXISTS `employee_education`;
 CREATE TABLE `employee_education` (
   `id` int NOT NULL AUTO_INCREMENT,
   `employee_id` int NOT NULL,
-  `education_level` enum('Elementary','High School','Vocational','College','Graduate Studies','Post Graduate') COLLATE utf8mb4_unicode_ci NOT NULL,
-  `school_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `course_degree` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `education_level` enum('Elementary','High School','Vocational','College','Graduate Studies','Post Graduate') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `school_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `course_degree` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `year_graduated` year DEFAULT NULL,
-  `highest_level_units_earned` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `scholarship_honors` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `highest_level_units_earned` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `scholarship_honors` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `idx_employee_education` (`employee_id`),
@@ -258,7 +288,7 @@ CREATE TABLE `employee_leave_balances` (
   KEY `idx_leave_balances_employee_year_type` (`employee_id`,`year`,`leave_type_id`),
   CONSTRAINT `employee_leave_balances_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE,
   CONSTRAINT `employee_leave_balances_ibfk_2` FOREIGN KEY (`leave_type_id`) REFERENCES `leave_types` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=126 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=149 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -272,14 +302,14 @@ CREATE TABLE `employee_trainings` (
   `id` int NOT NULL AUTO_INCREMENT,
   `employee_id` int NOT NULL,
   `training_program_id` int DEFAULT NULL,
-  `training_title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `training_title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `start_date` date NOT NULL,
   `end_date` date NOT NULL,
   `duration_hours` decimal(5,2) DEFAULT NULL,
-  `venue` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `organizer` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `venue` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `organizer` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `certificate_issued` tinyint(1) DEFAULT '0',
-  `certificate_number` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `certificate_number` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `training_program_id` (`training_program_id`),
@@ -300,36 +330,36 @@ DROP TABLE IF EXISTS `employees`;
 CREATE TABLE `employees` (
   `id` int NOT NULL AUTO_INCREMENT,
   `user_id` int DEFAULT NULL,
-  `employee_number` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `first_name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `middle_name` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `last_name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `suffix` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `sex` enum('Male','Female') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `employee_number` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `first_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `middle_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `last_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `suffix` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `sex` enum('Male','Female') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `birth_date` date NOT NULL,
-  `birth_place` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `civil_status` enum('Single','Married','Widowed','Separated','Divorced') COLLATE utf8mb4_unicode_ci DEFAULT 'Single',
-  `contact_number` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `email_address` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `current_address` text COLLATE utf8mb4_unicode_ci,
-  `permanent_address` text COLLATE utf8mb4_unicode_ci,
-  `tin` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `gsis_number` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `pagibig_number` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `philhealth_number` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `sss_number` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `birth_place` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `civil_status` enum('Single','Married','Widowed','Separated','Divorced') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'Single',
+  `contact_number` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `email_address` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `current_address` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `permanent_address` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `tin` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `gsis_number` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `pagibig_number` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `philhealth_number` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `sss_number` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `appointment_date` date NOT NULL,
-  `plantilla_position` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `plantilla_number` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `plantilla_position` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `plantilla_number` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `salary_grade` int DEFAULT NULL,
   `step_increment` int DEFAULT '1',
   `current_monthly_salary` decimal(12,2) DEFAULT NULL,
   `current_daily_rate` decimal(10,2) DEFAULT NULL,
   `highest_monthly_salary` decimal(12,2) DEFAULT NULL,
   `highest_daily_rate` decimal(10,2) DEFAULT NULL,
-  `employment_status` enum('Active','Resigned','Retired','Terminated','AWOL') COLLATE utf8mb4_unicode_ci DEFAULT 'Active',
+  `employment_status` enum('Active','Resigned','Retired','Terminated','AWOL') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'Active',
   `separation_date` date DEFAULT NULL,
-  `separation_reason` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `separation_reason` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `deleted_at` timestamp NULL DEFAULT NULL,
@@ -343,7 +373,7 @@ CREATE TABLE `employees` (
   KEY `idx_employees_active` (`employment_status`,`deleted_at`),
   KEY `idx_employees_search_active` (`first_name`,`last_name`,`deleted_at`),
   CONSTRAINT `employees_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=38 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=48 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -360,14 +390,14 @@ CREATE TABLE `leave_applications` (
   `start_date` date NOT NULL,
   `end_date` date NOT NULL,
   `days_requested` decimal(4,2) NOT NULL,
-  `reason` text COLLATE utf8mb4_unicode_ci,
-  `status` enum('Pending','Approved','Rejected','Cancelled') COLLATE utf8mb4_unicode_ci DEFAULT 'Pending',
+  `reason` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `status` enum('Pending','Approved','Rejected','Cancelled') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'Pending',
   `applied_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `reviewed_by` int DEFAULT NULL,
   `reviewed_at` timestamp NULL DEFAULT NULL,
-  `review_notes` text COLLATE utf8mb4_unicode_ci,
+  `review_notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `auto_approved` tinyint(1) DEFAULT '0' COMMENT 'Flag for automatically approved entries',
-  `application_number` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Unique application reference number',
+  `application_number` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Unique application reference number',
   `is_admin_created` tinyint(1) DEFAULT '0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `application_number` (`application_number`),
@@ -382,7 +412,7 @@ CREATE TABLE `leave_applications` (
   CONSTRAINT `leave_applications_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE,
   CONSTRAINT `leave_applications_ibfk_2` FOREIGN KEY (`leave_type_id`) REFERENCES `leave_types` (`id`),
   CONSTRAINT `leave_applications_ibfk_3` FOREIGN KEY (`reviewed_by`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=37 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=38 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -397,13 +427,13 @@ CREATE TABLE `leave_balance_adjustments` (
   `employee_id` int NOT NULL,
   `leave_type_id` int NOT NULL,
   `year` year NOT NULL,
-  `adjustment_type` enum('credit','debit','carry_forward','monetization','correction') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `adjustment_type` enum('credit','debit','carry_forward','monetization','correction') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `days_adjusted` decimal(6,2) NOT NULL,
   `previous_balance` decimal(6,2) NOT NULL,
   `new_balance` decimal(6,2) NOT NULL,
-  `reason` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `reason` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `reference_id` int DEFAULT NULL,
-  `reference_type` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `reference_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `adjustment_date` date NOT NULL,
   `processed_by` int NOT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
@@ -438,9 +468,9 @@ CREATE TABLE `leave_monetization_log` (
   `daily_rate` decimal(10,2) NOT NULL,
   `computed_amount` decimal(12,2) NOT NULL,
   `processing_date` date NOT NULL,
-  `status` enum('calculated','processed','paid','cancelled') COLLATE utf8mb4_unicode_ci DEFAULT 'calculated',
-  `reference_number` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `notes` text COLLATE utf8mb4_unicode_ci,
+  `status` enum('calculated','processed','paid','cancelled') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'calculated',
+  `reference_number` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `processed_by` int NOT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -466,9 +496,9 @@ DROP TABLE IF EXISTS `leave_types`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `leave_types` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `name` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `code` varchar(10) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` text COLLATE utf8mb4_unicode_ci,
+  `name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `code` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `max_days_per_year` int DEFAULT NULL,
   `is_monetizable` tinyint(1) DEFAULT '0',
   `requires_medical_certificate` tinyint(1) DEFAULT '0',
@@ -476,7 +506,7 @@ CREATE TABLE `leave_types` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`),
   UNIQUE KEY `code` (`code`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -552,12 +582,12 @@ DROP TABLE IF EXISTS `payroll_item_lines`;
 CREATE TABLE `payroll_item_lines` (
   `id` int NOT NULL AUTO_INCREMENT,
   `payroll_item_id` int NOT NULL,
-  `line_type` enum('Allowance','Deduction','Adjustment') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `line_type` enum('Allowance','Deduction','Adjustment') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `type_id` int DEFAULT NULL,
-  `description` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `amount` decimal(12,2) NOT NULL,
   `is_override` tinyint(1) NOT NULL DEFAULT '0',
-  `calculation_basis` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `calculation_basis` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `payroll_item_id` (`payroll_item_id`),
@@ -583,12 +613,12 @@ CREATE TABLE `payroll_items` (
   `total_deductions` decimal(12,2) NOT NULL DEFAULT '0.00',
   `gross_pay` decimal(12,2) NOT NULL DEFAULT '0.00',
   `net_pay` decimal(12,2) NOT NULL,
-  `status` enum('Draft','Processed','Finalized','Paid') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Draft',
+  `status` enum('Draft','Processed','Finalized','Paid') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Draft',
   `processed_by` int DEFAULT NULL,
   `processed_at` timestamp NULL DEFAULT NULL,
   `paid_by` int DEFAULT NULL,
   `paid_at` timestamp NULL DEFAULT NULL,
-  `notes` text COLLATE utf8mb4_unicode_ci,
+  `notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
@@ -601,48 +631,8 @@ CREATE TABLE `payroll_items` (
   CONSTRAINT `payroll_items_ibfk_2` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE,
   CONSTRAINT `payroll_items_ibfk_3` FOREIGN KEY (`processed_by`) REFERENCES `users` (`id`),
   CONSTRAINT `payroll_items_ibfk_4` FOREIGN KEY (`paid_by`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=47 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8mb4 */ ;
-/*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = 'IGNORE_SPACE,ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
-DELIMITER ;;
-/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `tr_payroll_items_insert` AFTER INSERT ON `payroll_items` FOR EACH ROW BEGIN
-    INSERT INTO `audit_logs` (`user_id`, `action`, `table_name`, `record_id`, `new_values`)
-    VALUES (IFNULL(NEW.processed_by, 1), 'CREATE_PAYROLL_ITEM', 'payroll_items', NEW.id,
-            JSON_OBJECT('payroll_period_id', NEW.payroll_period_id, 'employee_id', NEW.employee_id, 
-                       'working_days', NEW.working_days, 'basic_pay', NEW.basic_pay, 'net_pay', NEW.net_pay, 'status', NEW.status));
-END */;;
-DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8mb4 */ ;
-/*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = 'IGNORE_SPACE,ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
-DELIMITER ;;
-/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `tr_payroll_items_update` AFTER UPDATE ON `payroll_items` FOR EACH ROW BEGIN
-    INSERT INTO `audit_logs` (`user_id`, `action`, `table_name`, `record_id`, `old_values`, `new_values`)
-    VALUES (IFNULL(NEW.processed_by, IFNULL(NEW.paid_by, 1)), 'UPDATE_PAYROLL_ITEM', 'payroll_items', NEW.id,
-            JSON_OBJECT('working_days', OLD.working_days, 'basic_pay', OLD.basic_pay, 'net_pay', OLD.net_pay, 'status', OLD.status),
-            JSON_OBJECT('working_days', NEW.working_days, 'basic_pay', NEW.basic_pay, 'net_pay', NEW.net_pay, 'status', NEW.status));
-END */;;
-DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
 
 --
 -- Table structure for table `payroll_periods`
@@ -659,7 +649,7 @@ CREATE TABLE `payroll_periods` (
   `start_date` date NOT NULL,
   `end_date` date NOT NULL,
   `pay_date` date NOT NULL,
-  `status` enum('Draft','Processing','Completed','Paid') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Draft',
+  `status` enum('Draft','Processing','Completed','Paid') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Draft',
   `created_by` int NOT NULL,
   `finalized_by` int DEFAULT NULL,
   `finalized_at` timestamp NULL DEFAULT NULL,
@@ -672,48 +662,8 @@ CREATE TABLE `payroll_periods` (
   KEY `idx_payroll_periods_year_month_status` (`year`,`month`,`status`),
   CONSTRAINT `payroll_periods_ibfk_1` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`),
   CONSTRAINT `payroll_periods_ibfk_2` FOREIGN KEY (`finalized_by`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8mb4 */ ;
-/*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = 'IGNORE_SPACE,ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
-DELIMITER ;;
-/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `tr_payroll_periods_insert` AFTER INSERT ON `payroll_periods` FOR EACH ROW BEGIN
-    INSERT INTO `audit_logs` (`user_id`, `action`, `table_name`, `record_id`, `new_values`)
-    VALUES (NEW.created_by, 'CREATE_PAYROLL_PERIOD', 'payroll_periods', NEW.id, 
-            JSON_OBJECT('year', NEW.year, 'month', NEW.month, 'period_number', NEW.period_number, 
-                       'start_date', NEW.start_date, 'end_date', NEW.end_date, 'pay_date', NEW.pay_date, 'status', NEW.status));
-END */;;
-DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8mb4 */ ;
-/*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = 'IGNORE_SPACE,ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
-DELIMITER ;;
-/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `tr_payroll_periods_update` AFTER UPDATE ON `payroll_periods` FOR EACH ROW BEGIN
-    INSERT INTO `audit_logs` (`user_id`, `action`, `table_name`, `record_id`, `old_values`, `new_values`)
-    VALUES (IFNULL(NEW.finalized_by, NEW.created_by), 'UPDATE_PAYROLL_PERIOD', 'payroll_periods', NEW.id,
-            JSON_OBJECT('status', OLD.status, 'finalized_by', OLD.finalized_by, 'finalized_at', OLD.finalized_at),
-            JSON_OBJECT('status', NEW.status, 'finalized_by', NEW.finalized_by, 'finalized_at', NEW.finalized_at));
-END */;;
-DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
 
 --
 -- Table structure for table `salary_grades`
@@ -749,9 +699,9 @@ DROP TABLE IF EXISTS `system_settings`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `system_settings` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `setting_key` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `setting_value` text COLLATE utf8mb4_unicode_ci,
-  `description` text COLLATE utf8mb4_unicode_ci,
+  `setting_key` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `setting_value` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `updated_by` int NOT NULL,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
@@ -759,7 +709,7 @@ CREATE TABLE `system_settings` (
   KEY `updated_by` (`updated_by`),
   KEY `idx_setting_key` (`setting_key`),
   CONSTRAINT `system_settings_ibfk_1` FOREIGN KEY (`updated_by`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=43 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -771,10 +721,10 @@ DROP TABLE IF EXISTS `training_programs`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `training_programs` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` text COLLATE utf8mb4_unicode_ci,
+  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `duration_hours` int DEFAULT NULL,
-  `training_type` enum('Internal','External','Online','Seminar','Workshop') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `training_type` enum('Internal','External','Online','Seminar','Workshop') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=41 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -789,10 +739,10 @@ DROP TABLE IF EXISTS `users`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `users` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `username` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `email` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `password_hash` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `role` enum('admin','employee') COLLATE utf8mb4_unicode_ci DEFAULT 'employee',
+  `username` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `email` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `password_hash` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `role` enum('admin','employee') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'employee',
   `is_active` tinyint(1) DEFAULT '1',
   `failed_login_attempts` int DEFAULT '0',
   `locked_until` timestamp NULL DEFAULT NULL,
@@ -805,8 +755,32 @@ CREATE TABLE `users` (
   KEY `idx_username` (`username`),
   KEY `idx_email` (`email`),
   KEY `idx_role` (`role`)
-) ENGINE=InnoDB AUTO_INCREMENT=36 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=59 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Temporary view structure for view `v_compensation_benefits`
+--
+
+DROP TABLE IF EXISTS `v_compensation_benefits`;
+/*!50001 DROP VIEW IF EXISTS `v_compensation_benefits`*/;
+SET @saved_cs_client     = @@character_set_client;
+/*!50503 SET character_set_client = utf8mb4 */;
+/*!50001 CREATE VIEW `v_compensation_benefits` AS SELECT 
+ 1 AS `id`,
+ 1 AS `employee_id`,
+ 1 AS `employee_number`,
+ 1 AS `employee_name`,
+ 1 AS `plantilla_position`,
+ 1 AS `current_monthly_salary`,
+ 1 AS `benefit_type`,
+ 1 AS `days_used`,
+ 1 AS `amount`,
+ 1 AS `notes`,
+ 1 AS `processed_at`,
+ 1 AS `benefit_year`,
+ 1 AS `benefit_month`*/;
+SET character_set_client = @saved_cs_client;
 
 --
 -- Temporary view structure for view `v_employee_benefit_details`
