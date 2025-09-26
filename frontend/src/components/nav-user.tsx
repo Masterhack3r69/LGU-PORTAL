@@ -1,6 +1,5 @@
 import {
   ChevronsUpDown,
-  User,
   LogOut,
 
 } from "lucide-react"
@@ -13,7 +12,6 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
