@@ -29,48 +29,45 @@ const AdminLeaveManagement: React.FC = () => {
           <TabsList className="grid w-full grid-cols-3">
             <Tooltip>
               <TooltipTrigger asChild>
-                <TabsTrigger value="applications" className="flex items-center justify-center space-x-2 transition-all duration-200 hover:scale-105">
-                  <Users className="h-5 w-5 md:h-4 md:w-4" />
+                <TabsTrigger 
+                  value="applications" 
+                  className="flex items-center justify-center space-x-2 hover:bg-muted/50 hover:text-foreground transition-colors data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                >
+                  <Users className="h-4 w-4" />
                   <span className="hidden sm:inline">Applications</span>
                 </TabsTrigger>
               </TooltipTrigger>
-              <TooltipContent className="sm:hidden">
+              <TooltipContent side="bottom" className="sm:hidden">
                 <p>Leave Applications</p>
               </TooltipContent>
             </Tooltip>
             
-            {/* <Tooltip>
-              <TooltipTrigger asChild>
-                <TabsTrigger value="approvals" className="flex items-center justify-center space-x-2 transition-all duration-200 hover:scale-105">
-                  <CheckSquare className="h-5 w-5 md:h-4 md:w-4" />
-                  <span className="hidden sm:inline">Approvals</span>
-                </TabsTrigger>
-              </TooltipTrigger>
-              <TooltipContent className="sm:hidden">
-                <p>Leave Approvals</p>
-              </TooltipContent>
-            </Tooltip>
-             */}
             <Tooltip>
               <TooltipTrigger asChild>
-                <TabsTrigger value="balances" className="flex items-center justify-center space-x-2 transition-all duration-200 hover:scale-105">
-                  <BarChart3 className="h-5 w-5 md:h-4 md:w-4" />
+                <TabsTrigger 
+                  value="balances" 
+                  className="flex items-center justify-center space-x-2 hover:bg-muted/50 hover:text-foreground transition-colors data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                >
+                  <BarChart3 className="h-4 w-4" />
                   <span className="hidden sm:inline">Balances</span>
                 </TabsTrigger>
               </TooltipTrigger>
-              <TooltipContent className="sm:hidden">
+              <TooltipContent side="bottom" className="sm:hidden">
                 <p>Leave Balances</p>
               </TooltipContent>
             </Tooltip>
             
             <Tooltip>
               <TooltipTrigger asChild>
-                <TabsTrigger value="types" className="flex items-center justify-center space-x-2 transition-all duration-200 hover:scale-105">
-                  <Settings className="h-5 w-5 md:h-4 md:w-4" />
+                <TabsTrigger 
+                  value="types" 
+                  className="flex items-center justify-center space-x-2 hover:bg-muted/50 hover:text-foreground transition-colors data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                >
+                  <Settings className="h-4 w-4" />
                   <span className="hidden sm:inline">Leave Types</span>
                 </TabsTrigger>
               </TooltipTrigger>
-              <TooltipContent className="sm:hidden">
+              <TooltipContent side="bottom" className="sm:hidden">
                 <p>Leave Types Management</p>
               </TooltipContent>
             </Tooltip>

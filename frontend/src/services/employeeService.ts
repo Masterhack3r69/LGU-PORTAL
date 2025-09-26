@@ -95,18 +95,7 @@ class EmployeeService {
       }                                                                                                                         
     }                                                                                                                           
                                                                                                                                 
-    // Map frontend status to backend employment status                                                                         
-    private mapStatusToEmploymentStatus(status: string): string {                                                               
-      switch (status) {                                                                                                         
-        case 'active':                                                                                                          
-          return 'Active';                                                                                                      
-        case 'inactive':                                                                                                        
-          return 'Resigned'; // Or another inactive status                                                                      
-        case 'pending':                                                                                                         
-        default:                                                                                                                
-          return 'Active'; // Decide a default mapping                                                                          
-      }                                                                                                                         
-    }                                                                                                                           
+                                                                                                                           
                                                                                                                                 
     // Transform frontend form data to backend format
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -150,8 +139,8 @@ class EmployeeService {
         limit: filters.limit || 10,                                                                                             
         ...(filters.name && { search: filters.name }),                                                                          
         ...(filters.department && { department: filters.department }),                                                          
-        ...(filters.position && { position: filters.position }),                                                                
-        ...(filters.status && { employment_status: this.mapStatusToEmploymentStatus(filters.status) }),                         
+        ...(filters.position && { department: filters.position }),                                                                
+        ...(filters.status && { employment_status: filters.status }),                         
       };                                                                                                                        
                                                                                                                                 
       const response = await apiService.get<BackendEmployeeResponse>('/employees', params);                                     

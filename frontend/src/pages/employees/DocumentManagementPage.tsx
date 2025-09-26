@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { FileText, Download, CheckCircle, X, Clock, AlertCircle, Eye, Search, RefreshCw, Filter, ChevronDown } from 'lucide-react';
+import { FileText, Download, CheckCircle, CircleX, X, Clock, AlertCircle, Eye, Search, RefreshCw, Filter, ChevronDown } from 'lucide-react';
 import { documentService } from '@/services/documentService';
 import type { Document, DocumentType, DocumentStatistics } from '@/types/employee';
 
@@ -169,64 +169,52 @@ export function DocumentManagementPage() {
 
       {/* Statistics Cards */}
       {statistics && (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {/* Total Documents Card */}
-          <Card className="transition-all duration-300 hover:shadow-lg hover:scale-105 border-l-4 border-l-blue-500 bg-gradient-to-r from-blue-50 to-white">
+          <Card className="border-l-4 border-l-blue-500">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Documents</CardTitle>
+              <FileText className="h-4 w-4 text-blue-600" />
+            </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-muted-foreground">Total Documents</p>
-                  <p className="text-2xl font-bold text-foreground">{statistics.total}</p>
-                </div>
-                <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
-                  <FileText className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                </div>
-              </div>
+              <div className="text-2xl font-bold">{statistics.total}</div>
+              <p className="text-xs text-muted-foreground">all submitted documents</p>
             </CardContent>
           </Card>
 
           {/* Pending Review Card */}
-          <Card className="transition-all duration-300 hover:shadow-lg hover:scale-105 border-l-4 border-l-amber-500 bg-gradient-to-r from-amber-50 to-white">
+          <Card className="border-l-4 border-l-orange-500">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Pending</CardTitle>
+              <Clock className="h-4 w-4 text-orange-600" />
+            </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-muted-foreground">Pending</p>
-                  <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{statistics.pending}</p>
-                </div>
-                <div className="p-2 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg">
-                  <Clock className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
-                </div>
-              </div>
+              <div className="text-2xl font-bold">{statistics.pending}</div>
+              <p className="text-xs text-muted-foreground">awaiting review</p>
             </CardContent>
           </Card>
 
           {/* Approved Card */}
-          <Card className="transition-all duration-300 hover:shadow-lg hover:scale-105 border-l-4 border-l-green-500 bg-gradient-to-r from-green-50 to-white">
+          <Card className="border-l-4 border-l-green-500">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Approved</CardTitle>
+              <CheckCircle className="h-4 w-4 text-green-600" />
+            </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-muted-foreground">Approved</p>
-                  <p className="text-2xl font-bold text-green-600 dark:text-green-400">{statistics.approved}</p>
-                </div>
-                <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
-                  <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
-                </div>
-              </div>
+              <div className="text-2xl font-bold">{statistics.approved}</div>
+              <p className="text-xs text-muted-foreground">successfully approved</p>
             </CardContent>
           </Card>
 
           {/* Rejected Card */}
-          <Card className="transition-all duration-300 hover:shadow-lg hover:scale-105 border-l-4 border-l-red-500 bg-gradient-to-r from-red-50 to-white">
+          <Card className="border-l-4 border-l-red-500">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Rejected</CardTitle>
+              <CircleX className="h-4 w-4 text-red-600" />
+            </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-muted-foreground">Rejected</p>
-                  <p className="text-2xl font-bold text-red-600 dark:text-red-400">{statistics.rejected}</p>
-                </div>
-                <div className="p-2 bg-red-100 dark:bg-red-900/20 rounded-lg">
-                  <X className="h-5 w-5 text-red-600 dark:text-red-400" />
-                </div>
-              </div>
+              <div className="text-2xl font-bold">{statistics.rejected}</div>
+              <p className="text-xs text-muted-foreground">requires resubmission</p>
             </CardContent>
           </Card>
         </div>
@@ -234,7 +222,7 @@ export function DocumentManagementPage() {
 
       {/* Filters */}
       <Card>
-        <CardContent className="p-4">
+        <CardContent className="px-6">
           {/* Mobile Filter Toggle */}
           <div className="lg:hidden mb-4">
             <Collapsible open={isFiltersOpen} onOpenChange={setIsFiltersOpen}>
@@ -313,7 +301,7 @@ export function DocumentManagementPage() {
             </div>
             <div className="w-[200px]">
               <Select value={filters.document_type_id} onValueChange={(value) => setFilters({...filters, document_type_id: value})}>
-                <SelectTrigger className="transition-all duration-200 hover:border-slate-400">
+                <SelectTrigger className="w-full transition-all duration-200 hover:border-slate-400">
                   <SelectValue placeholder="All types" />
                 </SelectTrigger>
                 <SelectContent>
@@ -328,7 +316,7 @@ export function DocumentManagementPage() {
             </div>
             <div className="w-[140px]">
               <Select value={filters.status} onValueChange={(value) => setFilters({...filters, status: value})}>
-                <SelectTrigger className="transition-all duration-200 hover:border-slate-400">
+                <SelectTrigger className="transition-all duration-200 hover:border-slate-400 w-full">
                   <SelectValue placeholder="All statuses" />
                 </SelectTrigger>
                 <SelectContent>

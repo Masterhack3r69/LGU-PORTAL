@@ -2,7 +2,6 @@ import * as React from "react";
 import {
   Users,
   Calendar,
-  BarChart3,
   Settings,
   Building2,
   Shield,
@@ -29,9 +28,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const teams = [
     {
-      name: "Employee Management System",
+      name: "LGU Portal",
       logo: Building2,
-      plan: "Enterprise",
+      plan: "Management System",
     },
   ];
 
@@ -153,28 +152,28 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     items: [], // No dropdown items for now
   });
 
-  // Reports - Only show for admins, hide completely for employees
-  if (user?.role === "admin") {
-    navMain.push({
-      title: "Reports & Analytics",
-      url: "/reports",
-      icon: BarChart3,
-      items: [
-        {
-          title: "Employee Reports",
-          url: "/reports/employees",
-        },
-        {
-          title: "Leave Reports",
-          url: "/reports/leaves",
-        },
-        {
-          title: "Analytics Dashboard",
-          url: "/reports/analytics",
-        },
-      ],
-    });
-  }
+  // // Reports - Only show for admins, hide completely for employees
+  // if (user?.role === "admin") {
+  //   navMain.push({
+  //     title: "Reports & Analytics",
+  //     url: "/reports",
+  //     icon: BarChart3,
+  //     items: [
+  //       {
+  //         title: "Employee Reports",
+  //         url: "/reports/employees",
+  //       },
+  //       {
+  //         title: "Leave Reports",
+  //         url: "/reports/leaves",
+  //       },
+  //       {
+  //         title: "Analytics Dashboard",
+  //         url: "/reports/analytics",
+  //       },
+  //     ],
+  //   });
+  // }
 
   // Add admin-only sections
   if (user?.role === "admin") {
@@ -186,15 +185,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       url: "/admin",
       icon: Shield,
       items: [
-        {
-          title: "User Management",
-          url: "/admin/users",
-        },
-        {
-          title: "System Settings",
-          url: "/admin/settings",
-        },
-        
+        // {
+        //   title: "User Management",
+        //   url: "/admin/users",
+        // },
+        // {
+        //   title: "System Settings",
+        //   url: "/admin/settings",
+        // },
+
         {
           title: "Audit Logs",
           url: "/admin/audit",
@@ -218,14 +217,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: "Profile",
           url: "/settings/profile",
         },
-        {
-          title: "Preferences",
-          url: "/settings/preferences",
-        },
-        {
-          title: "Security",
-          url: "/settings/security",
-        },
+        // {
+        //   title: "Preferences",
+        //   url: "/settings/preferences",
+        // },
+        // {
+        //   title: "Security",
+        //   url: "/settings/security",
+        // },
         {
           title: "System Settings",
           url: "/settings/system",

@@ -31,6 +31,13 @@ export interface AdminDashboardStats {
     timestamp: string;
     user?: string;
   }>;
+  employmentStatusBreakdown: {
+    active: number;
+    retired: number;
+    resigned: number;
+    terminated: number;
+    awol: number;
+  };
   monthlyStats: {
     newEmployees: number;
     leaveApplications: number;

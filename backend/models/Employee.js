@@ -482,7 +482,17 @@ class Employee {
             params.push(filters.appointment_date_to);
         }
 
-        query += ' ORDER BY e.last_name, e.first_name';
+        // Add sorting by employment status first, then alphabetically
+        query += ` ORDER BY 
+            CASE e.employment_status 
+                WHEN 'Active' THEN 1 
+                WHEN 'Retired' THEN 2 
+                WHEN 'Resigned' THEN 3 
+                WHEN 'Terminated' THEN 4 
+                WHEN 'AWOL' THEN 5 
+                ELSE 6 
+            END,
+            e.last_name, e.first_name`;
 
         // Improved pagination implementation - handle LIMIT/OFFSET separately
         if (filters.limit) {

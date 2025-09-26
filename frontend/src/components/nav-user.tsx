@@ -1,10 +1,8 @@
 import {
-  BadgeCheck,
-  Settings,
   ChevronsUpDown,
   User,
   LogOut,
-  Shield,
+
 } from "lucide-react"
 
 import {
@@ -37,6 +35,10 @@ export function NavUser({
     name: string
     email: string
     avatar: string
+    role?: string
+    employee?: {
+      sex?: string
+    }
   }
 }) {
   const { isMobile } = useSidebar()
@@ -51,6 +53,16 @@ export function NavUser({
     }
   }
 
+
+
+  const getAvatarInitials = () => {
+    const names = user.name.split(' ')
+    if (names.length >= 2) {
+      return `${names[0][0]}${names[1][0]}`.toUpperCase()
+    }
+    return user.name.substring(0, 2).toUpperCase()
+  }
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -62,7 +74,9 @@ export function NavUser({
             >
               <Avatar className="h-8 w-8 rounded-lg">
                 <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                <AvatarFallback className="rounded-lg">
+                  {getAvatarInitials()}
+                </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{user.name}</span>
@@ -81,7 +95,9 @@ export function NavUser({
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                  <AvatarFallback className="rounded-lg">
+                    {getAvatarInitials()}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.name}</span>
@@ -96,7 +112,7 @@ export function NavUser({
                 Profile
               </DropdownMenuItem>
             </DropdownMenuGroup>
-            <DropdownMenuSeparator />
+            {/* <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem>
                 <BadgeCheck />
@@ -111,7 +127,7 @@ export function NavUser({
                 Security
               </DropdownMenuItem>
             </DropdownMenuGroup>
-            <DropdownMenuSeparator />
+            <DropdownMenuSeparator /> */}
             <DropdownMenuItem onClick={handleLogout}>
               <LogOut />
               Log out

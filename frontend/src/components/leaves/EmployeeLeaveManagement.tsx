@@ -50,11 +50,11 @@ const EmployeeLeaveManagement: React.FC = () => {
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="grid w-full grid-cols-2 h-9">
-          <TabsTrigger value="applications" className="flex items-center space-x-1 text-sm">
+          <TabsTrigger value="applications" className="flex items-center space-x-1 text-sm hover:bg-muted/50 hover:text-foreground transition-colors data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">
             <FileText className="h-4 w-4" />
             <span>Applications</span>
           </TabsTrigger>
-          <TabsTrigger value="balances" className="flex items-center space-x-1 text-sm">
+          <TabsTrigger value="balances" className="flex items-center space-x-1 text-sm hover:bg-muted/50 hover:text-foreground transition-colors data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">
             <Calendar className="h-4 w-4" />
             <span>Balances</span>
           </TabsTrigger>

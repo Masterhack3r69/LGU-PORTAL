@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { FileText, Edit, Trash2, Search, Clock, CalendarIcon } from 'lucide-react';
+import { FileText, Edit, Trash2, Search, Clock, CalendarIcon, CheckCircle, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import leaveService from '@/services/leaveService';
 import LeaveCard from './LeaveCard';
@@ -171,17 +171,69 @@ const EmployeeLeaveApplications: React.FC<EmployeeLeaveApplicationsProps> = ({
     );
   }
 
+  const getStatusStats = () => {
+    return {
+      total: applications.length,
+      pending: applications.filter(app => app.status === 'Pending').length,
+      approved: applications.filter(app => app.status === 'Approved').length,
+      rejected: applications.filter(app => app.status === 'Rejected').length,
+    };
+  };
+
+  const stats = getStatusStats();
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {/* Statistics Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="border-l-4 border-l-blue-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Applications</CardTitle>
+            <FileText className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.total}</div>
+            <p className="text-xs text-muted-foreground">all your requests</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-orange-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pending</CardTitle>
+            <Clock className="h-4 w-4 text-orange-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.pending}</div>
+            <p className="text-xs text-muted-foreground">awaiting approval</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-green-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Approved</CardTitle>
+            <CheckCircle className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.approved}</div>
+            <p className="text-xs text-muted-foreground">successfully approved</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-red-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Rejected</CardTitle>
+            <XCircle className="h-4 w-4 text-red-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.rejected}</div>
+            <p className="text-xs text-muted-foreground">needs revision</p>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Header and Filters */}
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center space-x-2">
-            <FileText className="h-4 w-4" />
-            <span>My Leave Applications</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-4">
             <div className="flex-1">
               <div className="relative">

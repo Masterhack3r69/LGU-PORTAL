@@ -506,6 +506,7 @@ export function EmployeeListPage() {
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [documentsDialogOpen, setDocumentsDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState(''); // Local search state
+  const [positionTerm, setPositionTerm] = useState(''); // Local position search state
   const [isFiltersOpen, setIsFiltersOpen] = useState(false); // Collapsible state for filters
   const [filters, setFilters] = useState<EmployeeFilters>({
     name: '',
@@ -541,25 +542,40 @@ export function EmployeeListPage() {
     fetchEmployees();
   }, [fetchEmployees]);
 
-  // Debounced search effect
+  // Debounced search effect for name
   useEffect(() => {
     const debounceTimer = setTimeout(() => {
       if (searchTerm !== filters.name) {
         setFilters(prev => ({ ...prev, name: searchTerm, page: 1 }));
       }
-    }, 500); // 500ms delay
+    }, 800); // 800ms delay for better UX
 
     return () => clearTimeout(debounceTimer);
   }, [searchTerm, filters.name]);
+
+  // Debounced search effect for position
+  useEffect(() => {
+    const debounceTimer = setTimeout(() => {
+      if (positionTerm !== filters.position) {
+        setFilters(prev => ({ ...prev, position: positionTerm, page: 1 }));
+      }
+    }, 800); // 800ms delay for better UX
+
+    return () => clearTimeout(debounceTimer);
+  }, [positionTerm, filters.position]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'Active':
         return <Badge className="bg-green-100 text-green-800">Active</Badge>;
       case 'Resigned':
+        return <Badge className="bg-blue-100 text-blue-800">Resigned</Badge>;
       case 'Retired':
+        return <Badge className="bg-purple-100 text-purple-800">Retired</Badge>;
       case 'Terminated':
-        return <Badge variant="secondary">Inactive</Badge>;
+        return <Badge className="bg-red-100 text-red-800">Terminated</Badge>;
+      case 'AWOL':
+        return <Badge className="bg-orange-100 text-orange-800">AWOL</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -738,8 +754,8 @@ export function EmployeeListPage() {
                     </div>
                     <Input
                       placeholder="Position"
-                      value={filters.position}
-                      onChange={(e) => handleFilterChange('position', e.target.value)}
+                      value={positionTerm}
+                      onChange={(e) => setPositionTerm(e.target.value)}
                       className="w-full"
                     />
                     <Select value={filters.status || 'all'} onValueChange={(value) => handleFilterChange('status', value === 'all' ? '' : value)}>
@@ -752,6 +768,7 @@ export function EmployeeListPage() {
                         <SelectItem value="Resigned">Resigned</SelectItem>
                         <SelectItem value="Retired">Retired</SelectItem>
                         <SelectItem value="Terminated">Terminated</SelectItem>
+                        <SelectItem value="AWOL">AWOL</SelectItem>
                       </SelectContent>
                     </Select>
                     <Button variant="outline" onClick={fetchEmployees} className="w-full">
@@ -778,8 +795,8 @@ export function EmployeeListPage() {
               </div>
               <Input
                 placeholder="Position"
-                value={filters.position}
-                onChange={(e) => handleFilterChange('position', e.target.value)}
+                value={positionTerm}
+                onChange={(e) => setPositionTerm(e.target.value)}
                 className="w-[180px]"
               />
               <Select value={filters.status || 'all'} onValueChange={(value) => handleFilterChange('status', value === 'all' ? '' : value)}>
@@ -792,6 +809,7 @@ export function EmployeeListPage() {
                   <SelectItem value="Resigned">Resigned</SelectItem>
                   <SelectItem value="Retired">Retired</SelectItem>
                   <SelectItem value="Terminated">Terminated</SelectItem>
+                  <SelectItem value="AWOL">AWOL</SelectItem>
                 </SelectContent>
               </Select>
               <Button variant="outline" onClick={fetchEmployees}>

@@ -51,6 +51,7 @@ class LeaveService {
       ...(filters.status && { status: filters.status }),
       ...(filters.start_date && { start_date: filters.start_date }),
       ...(filters.end_date && { end_date: filters.end_date }),
+      ...(filters.search && { search: filters.search }),
     };
 
     const response = await apiService.get<{

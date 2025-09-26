@@ -8,7 +8,11 @@ class DashboardController {
       const employeeStatsResult = await executeQuery(`
         SELECT 
           COUNT(*) as total_employees,
-          SUM(CASE WHEN employment_status = 'Active' THEN 1 ELSE 0 END) as active_employees
+          SUM(CASE WHEN employment_status = 'Active' THEN 1 ELSE 0 END) as active_employees,
+          SUM(CASE WHEN employment_status = 'Retired' THEN 1 ELSE 0 END) as retired_employees,
+          SUM(CASE WHEN employment_status = 'Resigned' THEN 1 ELSE 0 END) as resigned_employees,
+          SUM(CASE WHEN employment_status = 'Terminated' THEN 1 ELSE 0 END) as terminated_employees,
+          SUM(CASE WHEN employment_status = 'AWOL' THEN 1 ELSE 0 END) as awol_employees
         FROM employees 
         WHERE deleted_at IS NULL
       `);
@@ -114,6 +118,13 @@ class DashboardController {
         monthlyPayrollStatus: payrollStatus.processed_count > 0 ? 'completed' : 'pending',
         systemHealth: 'good', // This could be enhanced with actual system checks
         recentActivities: formattedActivities,
+        employmentStatusBreakdown: {
+          active: employeeStats.active_employees,
+          retired: employeeStats.retired_employees,
+          resigned: employeeStats.resigned_employees,
+          terminated: employeeStats.terminated_employees,
+          awol: employeeStats.awol_employees
+        },
         monthlyStats: {
           newEmployees: monthlyStats.new_employees,
           leaveApplications: monthlyStats.leave_applications,
@@ -121,6 +132,7 @@ class DashboardController {
           payrollProcessed: payrollStatus.processed_count > 0
         }
       };
+
 
       res.json({
         success: true,

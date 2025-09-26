@@ -1,24 +1,11 @@
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
+import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
-  AlertCircle,
-  Users,
-  Clock,
-  DollarSign,
-  Activity,
-  Calendar,
-  BarChart3,
-  GraduationCap,
-  User,
-  CheckCircle,
-  Award
+  AlertCircle
 } from 'lucide-react';
 import { employeeService } from '@/services/employeeService';
 import { dashboardService, type EmployeeDashboardStats, type AdminDashboardStats } from '@/services/dashboardService';
@@ -58,6 +45,13 @@ export function DashboardPage() {
               pendingDocuments: 0,
               monthlyPayrollStatus: 'completed',
               systemHealth: 'good',
+              employmentStatusBreakdown: {
+                active: employeesResponse.total,
+                retired: 0,
+                resigned: 0,
+                terminated: 0,
+                awol: 0
+              },
               recentActivities: [
                 {
                   id: '1',
@@ -219,9 +213,7 @@ export function DashboardPage() {
               Welcome back, {user?.full_name || user?.username}!
             </p>
           </div>
-          <Badge variant="default">
-            {user?.role === 'admin' ? 'Administrator' : 'Employee'}
-          </Badge>
+
         </div>
         <Card>
           <CardContent className="pt-6">
@@ -244,9 +236,6 @@ export function DashboardPage() {
             Welcome back, {user?.full_name || user?.username}!
           </p>
         </div>
-        <Badge variant="default">
-          {user?.role === 'admin' ? 'Administrator' : 'Employee'}
-        </Badge>
       </div>
 
       {/* Render role-specific dashboard */}

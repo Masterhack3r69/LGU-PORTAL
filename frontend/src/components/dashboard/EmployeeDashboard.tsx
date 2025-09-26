@@ -91,10 +91,10 @@ export function EmployeeDashboard({
     <>
       {/* Employee Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <Card className="border-l-4 border-l-blue-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Leave Balance</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <Calendar className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalLeaveBalance}</div>
@@ -102,12 +102,12 @@ export function EmployeeDashboard({
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-l-4 border-l-orange-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Pending Applications
             </CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <Clock className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -117,12 +117,12 @@ export function EmployeeDashboard({
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-l-4 border-l-purple-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Training Progress
             </CardTitle>
-            <GraduationCap className="h-4 w-4 text-muted-foreground" />
+            <GraduationCap className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{trainingProgress}%</div>
@@ -133,12 +133,12 @@ export function EmployeeDashboard({
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-l-4 border-l-green-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Profile Status
             </CardTitle>
-            <User className="h-4 w-4 text-muted-foreground" />
+            <User className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.profileCompletion}%</div>
@@ -226,43 +226,43 @@ export function EmployeeDashboard({
           <CardContent className="space-y-3">
             <Button
               variant="outline"
-              className="w-full justify-start"
+              className="w-full justify-start hover:bg-blue-50 hover:border-blue-200 transition-colors"
               onClick={() => onQuickAction("apply-leave")}
             >
-              <Calendar className="mr-2 h-4 w-4" />
-              Apply for Leave
+              <Calendar className="mr-2 h-4 w-4 text-blue-600" />
+              <span className="font-medium">Apply for Leave</span>
             </Button>
             <Button
               variant="outline"
-              className="w-full justify-start"
+              className="w-full justify-start hover:bg-green-50 hover:border-green-200 transition-colors"
               onClick={() => onQuickAction("view-payroll")}
             >
-              <DollarSign className="mr-2 h-4 w-4" />
-              View Payroll
+              <DollarSign className="mr-2 h-4 w-4 text-green-600" />
+              <span className="font-medium">View Payroll</span>
             </Button>
             <Button
               variant="outline"
-              className="w-full justify-start"
+              className="w-full justify-start hover:bg-purple-50 hover:border-purple-200 transition-colors"
               onClick={() => onQuickAction("view-benefits")}
             >
-              <Award className="mr-2 h-4 w-4" />
-              View Benefits
+              <Award className="mr-2 h-4 w-4 text-purple-600" />
+              <span className="font-medium">View Benefits</span>
             </Button>
             <Button
               variant="outline"
-              className="w-full justify-start"
+              className="w-full justify-start hover:bg-orange-50 hover:border-orange-200 transition-colors"
               onClick={() => onQuickAction("view-training")}
             >
-              <GraduationCap className="mr-2 h-4 w-4" />
-              My Training
+              <GraduationCap className="mr-2 h-4 w-4 text-orange-600" />
+              <span className="font-medium">My Training</span>
             </Button>
             <Button
               variant="outline"
-              className="w-full justify-start"
+              className="w-full justify-start hover:bg-indigo-50 hover:border-indigo-200 transition-colors"
               onClick={() => onQuickAction("update-profile")}
             >
-              <User className="mr-2 h-4 w-4" />
-              Update Profile
+              <User className="mr-2 h-4 w-4 text-indigo-600" />
+              <span className="font-medium">Update Profile</span>
             </Button>
           </CardContent>
         </Card>

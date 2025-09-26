@@ -588,7 +588,7 @@ export function EmployeeCreatePage() {
 
                   {/* Row 5: Separation Date and Reason - Show only when status is not Active */}
                   {form.watch('employment_status') && 
-                   ['Resigned', 'Retired', 'Terminated', 'AWOL'].includes(form.watch('employment_status')) && (
+                   ['Resigned', 'Retired', 'Terminated', 'AWOL'].includes(form.watch('employment_status') || '') && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
