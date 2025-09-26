@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+  import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -196,7 +196,7 @@ export function BulkProcessingPanel({ onSuccess }: BulkProcessingPanelProps) {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-2">
               <label className="text-sm font-medium">Benefit Type</label>
               <Select
@@ -205,7 +205,7 @@ export function BulkProcessingPanel({ onSuccess }: BulkProcessingPanelProps) {
                   setSelectedBenefitType(value as BenefitType)
                 }
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select benefit type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -222,7 +222,7 @@ export function BulkProcessingPanel({ onSuccess }: BulkProcessingPanelProps) {
                 </p>
               )}
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 col-span-2">
               <label className="text-sm font-medium">Notes (Optional)</label>
               <Textarea
                 placeholder="Add processing notes..."
@@ -239,7 +239,7 @@ export function BulkProcessingPanel({ onSuccess }: BulkProcessingPanelProps) {
       {selectedBenefitType && (
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               <div>
                 <CardTitle>Eligible Employees</CardTitle>
                 <CardDescription>
@@ -247,9 +247,9 @@ export function BulkProcessingPanel({ onSuccess }: BulkProcessingPanelProps) {
                   {BENEFIT_TYPE_LABELS[selectedBenefitType]}
                 </CardDescription>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 {calculations.length > 0 && (
-                  <div className="text-right">
+                  <div className="text-center sm:text-right">
                     <div className="text-sm text-muted-foreground">
                       Total Amount
                     </div>
@@ -258,33 +258,37 @@ export function BulkProcessingPanel({ onSuccess }: BulkProcessingPanelProps) {
                     </div>
                   </div>
                 )}
-                <Button
-                  onClick={calculateBenefits}
-                  disabled={calculating || selectedEmployees.size === 0}
-                  variant="outline"
-                >
-                  {calculating ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <Calculator className="mr-2 h-4 w-4" />
-                  )}
-                  Calculate
-                </Button>
-                <Button
-                  onClick={processBenefits}
-                  disabled={
-                    processing ||
-                    selectedEmployees.size === 0 ||
-                    calculations.length === 0
-                  }
-                >
-                  {processing ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <CheckCircle className="mr-2 h-4 w-4" />
-                  )}
-                  Process ({selectedEmployees.size})
-                </Button>
+                <div className="flex gap-2 w-full sm:w-auto">
+                  <Button
+                    onClick={calculateBenefits}
+                    disabled={calculating || selectedEmployees.size === 0}
+                    variant="outline"
+                    className="flex-1 sm:flex-none"
+                  >
+                    {calculating ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Calculator className="mr-2 h-4 w-4" />
+                    )}
+                    Calculate
+                  </Button>
+                  <Button
+                    onClick={processBenefits}
+                    disabled={
+                      processing ||
+                      selectedEmployees.size === 0 ||
+                      calculations.length === 0
+                    }
+                    className="flex-1 sm:flex-none"
+                  >
+                    {processing ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <CheckCircle className="mr-2 h-4 w-4" />
+                    )}
+                    Process ({selectedEmployees.size})
+                  </Button>
+                </div>
               </div>
             </div>
           </CardHeader>
@@ -304,93 +308,198 @@ export function BulkProcessingPanel({ onSuccess }: BulkProcessingPanelProps) {
                 </p>
               </div>
             ) : (
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-12">
-                        <Checkbox
-                          checked={
-                            selectedEmployees.size === eligibleEmployees.length
-                          }
-                          onCheckedChange={toggleAll}
-                        />
-                      </TableHead>
-                      <TableHead>Employee</TableHead>
-                      <TableHead>Monthly Salary</TableHead>
-                      <TableHead>Years of Service</TableHead>
-                      {selectedBenefitType === "TERMINAL_LEAVE" && (
-                        <TableHead>Total Leave Earned</TableHead>
-                      )}
-                      <TableHead className="text-right">
-                        Calculated Amount
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {eligibleEmployees.map((employee) => {
-                      const calculation = getCalculationForEmployee(
-                        employee.id
-                      );
-                      return (
-                        <TableRow key={employee.id}>
-                          <TableCell>
-                            <Checkbox
-                              checked={selectedEmployees.has(employee.id)}
-                              onCheckedChange={() =>
-                                toggleEmployee(employee.id)
-                              }
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <div>
-                              <div className="font-medium">
-                                {employee.first_name} {employee.last_name}
-                              </div>
-                              <div className="text-sm text-muted-foreground">
-                                {employee.employee_number}
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            {compensationService.formatCurrency(
-                              employee.current_monthly_salary
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {employee.years_of_service
-                              ? `${employee.years_of_service} years`
-                              : "-"}
-                          </TableCell>
-                          {selectedBenefitType === "TERMINAL_LEAVE" && (
+              <>
+                {/* Desktop Table */}
+                <div className="hidden md:block rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-12">
+                          <Checkbox
+                            checked={
+                              selectedEmployees.size === eligibleEmployees.length
+                            }
+                            onCheckedChange={toggleAll}
+                          />
+                        </TableHead>
+                        <TableHead>Employee</TableHead>
+                        <TableHead>Monthly Salary</TableHead>
+                        <TableHead>Years of Service</TableHead>
+                        {selectedBenefitType === "TERMINAL_LEAVE" && (
+                          <TableHead>Total Leave Earned</TableHead>
+                        )}
+                        <TableHead className="text-right">
+                          Calculated Amount
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {eligibleEmployees.map((employee) => {
+                        const calculation = getCalculationForEmployee(
+                          employee.id
+                        );
+                        return (
+                          <TableRow key={employee.id}>
                             <TableCell>
-                              {employee.total_leave_earned
-                                ? `${employee.total_leave_earned} days`
+                              <Checkbox
+                                checked={selectedEmployees.has(employee.id)}
+                                onCheckedChange={() =>
+                                  toggleEmployee(employee.id)
+                                }
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <div>
+                                <div className="font-medium">
+                                  {employee.first_name} {employee.last_name}
+                                </div>
+                                <div className="text-sm text-muted-foreground">
+                                  {employee.employee_number}
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {compensationService.formatCurrency(
+                                employee.current_monthly_salary
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {employee.years_of_service
+                                ? `${employee.years_of_service} years`
                                 : "-"}
                             </TableCell>
-                          )}
-                          <TableCell className="text-right">
-                            {calculation ? (
-                              <div className="flex items-center justify-end gap-2">
-                                <span className="font-medium">
-                                  {compensationService.formatCurrency(
-                                    calculation.amount
-                                  )}
-                                </span>
+                            {selectedBenefitType === "TERMINAL_LEAVE" && (
+                              <TableCell>
+                                {employee.total_leave_earned
+                                  ? `${employee.total_leave_earned} days`
+                                  : "-"}
+                              </TableCell>
+                            )}
+                            <TableCell className="text-right">
+                              {calculation ? (
+                                <div className="flex items-center justify-end gap-2">
+                                  <span className="font-medium">
+                                    {compensationService.formatCurrency(
+                                      calculation.amount
+                                    )}
+                                  </span>
+                                  <Badge variant="secondary" className="text-xs">
+                                    Calculated
+                                  </Badge>
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground">-</span>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Mobile Card View */}
+                <div className="md:hidden space-y-4">
+                  <div className="flex items-center gap-2 p-4 bg-muted/50 rounded-lg">
+                    <Checkbox
+                      checked={selectedEmployees.size === eligibleEmployees.length}
+                      onCheckedChange={toggleAll}
+                    />
+                    <span className="text-sm font-medium">
+                      Select All ({eligibleEmployees.length} employees)
+                    </span>
+                  </div>
+                  
+                  {eligibleEmployees.map((employee) => {
+                    const calculation = getCalculationForEmployee(employee.id);
+                    const isSelected = selectedEmployees.has(employee.id);
+                    
+                    return (
+                      <Card 
+                        key={employee.id} 
+                        className={`cursor-pointer transition-all ${
+                          isSelected ? 'ring-2 ring-primary bg-primary/5' : 'hover:shadow-md'
+                        }`}
+                        onClick={() => toggleEmployee(employee.id)}
+                      >
+                        <CardContent className="p-4">
+                          <div className="space-y-3">
+                            {/* Header with checkbox */}
+                            <div className="flex items-start justify-between">
+                              <div className="flex items-start gap-3">
+                                <Checkbox
+                                  checked={isSelected}
+                                  onCheckedChange={() => toggleEmployee(employee.id)}
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                                <div>
+                                  <div className="font-medium">
+                                    {employee.first_name} {employee.last_name}
+                                  </div>
+                                  <div className="text-sm text-muted-foreground">
+                                    {employee.employee_number}
+                                  </div>
+                                </div>
+                              </div>
+                              {calculation && (
                                 <Badge variant="secondary" className="text-xs">
                                   Calculated
                                 </Badge>
+                              )}
+                            </div>
+
+                            {/* Employee Details */}
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                              <div>
+                                <span className="text-muted-foreground">Monthly Salary:</span>
+                                <div className="font-medium">
+                                  {compensationService.formatCurrency(
+                                    employee.current_monthly_salary
+                                  )}
+                                </div>
                               </div>
-                            ) : (
-                              <span className="text-muted-foreground">-</span>
+                              <div>
+                                <span className="text-muted-foreground">Years of Service:</span>
+                                <div className="font-medium">
+                                  {employee.years_of_service
+                                    ? `${employee.years_of_service} years`
+                                    : "-"}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Terminal Leave specific field */}
+                            {selectedBenefitType === "TERMINAL_LEAVE" && (
+                              <div className="text-sm">
+                                <span className="text-muted-foreground">Total Leave Earned:</span>
+                                <div className="font-medium">
+                                  {employee.total_leave_earned
+                                    ? `${employee.total_leave_earned} days`
+                                    : "-"}
+                                </div>
+                              </div>
                             )}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
+
+                            {/* Calculated Amount */}
+                            {calculation && (
+                              <div className="pt-2 border-t">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm text-muted-foreground">
+                                    Calculated Amount:
+                                  </span>
+                                  <span className="text-lg font-semibold text-primary">
+                                    {compensationService.formatCurrency(calculation.amount)}
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </>
             )}
           </CardContent>
         </Card>

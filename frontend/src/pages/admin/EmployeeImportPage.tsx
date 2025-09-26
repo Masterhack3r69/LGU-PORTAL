@@ -35,16 +35,19 @@ const EmployeeImportPage: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="container space-y-6">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Employee Import</h1>
-          <p className="text-muted-foreground mt-2">
-            Bulk import employee data from Excel files with automatic user account creation
-          </p>
+      <div className="sticky top-0 z-10 bg-background pb-4 pt-2 border-b border-border">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-semibold tracking-tight">Employee Import</h1>
+            <p className="text-muted-foreground text-sm sm:text-base">
+              Bulk import employee data from Excel files with automatic user account creation
+            </p>
+          </div>
         </div>
       </div>
+    
 
       {/* System Information */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

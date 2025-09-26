@@ -255,10 +255,23 @@ class PayrollService {
 
   // New PDF payslip generation methods
   async generatePayslipPDF(payrollItemId: number): Promise<Blob> {
-    return api.get<Blob>(`/payroll/items/${payrollItemId}/payslip`, {
+    const response = await api.get<Blob>(`/payroll/items/${payrollItemId}/payslip`, {
       responseType: 'blob'
     });
+    
+    // Validate the blob response
+    if (!(response instanceof Blob)) {
+      throw new Error('Invalid response format: Expected blob');
+    }
+    
+    if (response.size === 0) {
+      throw new Error('Empty PDF file received');
+    }
+    
+    return response;
   }
+
+
 
   async downloadPayslipAsBase64(payrollItemId: number): Promise<PayrollResponse<{
     payslip_id: string;

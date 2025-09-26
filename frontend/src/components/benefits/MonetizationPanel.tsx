@@ -208,7 +208,7 @@ export function MonetizationPanel({ onSuccess }: MonetizationPanelProps) {
                 onValueChange={(value) => setSelectedEmployeeId(parseInt(value))}
                 disabled={loading}
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select employee" />
                 </SelectTrigger>
                 <SelectContent>

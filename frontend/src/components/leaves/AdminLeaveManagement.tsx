@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Tooltip,
   TooltipContent,
@@ -26,12 +26,16 @@ const AdminLeaveManagement: React.FC = () => {
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TooltipProvider>
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-3 h-auto p-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
             <Tooltip>
               <TooltipTrigger asChild>
                 <TabsTrigger 
                   value="applications" 
-                  className="flex items-center justify-center space-x-2 hover:bg-muted/50 hover:text-foreground transition-colors data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                  className={`flex items-center gap-2 rounded-md transition-all ${
+                    activeTab === "overview"
+                      ? "bg-white dark:bg-gray-700 shadow-sm border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100"
+                      : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700"
+                  }`}
                 >
                   <Users className="h-4 w-4" />
                   <span className="hidden sm:inline">Applications</span>
@@ -46,7 +50,11 @@ const AdminLeaveManagement: React.FC = () => {
               <TooltipTrigger asChild>
                 <TabsTrigger 
                   value="balances" 
-                  className="flex items-center justify-center space-x-2 hover:bg-muted/50 hover:text-foreground transition-colors data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                 className={`flex items-center gap-2 rounded-md transition-all ${
+                    activeTab === "overview"
+                      ? "bg-white dark:bg-gray-700 shadow-sm border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100"
+                      : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700"
+                  }`}
                 >
                   <BarChart3 className="h-4 w-4" />
                   <span className="hidden sm:inline">Balances</span>
@@ -61,7 +69,11 @@ const AdminLeaveManagement: React.FC = () => {
               <TooltipTrigger asChild>
                 <TabsTrigger 
                   value="types" 
-                  className="flex items-center justify-center space-x-2 hover:bg-muted/50 hover:text-foreground transition-colors data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                  className={`flex items-center gap-2 rounded-md transition-all ${
+                    activeTab === "overview"
+                      ? "bg-white dark:bg-gray-700 shadow-sm border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100"
+                      : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700"
+                  }`}
                 >
                   <Settings className="h-4 w-4" />
                   <span className="hidden sm:inline">Leave Types</span>

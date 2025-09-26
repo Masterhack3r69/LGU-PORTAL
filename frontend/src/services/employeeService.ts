@@ -140,7 +140,7 @@ class EmployeeService {
         ...(filters.name && { search: filters.name }),                                                                          
         ...(filters.department && { department: filters.department }),                                                          
         ...(filters.position && { department: filters.position }),                                                                
-        ...(filters.status && { employment_status: filters.status }),                         
+        ...(filters.status && { employment_status: filters.status === 'active' ? 'Active' : filters.status }),                         
       };                                                                                                                        
                                                                                                                                 
       const response = await apiService.get<BackendEmployeeResponse>('/employees', params);                                     

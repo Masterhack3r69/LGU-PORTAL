@@ -145,11 +145,10 @@ export function PayrollManagementPage() {
       <div className="sticky top-0 z-10 bg-background pb-4 pt-2 border-b border-border">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-              <Calculator className="h-6 w-6" />
+            <h1 className="text-xl font-semibold tracking-tight">
               Payroll Management
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground text-sm sm:text-base">
               Process payroll calculations and make adjustments
             </p>
           </div>

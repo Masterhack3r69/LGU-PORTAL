@@ -272,7 +272,7 @@ const ExcelImport: React.FC<ExcelImportProps> = ({ onImportComplete }) => {
       </div>
 
       {/* Progress Indicator */}
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-4  px-5">
         {[
           { key: 'upload', label: 'Upload', icon: Upload },
           { key: 'preview', label: 'Preview', icon: Eye },

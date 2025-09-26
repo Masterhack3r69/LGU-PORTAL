@@ -1,384 +1,437 @@
-// services/payslipPdfService.js - PDF payslip generation service
-const PDFDocument = require('pdfkit');
-const fs = require('fs');
-const path = require('path');
+// services/payslipPdfService.js - Professional Payslip PDF Generation Service
+const PDFDocument = require("pdfkit");
 
 class PayslipPdfService {
-    constructor() {
-        this.pageWidth = 612; // Letter width in points
-        this.pageHeight = 792; // Letter height in points
-        this.margin = 50;
-        this.contentWidth = this.pageWidth - (2 * this.margin);
-    }
+  constructor() {
+    this.pageWidth = 612; // Letter width
+    this.pageHeight = 792; // Letter height
+    this.margin = 60; // Professional margins
+    this.contentWidth = this.pageWidth - 2 * this.margin;
+    this.colors = {
+      primary: "#1a1a1a", // Deep black for main text
+      secondary: "#666666", // Medium gray for labels
+      accent: "#2563eb", // Professional blue
+      lightGray: "#f8f9fa", // Very light background
+      border: "#e1e5e9", // Subtle borders
+      white: "#ffffff",
+    };
+  }
 
-    /**
-     * Generate a professional payslip PDF
-     * @param {Object} payslipData - Complete payslip data
-     * @param {Buffer} companyLogo - Optional company logo buffer
-     * @returns {Buffer} PDF buffer
-     */
-    async generatePayslipPDF(payslipData, companyLogo = null) {
-        return new Promise((resolve, reject) => {
-            try {
-                const doc = new PDFDocument({
-                    size: 'LETTER',
-                    margin: this.margin,
-                    bufferPages: true
-                });
-
-                const buffers = [];
-                doc.on('data', buffers.push.bind(buffers));
-                doc.on('end', () => {
-                    const pdfBuffer = Buffer.concat(buffers);
-                    resolve(pdfBuffer);
-                });
-
-                this.drawPayslipTemplate(doc, payslipData, companyLogo);
-                doc.end();
-
-            } catch (error) {
-                reject(error);
-            }
+  async generatePayslipPDF(payslipData) {
+    return new Promise((resolve, reject) => {
+      try {
+        const doc = new PDFDocument({
+          size: "LETTER",
+          margin: this.margin,
+          bufferPages: true,
         });
+        const buffers = [];
+        doc.on("data", buffers.push.bind(buffers));
+        doc.on("end", () => resolve(Buffer.concat(buffers)));
+        doc.on("error", reject);
+
+        this.drawPayslipTemplate(doc, payslipData);
+        doc.end();
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+
+  drawPayslipTemplate(doc, data) {
+    if (!data.employee || !data.calculation) {
+      throw new Error("Employee and calculation data are required");
     }
 
-    /**
-     * Draw the complete payslip template
-     */
-    drawPayslipTemplate(doc, data, companyLogo) {
-        // Company Header
-        this.drawCompanyHeader(doc, data, companyLogo);
+    this.drawHeader(doc, data);
+    this.drawEmployeeSection(doc, data);
+    this.drawPayrollTable(doc, data);
+    this.drawSummarySection(doc, data);
+    this.drawFooter(doc);
+  }
 
-        // Employee Information Section
-        this.drawEmployeeInfo(doc, data);
+  // --- Professional Drawing Methods ---
 
-        // Payroll Period Section
-        this.drawPayrollPeriod(doc, data);
+  drawHeader(doc, data) {
+    // Company header section
+    doc
+      .font("Helvetica-Bold")
+      .fontSize(20)
+      .fillColor(this.colors.primary)
+      .text("Employee Management System", this.margin, 60);
 
-        // Earnings Section
-        this.drawEarningsSection(doc, data);
+    doc
+      .font("Helvetica")
+      .fontSize(10)
+      .fillColor(this.colors.secondary)
+      .text("Government Office Complex, City Hall", this.margin, 85)
+      .text("Phone: (02) 123-4567 | Email: hr@government.ph", this.margin, 100);
 
-        // Deductions Section
-        this.drawDeductionsSection(doc, data);
+    // Payslip title and period
+    doc
+      .font("Helvetica-Bold")
+      .fontSize(16)
+      .fillColor(this.colors.accent)
+      .text("PAYSLIP", this.pageWidth - this.margin - 100, 60, {
+        width: 100,
+        align: "right",
+      });
 
-        // Net Pay Section
-        this.drawNetPaySection(doc, data);
+    doc
+      .font("Helvetica")
+      .fontSize(9)
+      .fillColor(this.colors.secondary)
+      .text(
+        data.payroll_period || "Current Period",
+        this.pageWidth - this.margin - 120,
+        80,
+        { width: 120, align: "right" }
+      )
+      .text(
+        `Pay Date: ${new Date(data.pay_date).toLocaleDateString("en-PH")}`,
+        this.pageWidth - this.margin - 120,
+        95,
+        { width: 120, align: "right" }
+      );
 
-        // Payment Details
-        this.drawPaymentDetails(doc, data);
+    // Header separator line
+    doc
+      .strokeColor(this.colors.border)
+      .lineWidth(1)
+      .moveTo(this.margin, 125)
+      .lineTo(this.pageWidth - this.margin, 125)
+      .stroke();
 
-        // Footer
-        this.drawFooter(doc, data);
-    }
+    doc.y = 140;
+  }
 
-    /**
-     * Draw company header with logo
-     */
-    drawCompanyHeader(doc, data, companyLogo) {
-        const headerY = 50;
+  drawEmployeeSection(doc, data) {
+    const startY = doc.y;
 
-        // Company name
-        doc.font('Helvetica-Bold')
-           .fontSize(20)
-           .fillColor('#1a365d')
-           .text('YOUR COMPANY NAME', this.margin, headerY);
+    // Employee information in clean layout
+    doc
+      .font("Helvetica-Bold")
+      .fontSize(11)
+      .fillColor(this.colors.secondary)
+      .text("EMPLOYEE INFORMATION", this.margin, startY);
 
-        // Company address
-        doc.font('Helvetica')
-           .fontSize(10)
-           .fillColor('#4a5568')
-           .text('123 Business Street, City, Province 1234', this.margin, headerY + 25)
-           .text('Phone: (02) 123-4567 | Email: hr@company.com', this.margin, headerY + 40);
+    const infoY = startY + 20;
+    doc
+      .font("Helvetica-Bold")
+      .fontSize(12)
+      .fillColor(this.colors.primary)
+      .text(data.employee.name, this.margin, infoY);
 
-        // Payslip title
-        doc.font('Helvetica-Bold')
-           .fontSize(16)
-           .fillColor('#2d3748')
-           .text('PAYSLIP', this.margin, headerY + 70);
+    doc
+      .font("Helvetica")
+      .fontSize(10)
+      .fillColor(this.colors.secondary)
+      .text(
+        `Employee ID: ${data.employee.employee_number}`,
+        this.margin,
+        infoY + 18
+      )
+      .text(`Position: ${data.employee.position}`, this.margin, infoY + 33);
 
-        // Date generated
-        doc.font('Helvetica')
-           .fontSize(10)
-           .fillColor('#718096')
-           .text(`Generated: ${new Date().toLocaleDateString()}`, this.margin, headerY + 90);
+    doc.y = infoY + 60;
+  }
 
-        // Draw line separator
-        doc.moveTo(this.margin, headerY + 110)
-           .lineTo(this.pageWidth - this.margin, headerY + 110)
-           .stroke('#e2e8f0');
-    }
+  drawPayrollTable(doc, data) {
+    const tableY = doc.y;
+    const colWidths = [280, 120, 120]; // Description, Earnings, Deductions
+    const rowHeight = 25;
 
-    /**
-     * Draw employee information section
-     */
-    drawEmployeeInfo(doc, data) {
-        const startY = 140;
+    // Table header
+    doc
+      .font("Helvetica-Bold")
+      .fontSize(11)
+      .fillColor(this.colors.secondary)
+      .text("EARNINGS & DEDUCTIONS", this.margin, tableY);
 
-        doc.font('Helvetica-Bold')
-           .fontSize(12)
-           .fillColor('#2d3748')
-           .text('EMPLOYEE INFORMATION', this.margin, startY);
+    const headerY = tableY + 25;
 
-        doc.font('Helvetica')
-           .fontSize(10)
-           .fillColor('#4a5568');
+    // Header background
+    doc
+      .rect(this.margin, headerY, this.contentWidth, rowHeight)
+      .fill(this.colors.lightGray);
 
-        const employeeInfo = [
-            { label: 'Employee ID:', value: data.employee.employee_number },
-            { label: 'Name:', value: data.employee.name },
-            { label: 'Position:', value: data.employee.position },
-            { label: 'Department:', value: data.employee.plantilla_position || 'N/A' }
-        ];
+    // Header text
+    doc.font("Helvetica-Bold").fontSize(10).fillColor(this.colors.primary);
+    doc.text("Description", this.margin + 10, headerY + 8);
+    doc.text("Earnings", this.margin + colWidths[0] + 10, headerY + 8, {
+      width: colWidths[1] - 20,
+      align: "right",
+    });
+    doc.text(
+      "Deductions",
+      this.margin + colWidths[0] + colWidths[1] + 10,
+      headerY + 8,
+      { width: colWidths[2] - 20, align: "right" }
+    );
 
-        let currentY = startY + 25;
-        employeeInfo.forEach((info, index) => {
-            doc.text(info.label, this.margin, currentY)
-               .text(info.value, this.margin + 120, currentY);
-            currentY += 15;
-        });
-    }
+    let currentY = headerY + rowHeight;
 
-    /**
-     * Draw payroll period section
-     */
-    drawPayrollPeriod(doc, data) {
-        const startY = 220;
+    // Earnings rows
+    const earnings = [
+      { description: "Basic Pay", amount: data.calculation.basic_pay },
+      ...(data.line_items.filter((item) => item.line_type === "Allowance") ||
+        []),
+    ];
 
-        doc.font('Helvetica-Bold')
-           .fontSize(12)
-           .fillColor('#2d3748')
-           .text('PAYROLL PERIOD', this.margin, startY);
+    earnings.forEach((item, index) => {
+      if (index % 2 === 1) {
+        doc
+          .rect(this.margin, currentY, this.contentWidth, rowHeight)
+          .fill("#fafafa");
+      }
 
-        doc.font('Helvetica')
-           .fontSize(10)
-           .fillColor('#4a5568')
-           .text(`Period: ${data.payroll_period || 'N/A'}`, this.margin, startY + 25)
-           .text(`Working Days: ${data.calculation.working_days}`, this.margin, startY + 40)
-           .text(`Pay Date: ${data.pay_date || new Date().toLocaleDateString()}`, this.margin, startY + 55);
-    }
+      doc.font("Helvetica").fontSize(10).fillColor(this.colors.primary);
+      doc.text(item.description, this.margin + 10, currentY + 8);
+      doc.text(
+        this.formatCurrency(item.amount),
+        this.margin + colWidths[0] + 10,
+        currentY + 8,
+        { width: colWidths[1] - 20, align: "right" }
+      );
+      doc.text(
+        "",
+        this.margin + colWidths[0] + colWidths[1] + 10,
+        currentY + 8,
+        { width: colWidths[2] - 20, align: "right" }
+      );
 
-    /**
-     * Draw earnings section
-     */
-    drawEarningsSection(doc, data) {
-        const startY = 300;
+      currentY += rowHeight;
+    });
 
-        doc.font('Helvetica-Bold')
-           .fontSize(12)
-           .fillColor('#2d3748')
-           .text('EARNINGS', this.margin, startY);
-
-        // Table header
-        doc.font('Helvetica-Bold')
-           .fontSize(9)
-           .fillColor('#4a5568')
-           .text('Description', this.margin, startY + 25)
-           .text('Amount', this.margin + 300, startY + 25);
-
-        doc.moveTo(this.margin, startY + 35)
-           .lineTo(this.pageWidth - this.margin, startY + 35)
-           .stroke('#e2e8f0');
-
-        // Earnings items
-        doc.font('Helvetica')
-           .fontSize(9)
-           .fillColor('#2d3748');
-
-        let currentY = startY + 45;
-        const earnings = [
-            { description: 'Basic Pay', amount: data.calculation.basic_pay },
-            { description: 'Allowances', amount: data.calculation.total_allowances }
-        ];
-
-        // Add individual allowances if available
-        if (data.line_items) {
-            data.line_items
-                .filter(item => item.line_type === 'Allowance')
-                .forEach(item => {
-                    earnings.push({
-                        description: `  ${item.description}`,
-                        amount: item.amount
-                    });
-                });
+    // Deductions rows
+    const deductions =
+      data.line_items.filter((item) => item.line_type === "Deduction") || [];
+    if (deductions.length === 0) {
+      if (earnings.length % 2 === 1) {
+        doc
+          .rect(this.margin, currentY, this.contentWidth, rowHeight)
+          .fill("#fafafa");
+      }
+      doc.font("Helvetica").fontSize(10).fillColor(this.colors.primary);
+      doc.text("No Deductions", this.margin + 10, currentY + 8);
+      doc.text("", this.margin + colWidths[0] + 10, currentY + 8, {
+        width: colWidths[1] - 20,
+        align: "right",
+      });
+      doc.text(
+        this.formatCurrency(0),
+        this.margin + colWidths[0] + colWidths[1] + 10,
+        currentY + 8,
+        { width: colWidths[2] - 20, align: "right" }
+      );
+      currentY += rowHeight;
+    } else {
+      deductions.forEach((item, index) => {
+        if ((earnings.length + index) % 2 === 1) {
+          doc
+            .rect(this.margin, currentY, this.contentWidth, rowHeight)
+            .fill("#fafafa");
         }
 
-        earnings.forEach(earning => {
-            doc.text(earning.description, this.margin, currentY)
-               .text(this.formatCurrency(earning.amount), this.margin + 300, currentY);
-            currentY += 15;
+        doc.font("Helvetica").fontSize(10).fillColor(this.colors.primary);
+        doc.text(item.description, this.margin + 10, currentY + 8);
+        doc.text("", this.margin + colWidths[0] + 10, currentY + 8, {
+          width: colWidths[1] - 20,
+          align: "right",
         });
+        doc.text(
+          this.formatCurrency(item.amount),
+          this.margin + colWidths[0] + colWidths[1] + 10,
+          currentY + 8,
+          { width: colWidths[2] - 20, align: "right" }
+        );
 
-        // Total earnings
-        doc.font('Helvetica-Bold')
-           .text('Total Earnings', this.margin, currentY + 10)
-           .text(this.formatCurrency(data.calculation.gross_pay), this.margin + 300, currentY + 10);
+        currentY += rowHeight;
+      });
     }
 
-    /**
-     * Draw deductions section
-     */
-    drawDeductionsSection(doc, data) {
-        const startY = 450;
+    // Totals row
+    doc
+      .rect(this.margin, currentY, this.contentWidth, rowHeight)
+      .fill(this.colors.lightGray);
+    doc.font("Helvetica-Bold").fontSize(10).fillColor(this.colors.primary);
+    doc.text("TOTALS", this.margin + 10, currentY + 8);
+    doc.text(
+      this.formatCurrency(data.calculation.gross_pay),
+      this.margin + colWidths[0] + 10,
+      currentY + 8,
+      { width: colWidths[1] - 20, align: "right" }
+    );
+    doc.text(
+      this.formatCurrency(data.calculation.total_deductions),
+      this.margin + colWidths[0] + colWidths[1] + 10,
+      currentY + 8,
+      { width: colWidths[2] - 20, align: "right" }
+    );
 
-        doc.font('Helvetica-Bold')
-           .fontSize(12)
-           .fillColor('#2d3748')
-           .text('DEDUCTIONS', this.margin, startY);
+    doc.y = currentY + rowHeight + 20;
+  }
 
-        // Table header
-        doc.font('Helvetica-Bold')
-           .fontSize(9)
-           .fillColor('#4a5568')
-           .text('Description', this.margin, startY + 25)
-           .text('Amount', this.margin + 300, startY + 25);
+  drawSummarySection(doc, data) {
+    const summaryY = doc.y;
 
-        doc.moveTo(this.margin, startY + 35)
-           .lineTo(this.pageWidth - this.margin, startY + 35)
-           .stroke('#e2e8f0');
+    // Summary calculations
+    doc
+      .strokeColor(this.colors.border)
+      .lineWidth(1)
+      .moveTo(this.margin + 200, summaryY)
+      .lineTo(this.pageWidth - this.margin, summaryY)
+      .stroke();
 
-        // Deductions items
-        doc.font('Helvetica')
-           .fontSize(9)
-           .fillColor('#2d3748');
+    const rightAlign = this.pageWidth - this.margin - 120;
 
-        let currentY = startY + 45;
-        const deductions = [
-            { description: 'Tax', amount: 0 },
-            { description: 'SSS', amount: 0 },
-            { description: 'PhilHealth', amount: 0 },
-            { description: 'Pag-IBIG', amount: 0 }
-        ];
+    // Gross earnings
+    doc
+      .font("Helvetica")
+      .fontSize(11)
+      .fillColor(this.colors.secondary)
+      .text("Gross Earnings:", rightAlign - 100, summaryY + 15);
+    doc
+      .font("Helvetica-Bold")
+      .fontSize(11)
+      .fillColor(this.colors.primary)
+      .text(
+        this.formatCurrency(data.calculation.gross_pay),
+        rightAlign,
+        summaryY + 15,
+        { width: 120, align: "right" }
+      );
 
-        // Add individual deductions if available
-        if (data.line_items) {
-            data.line_items
-                .filter(item => item.line_type === 'Deduction')
-                .forEach(item => {
-                    deductions.push({
-                        description: `  ${item.description}`,
-                        amount: item.amount
-                    });
-                });
-        }
+    // Total deductions
+    doc
+      .font("Helvetica")
+      .fontSize(11)
+      .fillColor(this.colors.secondary)
+      .text("Total Deductions:", rightAlign - 100, summaryY + 35);
+    doc
+      .font("Helvetica-Bold")
+      .fontSize(11)
+      .fillColor(this.colors.primary)
+      .text(
+        this.formatCurrency(data.calculation.total_deductions),
+        rightAlign,
+        summaryY + 35,
+        { width: 120, align: "right" }
+      );
 
-        deductions.forEach(deduction => {
-            doc.text(deduction.description, this.margin, currentY)
-               .text(this.formatCurrency(deduction.amount), this.margin + 300, currentY);
-            currentY += 15;
-        });
+    // Net pay separator
+    doc
+      .strokeColor(this.colors.border)
+      .lineWidth(1)
+      .moveTo(rightAlign - 100, summaryY + 55)
+      .lineTo(this.pageWidth - this.margin, summaryY + 55)
+      .stroke();
 
-        // Total deductions
-        doc.font('Helvetica-Bold')
-           .text('Total Deductions', this.margin, currentY + 10)
-           .text(this.formatCurrency(data.calculation.total_deductions), this.margin + 300, currentY + 10);
-    }
+    // Net pay - prominent
+    doc
+      .font("Helvetica-Bold")
+      .fontSize(14)
+      .fillColor(this.colors.accent)
+      .text("NET PAY:", rightAlign - 100, summaryY + 65);
+    doc
+      .font("Helvetica-Bold")
+      .fontSize(16)
+      .fillColor(this.colors.accent)
+      .text(
+        this.formatCurrency(data.calculation.net_pay),
+        rightAlign,
+        summaryY + 65,
+        { width: 120, align: "right" }
+      );
 
-    /**
-     * Draw net pay section
-     */
-    drawNetPaySection(doc, data) {
-        const startY = 600;
+    doc.y = summaryY + 100;
+  }
 
-        // Net pay box
-        doc.rect(this.margin, startY, this.contentWidth, 60)
-           .fillAndStroke('#f7fafc', '#e2e8f0');
+  drawFooter(doc) {
+    const footerY = this.pageHeight - 80;
 
-        doc.font('Helvetica-Bold')
-           .fontSize(14)
-           .fillColor('#1a365d')
-           .text('NET PAY', this.margin + 20, startY + 15);
+    // Footer separator
+    doc
+      .strokeColor(this.colors.border)
+      .lineWidth(0.5)
+      .moveTo(this.margin, footerY)
+      .lineTo(this.pageWidth - this.margin, footerY)
+      .stroke();
 
-        doc.font('Helvetica-Bold')
-           .fontSize(16)
-           .fillColor('#2d3748')
-           .text(this.formatCurrency(data.calculation.net_pay), this.margin + 20, startY + 35);
-    }
+    // Footer text
+    doc
+      .font("Helvetica")
+      .fontSize(8)
+      .fillColor(this.colors.secondary)
+      .text(
+        "This payslip is system-generated and does not require a signature.",
+        this.margin,
+        footerY + 15,
+        { align: "center", width: this.contentWidth }
+      );
 
-    /**
-     * Draw payment details
-     */
-    drawPaymentDetails(doc, data) {
-        const startY = 680;
+    doc.text(
+      "For questions or discrepancies, please contact Human Resources at hr@government.ph",
+      this.margin,
+      footerY + 30,
+      { align: "center", width: this.contentWidth }
+    );
+  }
 
-        doc.font('Helvetica-Bold')
-           .fontSize(10)
-           .fillColor('#2d3748')
-           .text('PAYMENT DETAILS', this.margin, startY);
+  // --- Helper Methods ---
 
-        doc.font('Helvetica')
-           .fontSize(9)
-           .fillColor('#4a5568')
-           .text(`Payment Method: ${data.payment_method || 'Bank Transfer'}`, this.margin, startY + 20)
-           .text(`Account Number: ${data.account_number || 'N/A'}`, this.margin, startY + 35)
-           .text(`Bank: ${data.bank_name || 'N/A'}`, this.margin, startY + 50);
-    }
+  formatCurrency(amount) {
+    if (typeof amount !== "number") return amount;
+    return new Intl.NumberFormat("en-PH", {
+      style: "currency",
+      currency: "PHP",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  }
 
-    /**
-     * Draw footer
-     */
-    drawFooter(doc, data) {
-        const footerY = this.pageHeight - 80;
-
-        // Line separator
-        doc.moveTo(this.margin, footerY)
-           .lineTo(this.pageWidth - this.margin, footerY)
-           .stroke('#e2e8f0');
-
-        doc.font('Helvetica')
-           .fontSize(8)
-           .fillColor('#718096')
-           .text('This is a system-generated payslip. Please contact HR for any discrepancies.', this.margin, footerY + 15)
-           .text(`Generated by: ${data.generated_by || 'System'} | ID: ${data.payslip_id}`, this.margin, footerY + 30);
-    }
-
-    /**
-     * Format currency value
-     */
-    formatCurrency(amount) {
-        return new Intl.NumberFormat('en-PH', {
-            style: 'currency',
-            currency: 'PHP',
-            minimumFractionDigits: 2
-        }).format(amount);
-    }
-
-    /**
-     * Generate sample payslip data for testing
-     */
-    generateSampleData() {
-        return {
-            payslip_id: 'PS-2024-001',
-            generated_at: new Date().toISOString(),
-            generated_by: 'System',
-            employee: {
-                employee_number: 'EMP001',
-                name: 'John Doe',
-                position: 'Software Engineer',
-                department: 'IT Department'
-            },
-            payroll_period: 'January 2024',
-            pay_date: '2024-01-31',
-            calculation: {
-                working_days: 22,
-                daily_rate: 1000,
-                basic_pay: 22000,
-                total_allowances: 5000,
-                total_deductions: 3500,
-                gross_pay: 27000,
-                net_pay: 23500
-            },
-            line_items: [
-                { line_type: 'Allowance', description: 'Transportation Allowance', amount: 2000 },
-                { line_type: 'Allowance', description: 'Meal Allowance', amount: 3000 },
-                { line_type: 'Deduction', description: 'Tax Withholding', amount: 2000 },
-                { line_type: 'Deduction', description: 'SSS Contribution', amount: 1000 },
-                { line_type: 'Deduction', description: 'PhilHealth', amount: 500 }
-            ],
-            payment_method: 'Bank Transfer',
-            account_number: '****1234',
-            bank_name: 'BDO'
-        };
-    }
+  // Sample data generator for testing
+  generateSampleData() {
+    return {
+      employee: {
+        name: "Juan Dela Cruz",
+        employee_number: "EMP001",
+        position: "Software Developer",
+      },
+      payroll_period: "January 1-15, 2024",
+      pay_date: new Date(),
+      calculation: {
+        basic_pay: 25000.0,
+        gross_pay: 28500.0,
+        total_deductions: 3200.0,
+        net_pay: 25300.0,
+      },
+      line_items: [
+        {
+          description: "Transportation Allowance",
+          amount: 2000.0,
+          line_type: "Allowance",
+        },
+        {
+          description: "Meal Allowance",
+          amount: 1500.0,
+          line_type: "Allowance",
+        },
+        {
+          description: "SSS Contribution",
+          amount: 1200.0,
+          line_type: "Deduction",
+        },
+        { description: "PhilHealth", amount: 800.0, line_type: "Deduction" },
+        { description: "Pag-IBIG", amount: 600.0, line_type: "Deduction" },
+        {
+          description: "Withholding Tax",
+          amount: 600.0,
+          line_type: "Deduction",
+        },
+      ],
+    };
+  }
 }
 
 module.exports = new PayslipPdfService();

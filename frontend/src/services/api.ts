@@ -48,11 +48,23 @@ class ApiService {
   // Generic API methods
   public async get<T>(url: string, config?: Record<string, unknown>): Promise<T> {
     const response = await this.api.get(url, config);
+    
+    // For blob responses, return the response data directly
+    if (config?.responseType === 'blob') {
+      return response.data as T;
+    }
+    
     return response.data;
   }
 
   public async post<T>(url: string, data?: unknown, config?: Record<string, unknown>): Promise<T> {
     const response = await this.api.post(url, data, config);
+    
+    // For blob responses, return the response data directly
+    if (config?.responseType === 'blob') {
+      return response.data as T;
+    }
+    
     return response.data;
   }
 

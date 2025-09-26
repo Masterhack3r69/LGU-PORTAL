@@ -23,6 +23,7 @@ class PayrollItemController {
         this.getEmployeePayrollItems = this.getEmployeePayrollItems.bind(this);
         this.adjustWorkingDays = this.adjustWorkingDays.bind(this);
         this.addManualAdjustment = this.addManualAdjustment.bind(this);
+        this._getCalculationDetailsData = this._getCalculationDetailsData.bind(this);
         this.getCalculationDetails = this.getCalculationDetails.bind(this);
         this.generatePayslip = this.generatePayslip.bind(this);
         this.downloadPayslip = this.downloadPayslip.bind(this);
@@ -464,57 +465,65 @@ class PayrollItemController {
         }
     }
 
-    // Get payroll item calculation details
+    // Get payroll item calculation details (internal method)
+    async _getCalculationDetailsData(id) {
+        // Get payroll item with line items
+        const itemResult = await PayrollItem.findById(id);
+        if (!itemResult.success || !itemResult.data) {
+            throw new Error('Payroll item not found');
+        }
+
+        const payrollItem = itemResult.data;
+
+        // Get employee data for context
+        const employeeResult = await Employee.findById(payrollItem.employee_id);
+        if (!employeeResult.success) {
+            throw new Error('Employee not found');
+        }
+
+        const employee = employeeResult.data;
+
+        // Prepare calculation breakdown
+        return {
+            employee: {
+                id: employee.id,
+                employee_number: employee.employee_number,
+                name: `${employee.first_name} ${employee.last_name}`,
+                position: employee.plantilla_position,
+                current_monthly_salary: employee.current_monthly_salary,
+                current_daily_rate: employee.current_daily_rate
+            },
+            calculation: {
+                working_days: payrollItem.working_days,
+                daily_rate: payrollItem.daily_rate,
+                basic_pay: payrollItem.basic_pay,
+                basic_pay_calculation: `₱${payrollItem.daily_rate} × ${payrollItem.working_days} days = ₱${payrollItem.basic_pay}`,
+                total_allowances: payrollItem.total_allowances,
+                total_deductions: payrollItem.total_deductions,
+                gross_pay: payrollItem.gross_pay,
+                gross_pay_calculation: `₱${payrollItem.basic_pay} + ₱${payrollItem.total_allowances} = ₱${payrollItem.gross_pay}`,
+                net_pay: payrollItem.net_pay,
+                net_pay_calculation: `₱${payrollItem.gross_pay} - ₱${payrollItem.total_deductions} = ₱${payrollItem.net_pay}`,
+                status: payrollItem.status
+            },
+            line_items: payrollItem.line_items || []
+        };
+    }
+
+    // Get payroll item calculation details (API endpoint)
     async getCalculationDetails(req, res) {
         try {
             const { id } = req.params;
-
-            // Get payroll item with line items
-            const itemResult = await PayrollItem.findById(id);
-            if (!itemResult.success || !itemResult.data) {
-                return errorResponse(res, 'Payroll item not found', 404);
-            }
-
-            const payrollItem = itemResult.data;
-
-            // Get employee data for context
-            const employeeResult = await Employee.findById(payrollItem.employee_id);
-            if (!employeeResult.success) {
-                return errorResponse(res, 'Employee not found', 404);
-            }
-
-            const employee = employeeResult.data;
-
-            // Prepare calculation breakdown
-            const calculationDetails = {
-                employee: {
-                    id: employee.id,
-                    employee_number: employee.employee_number,
-                    name: `${employee.first_name} ${employee.last_name}`,
-                    position: employee.plantilla_position,
-                    current_monthly_salary: employee.current_monthly_salary,
-                    current_daily_rate: employee.current_daily_rate
-                },
-                calculation: {
-                    working_days: payrollItem.working_days,
-                    daily_rate: payrollItem.daily_rate,
-                    basic_pay: payrollItem.basic_pay,
-                    basic_pay_calculation: `₱${payrollItem.daily_rate} × ${payrollItem.working_days} days = ₱${payrollItem.basic_pay}`,
-                    total_allowances: payrollItem.total_allowances,
-                    total_deductions: payrollItem.total_deductions,
-                    gross_pay: payrollItem.gross_pay,
-                    gross_pay_calculation: `₱${payrollItem.basic_pay} + ₱${payrollItem.total_allowances} = ₱${payrollItem.gross_pay}`,
-                    net_pay: payrollItem.net_pay,
-                    net_pay_calculation: `₱${payrollItem.gross_pay} - ₱${payrollItem.total_deductions} = ₱${payrollItem.net_pay}`,
-                    status: payrollItem.status
-                },
-                line_items: payrollItem.line_items || []
-            };
-
+            const calculationDetails = await this._getCalculationDetailsData(id);
             return successResponse(res, calculationDetails, 'Calculation details retrieved successfully');
-
         } catch (error) {
             console.error('Get calculation details error:', error);
+            if (error.message === 'Payroll item not found') {
+                return errorResponse(res, 'Payroll item not found', 404);
+            }
+            if (error.message === 'Employee not found') {
+                return errorResponse(res, 'Employee not found', 404);
+            }
             return errorResponse(res, 'Internal server error', 500);
         }
     }
@@ -542,17 +551,14 @@ class PayrollItemController {
             }
 
             // Get complete calculation details
-            const detailsResult = await this.getCalculationDetails(req, res);
-            if (!detailsResult.success) {
-                return detailsResult;
-            }
+            const calculationDetails = await this._getCalculationDetailsData(id);
 
             // Generate PDF payslip
             const payslipData = {
                 payslip_id: id,
                 generated_at: new Date().toISOString(),
                 generated_by: userId,
-                ...detailsResult.data
+                ...calculationDetails
             };
 
             // Import PDF service
@@ -560,6 +566,11 @@ class PayrollItemController {
 
             try {
                 const pdfBuffer = await payslipPdfService.generatePayslipPDF(payslipData);
+
+                // Validate PDF buffer
+                if (!pdfBuffer || pdfBuffer.length === 0) {
+                    throw new Error('Generated PDF is empty');
+                }
 
                 // Set response headers for PDF download
                 const fileName = `payslip_${payslipData.employee.employee_number}_${Date.now()}.pdf`;
@@ -614,17 +625,14 @@ class PayrollItemController {
             }
 
             // Get complete calculation details
-            const detailsResult = await this.getCalculationDetails(req, res);
-            if (!detailsResult.success) {
-                return detailsResult;
-            }
+            const calculationDetails = await this._getCalculationDetailsData(id);
 
             // Generate PDF payslip
             const payslipData = {
                 payslip_id: id,
                 generated_at: new Date().toISOString(),
                 generated_by: userId,
-                ...detailsResult.data
+                ...calculationDetails
             };
 
             // Import PDF service
@@ -633,8 +641,18 @@ class PayrollItemController {
             try {
                 const pdfBuffer = await payslipPdfService.generatePayslipPDF(payslipData);
 
+                // Validate PDF buffer
+                if (!pdfBuffer || pdfBuffer.length === 0) {
+                    throw new Error('Generated PDF is empty');
+                }
+
                 // Convert PDF buffer to base64 for JSON response
                 const pdfBase64 = pdfBuffer.toString('base64');
+
+                // Validate base64 conversion
+                if (!pdfBase64 || pdfBase64.length === 0) {
+                    throw new Error('Failed to convert PDF to base64');
+                }
 
                 // Return JSON with PDF data
                 return successResponse(res, {

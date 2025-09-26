@@ -18,6 +18,7 @@ export function PayrollReportsPage() {
   const [selectedPeriod, setSelectedPeriod] = useState<PayrollPeriod | null>(null);
   const [payrollItems, setPayrollItems] = useState<PayrollItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [downloadingItems, setDownloadingItems] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     loadPeriods();
@@ -65,58 +66,107 @@ export function PayrollReportsPage() {
 
   const handleGeneratePayslip = async (payrollItemId: number) => {
     try {
+      setDownloadingItems(prev => new Set(prev).add(payrollItemId));
+      
       const response = await payrollService.generatePayslipPDF(payrollItemId);
 
-      // Create download link
-      const url = window.URL.createObjectURL(response);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `payslip_${payrollItemId}_${Date.now()}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      // Ensure we have a valid blob
+      if (response instanceof Blob && response.size > 0) {
+        // Create download link
+        const url = window.URL.createObjectURL(response);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `payslip_${payrollItemId}_${new Date().toISOString().split('T')[0]}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        
+        // Clean up
+        setTimeout(() => {
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+        }, 100);
 
-      toast.success('Payslip PDF downloaded successfully');
+        toast.success('Payslip PDF downloaded successfully');
+      } else {
+        throw new Error(`Invalid PDF response: ${response instanceof Blob ? 'Empty blob' : 'Not a blob'}`);
+      }
     } catch (error) {
-      console.error('Failed to generate payslip PDF:', error);
-      toast.error('Failed to generate payslip PDF');
+      toast.error(`Failed to generate payslip PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setDownloadingItems(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(payrollItemId);
+        return newSet;
+      });
     }
   };
 
   const handleDownloadPayslip = async (payrollItemId: number) => {
     try {
+      setDownloadingItems(prev => new Set(prev).add(payrollItemId));
+      
       const response = await payrollService.downloadPayslipAsBase64(payrollItemId);
 
-      if (response.success) {
+      if (response.success && response.data) {
         const { pdf_data, file_name } = response.data;
 
-        // Convert base64 to blob
-        const byteCharacters = atob(pdf_data);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        // Validate base64 data
+        if (!pdf_data || pdf_data.length === 0) {
+          throw new Error('Empty PDF data received from server');
         }
-        const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], { type: 'application/pdf' });
 
-        // Create download link
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = file_name;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
+        // Validate base64 format
+        const base64Pattern = /^[A-Za-z0-9+/]*={0,2}$/;
+        if (!base64Pattern.test(pdf_data)) {
+          throw new Error('Invalid base64 PDF data format');
+        }
 
-        toast.success('Payslip downloaded successfully');
+        try {
+          // Convert base64 to blob
+          const binaryString = atob(pdf_data);
+          const bytes = new Uint8Array(binaryString.length);
+          
+          for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+          }
+          
+          const blob = new Blob([bytes], { type: 'application/pdf' });
+
+          // Validate blob
+          if (blob.size === 0) {
+            throw new Error('Generated PDF blob is empty');
+          }
+
+          // Create download link
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = file_name || `payslip_${payrollItemId}_${new Date().toISOString().split('T')[0]}.pdf`;
+          document.body.appendChild(a);
+          a.click();
+
+          // Clean up
+          setTimeout(() => {
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+          }, 100);
+
+          toast.success('Payslip downloaded successfully');
+        } catch (decodeError) {
+          toast.error(`Failed to process PDF data: ${decodeError instanceof Error ? decodeError.message : 'Unknown error'}`);
+        }
       } else {
-        toast.error('Failed to download payslip');
+        const errorMsg = response.message || 'No data received from server';
+        toast.error(`Failed to download payslip: ${errorMsg}`);
       }
     } catch (error) {
-      console.error('Failed to download payslip:', error);
-      toast.error('Failed to download payslip');
+      toast.error(`Failed to download payslip: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setDownloadingItems(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(payrollItemId);
+        return newSet;
+      });
     }
   };
 
@@ -171,8 +221,10 @@ export function PayrollReportsPage() {
     totalAmount: payrollItems.reduce((sum, item) => sum + (item.net_pay || 0), 0),
     reportsGenerated: 0, // Placeholder, as summary report is coming soon
     pendingApprovals: payrollItems.filter(item =>
-      item.status?.toLowerCase() === 'processing' ||
-      item.status?.toLowerCase() === 'calculating'
+      item.status && (
+        item.status.toLowerCase() === 'processing' ||
+        item.status.toLowerCase() === 'calculating'
+      )
     ).length
   };
 
@@ -194,52 +246,48 @@ export function PayrollReportsPage() {
       </div>
 
       {/* Overview Stat Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="transition-all duration-300 hover:shadow-lg hover:scale-105 border-l-4 border-l-blue-500 bg-gradient-to-r from-blue-50 to-white">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-gray-700">Total Payslips Generated</CardTitle>
-              <FileText className="h-6 w-6 text-blue-500" />
-            </div>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="border-l-4 border-l-blue-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Payslips</CardTitle>
+            <FileText className="h-4 w-4 text-blue-600" />
           </CardHeader>
-          <CardContent className="pt-0">
-            <div className="text-3xl font-bold text-blue-700">{stats.totalPayslips}</div>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.totalPayslips}</div>
+            <p className="text-xs text-muted-foreground">generated</p>
           </CardContent>
         </Card>
 
-        <Card className="transition-all duration-300 hover:shadow-lg hover:scale-105 border-l-4 border-l-green-500 bg-gradient-to-r from-green-50 to-white">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-gray-700">Total Payroll Amount</CardTitle>
-              <DollarSign className="h-6 w-6 text-green-500" />
-            </div>
+        <Card className="border-l-4 border-l-green-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Amount</CardTitle>
+            <DollarSign className="h-4 w-4 text-green-600" />
           </CardHeader>
-          <CardContent className="pt-0">
-            <div className="text-3xl font-bold text-green-600">{formatCurrency(stats.totalAmount)}</div>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatCurrency(stats.totalAmount)}</div>
+            <p className="text-xs text-muted-foreground">payroll amount</p>
           </CardContent>
         </Card>
 
-        <Card className="transition-all duration-300 hover:shadow-lg hover:scale-105 border-l-4 border-l-amber-500 bg-gradient-to-r from-amber-50 to-white">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-gray-700">Reports Generated</CardTitle>
-              <BarChart className="h-6 w-6 text-amber-500" />
-            </div>
+        <Card className="border-l-4 border-l-orange-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Reports Generated</CardTitle>
+            <BarChart className="h-4 w-4 text-orange-600" />
           </CardHeader>
-          <CardContent className="pt-0">
-            <div className="text-3xl font-bold text-amber-600">{stats.reportsGenerated}</div>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.reportsGenerated}</div>
+            <p className="text-xs text-muted-foreground">this period</p>
           </CardContent>
         </Card>
 
-        <Card className="transition-all duration-300 hover:shadow-lg hover:scale-105 border-l-4 border-l-red-500 bg-gradient-to-r from-red-50 to-white">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-gray-700">Pending Approvals</CardTitle>
-              <Clock className="h-6 w-6 text-red-500" />
-            </div>
+        <Card className="border-l-4 border-l-purple-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pending Approvals</CardTitle>
+            <Clock className="h-4 w-4 text-purple-600" />
           </CardHeader>
-          <CardContent className="pt-0">
-            <div className="text-3xl font-bold text-red-600">{stats.pendingApprovals}</div>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.pendingApprovals}</div>
+            <p className="text-xs text-muted-foreground">awaiting approval</p>
           </CardContent>
         </Card>
       </div>
@@ -269,7 +317,7 @@ export function PayrollReportsPage() {
                     <div className="font-medium">
                       Period {period.period_number} - {period.year}
                     </div>
-                    {getStatusBadge(period.status)}
+                    {getStatusBadge(period.status || 'Draft')}
                   </div>
                   <div className="text-sm text-muted-foreground mt-1">
                     {new Date(period.year, period.month - 1).toLocaleString('default', { month: 'long' })}
@@ -340,9 +388,9 @@ export function PayrollReportsPage() {
                           {payrollItems.map((item) => (
                             <div key={item.id} className="flex items-center justify-between p-2 border rounded">
                               <div className="flex-1">
-                                <div className="font-medium">{item.employee?.full_name}</div>
+                                <div className="font-medium">{item.employee?.full_name || 'Unknown Employee'}</div>
                                 <div className="text-sm text-muted-foreground">
-                                  {formatCurrency(item.net_pay)} • {getStatusBadge(item.status)}
+                                  {formatCurrency(item.net_pay || 0)} • {getStatusBadge(item.status || 'Draft')}
                                 </div>
                               </div>
                               <div className="flex gap-2">
@@ -350,18 +398,32 @@ export function PayrollReportsPage() {
                                   variant="outline"
                                   size="sm"
                                   onClick={() => handleGeneratePayslip(item.id)}
-                                  disabled={item.status?.toLowerCase() !== 'processed' && item.status?.toLowerCase() !== 'finalized'}
+                                  disabled={
+                                    downloadingItems.has(item.id) ||
+                                    (!item.status || (item.status.toLowerCase() !== 'processed' && item.status.toLowerCase() !== 'finalized'))
+                                  }
                                 >
-                                  <FileText className="h-4 w-4 mr-1" />
+                                  {downloadingItems.has(item.id) ? (
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-1" />
+                                  ) : (
+                                    <FileText className="h-4 w-4 mr-1" />
+                                  )}
                                   PDF
                                 </Button>
                                 <Button
                                   variant="outline"
                                   size="sm"
                                   onClick={() => handleDownloadPayslip(item.id)}
-                                  disabled={item.status?.toLowerCase() !== 'processed' && item.status?.toLowerCase() !== 'finalized'}
+                                  disabled={
+                                    downloadingItems.has(item.id) ||
+                                    (!item.status || (item.status.toLowerCase() !== 'processed' && item.status.toLowerCase() !== 'finalized'))
+                                  }
                                 >
-                                  <Eye className="h-4 w-4 mr-1" />
+                                  {downloadingItems.has(item.id) ? (
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-1" />
+                                  ) : (
+                                    <Eye className="h-4 w-4 mr-1" />
+                                  )}
                                   View
                                 </Button>
                               </div>

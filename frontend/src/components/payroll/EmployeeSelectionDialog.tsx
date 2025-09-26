@@ -62,7 +62,12 @@ export function EmployeeSelectionDialog({
         limit: 1000
       });
 
-      const employeeData: EmployeeSelectionData[] = response.employees.map(employee => {
+      // Filter to ensure only active employees are included
+      const activeEmployees = response.employees.filter(employee => 
+        employee.status === 'active'
+      );
+
+      const employeeData: EmployeeSelectionData[] = activeEmployees.map(employee => {
         // Check if employee was previously selected
         const existingSelection = initialSelectedEmployees.find(
           emp => emp.employee.id === employee.id

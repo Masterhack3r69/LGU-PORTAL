@@ -172,9 +172,25 @@ class PayrollItem {
     static async findById(id) {
         const result = await findOneByTable('payroll_items', { id });
         if (result.success && result.data) {
+            const payrollItem = new PayrollItem(result.data);
+            
+            // Load line items for this payroll item
+            const lineItemsQuery = `
+                SELECT * FROM payroll_item_lines 
+                WHERE payroll_item_id = ? 
+                ORDER BY line_type, description
+            `;
+            const lineItemsResult = await executeQuery(lineItemsQuery, [id]);
+            
+            if (lineItemsResult.success) {
+                payrollItem.line_items = lineItemsResult.data;
+            } else {
+                payrollItem.line_items = [];
+            }
+            
             return {
                 success: true,
-                data: new PayrollItem(result.data)
+                data: payrollItem
             };
         }
         return result;

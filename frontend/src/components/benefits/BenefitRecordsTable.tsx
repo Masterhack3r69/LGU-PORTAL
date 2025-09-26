@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+  import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/table';
 import {
   Select,
-  SelectContent,
+  SelectContent,  
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -21,7 +21,6 @@ import {
 import { 
   Search, 
   Filter, 
-  Download, 
   Trash2,
   ChevronLeft,
   ChevronRight,
@@ -154,13 +153,10 @@ export function BenefitRecordsTable({ onRefresh }: BenefitRecordsTableProps) {
           <Button variant="outline" size="icon">
             <Filter className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="icon">
-            <Download className="h-4 w-4" />
-          </Button>
         </div>
 
-        {/* Table */}
-        <div className="rounded-md border">
+        {/* Desktop Table */}
+        <div className="hidden md:block rounded-md border px-3">
           <Table>
             <TableHeader>
               <TableRow>
@@ -237,29 +233,115 @@ export function BenefitRecordsTable({ onRefresh }: BenefitRecordsTableProps) {
           </Table>
         </div>
 
+        {/* Mobile Card View */}
+        <div className="md:hidden space-y-4">
+          {loading ? (
+            Array.from({ length: 3 }).map((_, i) => (
+              <Card key={i} className="animate-pulse">
+                <CardContent className="p-4">
+                  <div className="space-y-3">
+                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                    <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          ) : records.length === 0 ? (
+            <Card>
+              <CardContent className="p-8 text-center text-muted-foreground">
+                No benefit records found
+              </CardContent>
+            </Card>
+          ) : (
+            records.map((record) => (
+              <Card key={record.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="p-4">
+                  <div className="space-y-3">
+                    {/* Header */}
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <div className="font-medium">{record.employee_name}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {record.employee_number}
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8"
+                          onClick={() => handleDelete(record.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Benefit Type and Amount */}
+                    <div className="flex items-center justify-between">
+                      <Badge variant={getBenefitTypeBadgeVariant(record.benefit_type)}>
+                        {BENEFIT_TYPE_LABELS[record.benefit_type]}
+                      </Badge>
+                      <div className="text-lg font-semibold">
+                        {compensationService.formatCurrency(record.amount)}
+                      </div>
+                    </div>
+
+                    {/* Details */}
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">Days Used:</span>
+                        <div className="font-medium">
+                          {record.days_used ? `${record.days_used} days` : '-'}
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Processed:</span>
+                        <div className="font-medium">
+                          {compensationService.formatDate(record.processed_at)}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Processed By */}
+                    <div className="text-sm">
+                      <span className="text-muted-foreground">Processed by:</span>
+                      <span className="ml-1 font-medium">{record.processed_by_name}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
+
         {/* Pagination */}
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-muted-foreground">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="text-sm text-muted-foreground text-center sm:text-left">
             Showing {records.length} of {total} records
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-center gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => handleFilterChange('page', Math.max(1, filters.page! - 1))}
               disabled={filters.page === 1}
+              className="flex items-center gap-1"
             >
               <ChevronLeft className="h-4 w-4" />
-              Previous
+              <span className="hidden sm:inline">Previous</span>
             </Button>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 px-3 py-1 bg-muted rounded-md">
               <span className="text-sm">Page</span>
               <span className="text-sm font-medium">{filters.page}</span>
               <span className="text-sm">of</span>
               <span className="text-sm font-medium">{totalPages}</span>
             </div>
             <Button
-              variant="outline"
               size="sm"
               onClick={() => handleFilterChange('page', Math.min(totalPages, filters.page! + 1))}
               disabled={filters.page === totalPages}

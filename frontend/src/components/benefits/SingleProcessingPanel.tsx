@@ -188,7 +188,7 @@ export function SingleProcessingPanel({ onSuccess }: SingleProcessingPanelProps)
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="flex gap-4">
             {/* Benefit Type */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Benefit Type</label>
@@ -196,7 +196,7 @@ export function SingleProcessingPanel({ onSuccess }: SingleProcessingPanelProps)
                 value={selectedBenefitType}
                 onValueChange={(value) => setSelectedBenefitType(value as BenefitType)}
               >
-                <SelectTrigger>
+                <SelectTrigger className="md:w-[200px] w-[125px]" >
                   <SelectValue placeholder="Select benefit type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -222,7 +222,7 @@ export function SingleProcessingPanel({ onSuccess }: SingleProcessingPanelProps)
                 onValueChange={(value) => setSelectedEmployeeId(parseInt(value))}
                 disabled={loading}
               >
-                <SelectTrigger>
+                <SelectTrigger className="md:w-[300px] w-[250px]">
                   <SelectValue placeholder="Select employee" />
                 </SelectTrigger>
                 <SelectContent>

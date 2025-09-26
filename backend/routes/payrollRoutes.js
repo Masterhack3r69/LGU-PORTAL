@@ -250,4 +250,49 @@ router.get('/reports/summary', (req, res) => {
     });
 });
 
+// GET /api/payroll/test/sample-payslip - Generate sample payslip for testing
+router.get('/test/sample-payslip', async (req, res) => {
+    try {
+        const payslipPdfService = require('../services/payslipPdfService');
+        const sampleData = payslipPdfService.generateSampleData();
+        
+        const pdfBuffer = await payslipPdfService.generatePayslipPDF(sampleData);
+        
+        // Set response headers for PDF download
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename="sample-payslip.pdf"');
+        res.setHeader('Content-Length', pdfBuffer.length);
+        
+        // Send PDF buffer
+        res.send(pdfBuffer);
+    } catch (error) {
+        console.error('Sample payslip generation error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to generate sample payslip'
+        });
+    }
+});
+
+// POST /api/payroll/test/download-payslip/:id - Test download payslip without middleware
+router.post('/test/download-payslip/:id', async (req, res) => {
+    try {
+        console.log('🔄 Test download payslip route hit for item:', req.params.id);
+        
+        // Mock session user for testing
+        req.session = req.session || {};
+        req.session.user = req.session.user || { id: 1, role: 'admin' };
+        
+        // Call the downloadPayslip method directly
+        return await payrollItemController.downloadPayslip(req, res);
+    } catch (error) {
+        console.error('Test download payslip error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Test download failed',
+            error: error.message
+        });
+    }
+});
+
 module.exports = router;
