@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { toast } from 'sonner';
+import { showToast } from "@/lib/toast"
 
 export function LoginPage() {
   const [credentials, setCredentials] = useState({
@@ -37,17 +37,17 @@ export function LoginPage() {
     e.preventDefault();
     
     if (!credentials.username || !credentials.password) {
-      toast.error('Please fill in all fields');
+      showToast.error('Please fill in all fields');
       return;
     }
 
     setIsLoading(true);
     try {
       await login(credentials);
-      toast.success('Login successful');
+      showToast.success('Login successful');
     } catch (error) {
       console.error('Login error:', error);
-      toast.error('Invalid username or password');
+      showToast.error("Invalid credentials");
     } finally {
       setIsLoading(false);
     }

@@ -1,26 +1,37 @@
 // components/admin/ExcelImport.tsx - Excel import component for employees
-import React, { useState, useCallback } from 'react';
-import { useDropzone } from 'react-dropzone';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { 
-  Upload, 
-  Download, 
-  FileSpreadsheet, 
-  CheckCircle, 
+import React, { useState, useCallback } from "react";
+import { useDropzone } from "react-dropzone";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import {
+  Upload,
+  Download,
+  FileSpreadsheet,
+  CheckCircle,
   Key,
   FileText,
-  Eye
-} from 'lucide-react';
-import { importService } from '@/services/importService';
-import type { ImportPreviewData, ImportExecutionResult, ImportOptions, PasswordStrategy } from '@/types/import';
-import { toast } from 'sonner';
-import ImportPreview from './ImportPreview';
-import ImportResults from './ImportResults';
-import ImportOptionsComponent from './ImportOptions';
+  Eye,
+} from "lucide-react";
+import { importService } from "@/services/importService";
+import type {
+  ImportPreviewData,
+  ImportExecutionResult,
+  ImportOptions,
+  PasswordStrategy,
+} from "@/types/import";
+import { showToast } from "@/lib/toast";
+import ImportPreview from "./ImportPreview";
+import ImportResults from "./ImportResults";
+import ImportOptionsComponent from "./ImportOptions";
 
 interface ExcelImportProps {
   onImportComplete?: (result: ImportExecutionResult) => void;
@@ -28,15 +39,20 @@ interface ExcelImportProps {
 
 const ExcelImport: React.FC<ExcelImportProps> = ({ onImportComplete }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewData, setPreviewData] = useState<ImportPreviewData | null>(null);
-  const [importResult, setImportResult] = useState<ImportExecutionResult | null>(null);
+  const [previewData, setPreviewData] = useState<ImportPreviewData | null>(
+    null
+  );
+  const [importResult, setImportResult] =
+    useState<ImportExecutionResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [currentStep, setCurrentStep] = useState<'upload' | 'preview' | 'options' | 'results'>('upload');
+  const [currentStep, setCurrentStep] = useState<
+    "upload" | "preview" | "options" | "results"
+  >("upload");
   const [importOptions, setImportOptions] = useState<ImportOptions>({
-    password_strategy: 'custom_pattern' as PasswordStrategy,
+    password_strategy: "custom_pattern" as PasswordStrategy,
     create_user_accounts: true,
     skip_invalid_rows: true,
-    initialize_leave_balances: true
+    initialize_leave_balances: true,
   });
 
   // File drop zone configuration
@@ -45,26 +61,28 @@ const ExcelImport: React.FC<ExcelImportProps> = ({ onImportComplete }) => {
     if (file) {
       const validation = importService.validateFile(file);
       if (!validation.isValid) {
-        toast.error(validation.error);
+        showToast.error(validation.error || "Invalid file selected");
         return;
       }
-      
+
       setSelectedFile(file);
       setPreviewData(null);
       setImportResult(null);
-      setCurrentStep('upload');
+      setCurrentStep("upload");
     }
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
-      'application/vnd.ms-excel': ['.xls'],
-      'text/csv': ['.csv']
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [
+        ".xlsx",
+      ],
+      "application/vnd.ms-excel": [".xls"],
+      "text/csv": [".csv"],
     },
     multiple: false,
-    maxSize: 10 * 1024 * 1024 // 10MB
+    maxSize: 10 * 1024 * 1024, // 10MB
   });
 
   // Download template
@@ -72,21 +90,21 @@ const ExcelImport: React.FC<ExcelImportProps> = ({ onImportComplete }) => {
     try {
       setIsLoading(true);
       const blob = await importService.downloadTemplate();
-      
+
       // Create download link
       const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
-      link.download = 'employee_import_template.xlsx';
+      link.download = "employee_import_template.xlsx";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      
-      toast.success('Template downloaded successfully');
+
+      showToast.success("Template downloaded successfully");
     } catch (error) {
-      console.error('Error downloading template:', error);
-      toast.error('Failed to download template');
+      console.error("Error downloading template:", error);
+      showToast.error("Failed to download template");
     } finally {
       setIsLoading(false);
     }
@@ -100,16 +118,20 @@ const ExcelImport: React.FC<ExcelImportProps> = ({ onImportComplete }) => {
       setIsLoading(true);
       const preview = await importService.previewImport(selectedFile);
       setPreviewData(preview);
-      setCurrentStep('preview');
-      
+      setCurrentStep("preview");
+
       if (preview.validationErrors.length > 0) {
-        toast.warning(`Found ${preview.validationErrors.length} validation errors. Review before proceeding.`);
+        showToast.warning(
+          `Found ${preview.validationErrors.length} validation errors. Review before proceeding.`
+        );
       } else {
-        toast.success(`Preview generated: ${preview.validRows} valid rows ready for import`);
+        showToast.success(
+          `Preview generated: ${preview.validRows} valid rows ready for import`
+        );
       }
     } catch (error) {
-      console.error('Error previewing import:', error);
-      toast.error('Failed to preview import file');
+      console.error("Error previewing import:", error);
+      showToast.error("Failed to preview import file");
     } finally {
       setIsLoading(false);
     }
@@ -121,19 +143,24 @@ const ExcelImport: React.FC<ExcelImportProps> = ({ onImportComplete }) => {
 
     try {
       setIsLoading(true);
-      const result = await importService.executeImport(selectedFile, importOptions);
+      const result = await importService.executeImport(
+        selectedFile,
+        importOptions
+      );
       setImportResult(result);
-      setCurrentStep('results');
-      
+      setCurrentStep("results");
+
       if (result.summary.successful_imports > 0) {
-        toast.success(`Import completed! ${result.summary.successful_imports} employees imported successfully.`);
+        showToast.success(
+          `Import completed! ${result.summary.successful_imports} employees imported successfully.`
+        );
         onImportComplete?.(result);
       } else {
-        toast.error('Import failed. No employees were imported.');
+        showToast.error("Import failed. No employees were imported.");
       }
     } catch (error) {
-      console.error('Error executing import:', error);
-      toast.error('Failed to execute import');
+      console.error("Error executing import:", error);
+      showToast.error("Failed to execute import");
     } finally {
       setIsLoading(false);
     }
@@ -144,7 +171,7 @@ const ExcelImport: React.FC<ExcelImportProps> = ({ onImportComplete }) => {
     setSelectedFile(null);
     setPreviewData(null);
     setImportResult(null);
-    setCurrentStep('upload');
+    setCurrentStep("upload");
   };
 
   // Render upload area
@@ -158,12 +185,13 @@ const ExcelImport: React.FC<ExcelImportProps> = ({ onImportComplete }) => {
             Download Template
           </CardTitle>
           <CardDescription>
-            Download the Excel template with sample data and instructions for importing employees.
+            Download the Excel template with sample data and instructions for
+            importing employees.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Button 
-            onClick={handleDownloadTemplate} 
+          <Button
+            onClick={handleDownloadTemplate}
             disabled={isLoading}
             variant="outline"
             className="w-full"
@@ -190,12 +218,16 @@ const ExcelImport: React.FC<ExcelImportProps> = ({ onImportComplete }) => {
             {...getRootProps()}
             className={`
               border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
-              ${isDragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'}
-              ${selectedFile ? 'border-green-500 bg-green-50' : ''}
+              ${
+                isDragActive
+                  ? "border-primary bg-primary/5"
+                  : "border-muted-foreground/25"
+              }
+              ${selectedFile ? "border-green-500 bg-green-50" : ""}
             `}
           >
             <input {...getInputProps()} />
-            
+
             {selectedFile ? (
               <div className="space-y-2">
                 <CheckCircle className="h-12 w-12 text-green-500 mx-auto" />
@@ -203,7 +235,10 @@ const ExcelImport: React.FC<ExcelImportProps> = ({ onImportComplete }) => {
                 <p className="text-xs text-muted-foreground">
                   {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
                 </p>
-                <Badge variant="secondary" className="bg-green-100 text-green-800">
+                <Badge
+                  variant="secondary"
+                  className="bg-green-100 text-green-800"
+                >
                   File Ready
                 </Badge>
               </div>
@@ -211,7 +246,9 @@ const ExcelImport: React.FC<ExcelImportProps> = ({ onImportComplete }) => {
               <div className="space-y-2">
                 <Upload className="h-12 w-12 text-muted-foreground mx-auto" />
                 <p className="text-sm font-medium">
-                  {isDragActive ? 'Drop the file here' : 'Drag & drop your Excel file here'}
+                  {isDragActive
+                    ? "Drop the file here"
+                    : "Drag & drop your Excel file here"}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   or click to select a file (.xlsx, .xls, .csv)
@@ -225,7 +262,11 @@ const ExcelImport: React.FC<ExcelImportProps> = ({ onImportComplete }) => {
 
           {selectedFile && (
             <div className="mt-4 flex gap-2">
-              <Button onClick={handlePreviewImport} disabled={isLoading} className="flex-1">
+              <Button
+                onClick={handlePreviewImport}
+                disabled={isLoading}
+                className="flex-1"
+              >
                 <Eye className="h-4 w-4 mr-2" />
                 Preview Import
               </Button>
@@ -260,11 +301,12 @@ const ExcelImport: React.FC<ExcelImportProps> = ({ onImportComplete }) => {
         <div>
           <h2 className="text-2xl font-bold">Excel Import</h2>
           <p className="text-muted-foreground">
-            Import employee data from Excel files with automatic user account creation
+            Import employee data from Excel files with automatic user account
+            creation
           </p>
         </div>
-        
-        {currentStep !== 'upload' && (
+
+        {currentStep !== "upload" && (
           <Button onClick={handleReset} variant="outline">
             Start Over
           </Button>
@@ -274,16 +316,23 @@ const ExcelImport: React.FC<ExcelImportProps> = ({ onImportComplete }) => {
       {/* Progress Indicator */}
       <div className="flex items-center space-x-4  px-5">
         {[
-          { key: 'upload', label: 'Upload', icon: Upload },
-          { key: 'preview', label: 'Preview', icon: Eye },
-          { key: 'options', label: 'Options', icon: Key },
-          { key: 'results', label: 'Results', icon: CheckCircle }
+          { key: "upload", label: "Upload", icon: Upload },
+          { key: "preview", label: "Preview", icon: Eye },
+          { key: "options", label: "Options", icon: Key },
+          { key: "results", label: "Results", icon: CheckCircle },
         ].map(({ key, label, icon: Icon }, index) => (
           <React.Fragment key={key}>
-            <div className={`flex items-center space-x-2 ${
-              currentStep === key ? 'text-primary' : 
-              ['upload', 'preview', 'options', 'results'].indexOf(currentStep) > index ? 'text-green-600' : 'text-muted-foreground'
-            }`}>
+            <div
+              className={`flex items-center space-x-2 ${
+                currentStep === key
+                  ? "text-primary"
+                  : ["upload", "preview", "options", "results"].indexOf(
+                      currentStep
+                    ) > index
+                  ? "text-green-600"
+                  : "text-muted-foreground"
+              }`}
+            >
               <Icon className="h-4 w-4" />
               <span className="text-sm font-medium">{label}</span>
             </div>
@@ -308,32 +357,29 @@ const ExcelImport: React.FC<ExcelImportProps> = ({ onImportComplete }) => {
       )}
 
       {/* Content based on current step */}
-      {currentStep === 'upload' && renderUploadArea()}
-      
-      {currentStep === 'preview' && previewData && (
-        <ImportPreview 
+      {currentStep === "upload" && renderUploadArea()}
+
+      {currentStep === "preview" && previewData && (
+        <ImportPreview
           data={previewData}
-          onProceed={() => setCurrentStep('options')}
-          onBack={() => setCurrentStep('upload')}
+          onProceed={() => setCurrentStep("options")}
+          onBack={() => setCurrentStep("upload")}
         />
       )}
-      
-      {currentStep === 'options' && (
+
+      {currentStep === "options" && (
         <ImportOptionsComponent
           options={importOptions}
           onChange={setImportOptions}
           previewData={previewData}
           onExecute={handleExecuteImport}
-          onBack={() => setCurrentStep('preview')}
+          onBack={() => setCurrentStep("preview")}
           isLoading={isLoading}
         />
       )}
-      
-      {currentStep === 'results' && importResult && (
-        <ImportResults 
-          result={importResult}
-          onStartOver={handleReset}
-        />
+
+      {currentStep === "results" && importResult && (
+        <ImportResults result={importResult} onStartOver={handleReset} />
       )}
     </div>
   );

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { toast } from 'sonner';
+import { showToast } from "@/lib/toast"
 import {
   Users,
   Calculator,
@@ -83,7 +83,7 @@ export function EmployeeSelectionProcessing({
       setDetailsDialogOpen(true);
     } catch (error) {
       console.error('Failed to fetch employee details:', error);
-      toast.error('Failed to load employee details');
+      showToast.error('Failed to load employee details');
     }
   };
 
@@ -114,12 +114,12 @@ export function EmployeeSelectionProcessing({
           ? `${processedCount} selected employees`
           : `${processedCount} employees`;
 
-        toast.success(`Processed ${employeeText}`);
+        showToast.success(`Processed ${employeeText}`);
         loadPayrollItems(selectedPeriod.id);
       }
     } catch (error) {
       console.error('Failed to calculate payroll:', error);
-      toast.error('Failed to calculate payroll');
+      showToast.error('Failed to calculate payroll');
     } finally {
       setProcessingLoading(false);
     }
@@ -131,12 +131,12 @@ export function EmployeeSelectionProcessing({
     try {
       const response = await payrollService.finalizePeriod(selectedPeriod.id);
       if (response.success) {
-        toast.success('Payroll period finalized');
+        showToast.success('Payroll period finalized');
         loadPayrollItems(selectedPeriod.id);
       }
     } catch (error) {
       console.error('Failed to finalize payroll period:', error);
-      toast.error('Failed to finalize payroll period');
+      showToast.error('Failed to finalize payroll period');
     }
   };
 
@@ -144,12 +144,12 @@ export function EmployeeSelectionProcessing({
     try {
       const response = await payrollService.approvePayrollItem(payrollItemId);
       if (response.success) {
-        toast.success('Payroll item finalized');
+        showToast.success('Payroll item finalized');
         loadPayrollItems(selectedPeriod!.id);
       }
     } catch (error) {
       console.error('Failed to finalize payroll item:', error);
-      toast.error('Failed to finalize payroll item');
+      showToast.error('Failed to finalize payroll item');
     }
   };
 
@@ -157,12 +157,12 @@ export function EmployeeSelectionProcessing({
     try {
       const response = await payrollService.markAsPaid(payrollItemId);
       if (response.success) {
-        toast.success('Payroll item marked as paid');
+        showToast.success('Payroll item marked as paid');
         loadPayrollItems(selectedPeriod!.id);
       }
     } catch (error) {
       console.error('Failed to mark payroll item as paid:', error);
-      toast.error('Failed to mark payroll item as paid');
+      showToast.error('Failed to mark payroll item as paid');
     }
   };
 
@@ -171,18 +171,18 @@ export function EmployeeSelectionProcessing({
 
     const processedItems = payrollItems.filter(item => item.status?.toLowerCase() === 'processed');
     if (processedItems.length === 0) {
-      toast.error('No processed items to finalize');
+      showToast.error('No processed items to finalize');
       return;
     }
 
     try {
       const promises = processedItems.map(item => payrollService.approvePayrollItem(item.id));
       await Promise.all(promises);
-      toast.success(`Finalized ${processedItems.length} payroll items`);
+      showToast.success(`Finalized ${processedItems.length} payroll items`);
       loadPayrollItems(selectedPeriod.id);
     } catch (error) {
       console.error('Failed to bulk finalize payroll items:', error);
-      toast.error('Failed to bulk finalize payroll items');
+      showToast.error('Failed to bulk finalize payroll items');
     }
   };
 
@@ -191,18 +191,18 @@ export function EmployeeSelectionProcessing({
 
     const finalizedItems = payrollItems.filter(item => item.status?.toLowerCase() === 'finalized');
     if (finalizedItems.length === 0) {
-      toast.error('No finalized items to mark as paid');
+      showToast.error('No finalized items to mark as paid');
       return;
     }
 
     try {
       const promises = finalizedItems.map(item => payrollService.markAsPaid(item.id));
       await Promise.all(promises);
-      toast.success(`Marked ${finalizedItems.length} payroll items as paid`);
+      showToast.success(`Marked ${finalizedItems.length} payroll items as paid`);
       loadPayrollItems(selectedPeriod.id);
     } catch (error) {
       console.error('Failed to bulk mark as paid:', error);
-      toast.error('Failed to bulk mark as paid');
+      showToast.error('Failed to bulk mark as paid');
     }
   };
 

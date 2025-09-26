@@ -8,6 +8,7 @@ import type {
   UpdateTrainingDTO,
   TrainingResponse,
   TrainingStatistics,
+  TrainingTypeStatistic,
   EmployeeTrainingHistory,
   StatisticsFilters,
   TrainingApiResponse,
@@ -192,16 +193,21 @@ class TrainingService {
   async getTrainingTrends(year?: number): Promise<Array<{ month: string; count: number; hours: number }>> {
     const filters = year ? { year } : {};
     const statistics = await this.getTrainingStatistics(filters);
-    return statistics.byMonth || [];
+    // Map the trends data to the expected format
+    return statistics.trends?.map(trend => ({
+      month: trend.month,
+      count: trend.count,
+      hours: 0 // Hours not available in current statistics format
+    })) || [];
   }
 
   /**
    * Get training type distribution
    */
-  async getTrainingTypeDistribution(year?: number): Promise<TrainingStatistics['byTrainingType']> {
+  async getTrainingTypeDistribution(year?: number): Promise<TrainingTypeStatistic[]> {
     const filters = year ? { year } : {};
     const statistics = await this.getTrainingStatistics(filters);
-    return statistics.byTrainingType;
+    return statistics.by_type || [];
   }
 
   // Search and Filtering Helpers

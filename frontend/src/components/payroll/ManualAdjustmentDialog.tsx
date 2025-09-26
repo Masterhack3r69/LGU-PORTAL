@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { toast } from 'sonner';
+import { showToast } from "@/lib/toast"
 import { Plus } from 'lucide-react';
 import payrollService from '@/services/payrollService';
 import type { PayrollItem } from '@/types/payroll';
@@ -30,13 +30,13 @@ export function ManualAdjustmentDialog({ payrollItem, onAdjustmentAdded, trigger
     e.preventDefault();
 
     if (!formData.adjustmentType || !formData.description || !formData.amount) {
-      toast.error('Please fill in all required fields');
+      showToast.error('Please fill in all required fields');
       return;
     }
 
     const amount = parseFloat(formData.amount);
     if (isNaN(amount) || amount === 0) {
-      toast.error('Please enter a valid amount');
+      showToast.error('Please enter a valid amount');
       return;
     }
 
@@ -52,7 +52,7 @@ export function ManualAdjustmentDialog({ payrollItem, onAdjustmentAdded, trigger
       );
 
       if (response.success) {
-        toast.success('Manual adjustment added successfully');
+        showToast.success('Manual adjustment added successfully');
         onAdjustmentAdded(response.data);
         setOpen(false);
         setFormData({
@@ -62,11 +62,11 @@ export function ManualAdjustmentDialog({ payrollItem, onAdjustmentAdded, trigger
           reason: ''
         });
       } else {
-        toast.error(response.message || 'Failed to add manual adjustment');
+        showToast.error(response.message || 'Failed to add manual adjustment');
       }
     } catch (error) {
       console.error('Failed to add manual adjustment:', error);
-      toast.error('Failed to add manual adjustment');
+      showToast.error('Failed to add manual adjustment');
     } finally {
       setLoading(false);
     }

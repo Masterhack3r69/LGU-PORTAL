@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { toast } from 'sonner';
+import { showToast } from "@/lib/toast"
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -64,11 +64,11 @@ export function AllowanceTypesManagement() {
         const allowanceTypesData = Array.isArray(data) ? data : (data as { allowance_types?: AllowanceType[] })?.allowance_types || [];
         setAllowanceTypes(allowanceTypesData);
       } else {
-        toast.error('Failed to load allowance types');
+        showToast.error('Failed to load allowance types');
       }
     } catch (error) {
       console.error('Failed to load allowance types:', error);
-      toast.error('Failed to load allowance types');
+      showToast.error('Failed to load allowance types');
     } finally {
       setLoading(false);
     }
@@ -126,16 +126,16 @@ export function AllowanceTypesManagement() {
       }
 
       if (response.success) {
-        toast.success(editingType ? 'Allowance type updated successfully' : 'Allowance type created successfully');
+        showToast.success(editingType ? 'Allowance type updated successfully' : 'Allowance type created successfully');
         setDialogOpen(false);
         resetForm();
         loadAllowanceTypes();
       } else {
-        toast.error('Failed to save allowance type');
+        showToast.error('Failed to save allowance type');
       }
     } catch (error) {
       console.error('Failed to save allowance type:', error);
-      toast.error('Failed to save allowance type');
+      showToast.error('Failed to save allowance type');
     }
   };
 
@@ -143,14 +143,14 @@ export function AllowanceTypesManagement() {
     try {
       const response = await payrollService.deleteAllowanceType(id);
       if (response.success) {
-        toast.success('Allowance type deleted successfully');
+        showToast.success('Allowance type deleted successfully');
         loadAllowanceTypes();
       } else {
-        toast.error('Failed to delete allowance type');
+        showToast.error('Failed to delete allowance type');
       }
     } catch (error) {
       console.error('Failed to delete allowance type:', error);
-      toast.error('Failed to delete allowance type');
+      showToast.error('Failed to delete allowance type');
     }
   };
 
@@ -158,14 +158,14 @@ export function AllowanceTypesManagement() {
     try {
       const response = await payrollService.toggleAllowanceType(id);
       if (response.success) {
-        toast.success('Allowance type status updated successfully');
+        showToast.success('Allowance type status updated successfully');
         loadAllowanceTypes();
       } else {
-        toast.error('Failed to update allowance type status');
+        showToast.error('Failed to update allowance type status');
       }
     } catch (error) {
       console.error('Failed to toggle allowance type:', error);
-      toast.error('Failed to update allowance type status');
+      showToast.error('Failed to update allowance type status');
     }
   };
 

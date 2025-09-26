@@ -15,7 +15,7 @@ import {
   BookOpen,
   Clock
 } from 'lucide-react';
-import { toast } from 'sonner';
+import { showToast } from "@/lib/toast"
 import TrainingProgramForm from './TrainingProgramForm';
 import trainingService from '@/services/trainingService';
 import type { 
@@ -66,12 +66,12 @@ const AdminTrainingPrograms: React.FC = () => {
   const createMutation = useMutation({
     mutationFn: (data: CreateTrainingProgramDTO) => trainingService.createTrainingProgram(data),
     onSuccess: () => {
-      toast.success('Training program created successfully');
+      showToast.success('Training program created successfully');
       queryClient.invalidateQueries({ queryKey: ['training-programs'] });
       closeForm();
     },
     onError: (error: Error) => {
-      toast.error(`Failed to create program: ${error.message}`);
+      showToast.error(`Failed to create program: ${error.message}`);
     },
   });
 
@@ -80,12 +80,12 @@ const AdminTrainingPrograms: React.FC = () => {
     mutationFn: ({ id, data }: { id: number; data: UpdateTrainingProgramDTO }) => 
       trainingService.updateTrainingProgram(id, data),
     onSuccess: () => {
-      toast.success('Training program updated successfully');
+      showToast.success('Training program updated successfully');
       queryClient.invalidateQueries({ queryKey: ['training-programs'] });
       closeForm();
     },
     onError: (error: Error) => {
-      toast.error(`Failed to update program: ${error.message}`);
+      showToast.error(`Failed to update program: ${error.message}`);
     },
   });
 
@@ -93,11 +93,11 @@ const AdminTrainingPrograms: React.FC = () => {
   const deleteMutation = useMutation({
     mutationFn: (id: number) => trainingService.deleteTrainingProgram(id),
     onSuccess: () => {
-      toast.success('Training program deleted successfully');
+      showToast.success('Training program deleted successfully');
       queryClient.invalidateQueries({ queryKey: ['training-programs'] });
     },
     onError: (error: Error) => {
-      toast.error(`Failed to delete program: ${error.message}`);
+      showToast.error(`Failed to delete program: ${error.message}`);
     },
   });
 

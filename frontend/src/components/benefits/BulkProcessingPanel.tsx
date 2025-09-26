@@ -42,7 +42,7 @@ import {
   BENEFIT_TYPE_DESCRIPTIONS,
 } from "@/types/compensation";
 import { compensationService } from "@/services/compensationService";
-import { toast } from "sonner";
+import { showToast} from "@/lib/toast"
 
 interface BulkProcessingPanelProps {
   onSuccess: () => void;
@@ -95,7 +95,7 @@ export function BulkProcessingPanel({ onSuccess }: BulkProcessingPanelProps) {
       setSelectedEmployees(new Set(employees.map((emp) => emp.id)));
     } catch (error) {
       console.error("Failed to load eligible employees:", error);
-      toast.error("Failed to load eligible employees");
+      showToast.error("Failed to load eligible employees");
     } finally {
       setLoading(false);
     }
@@ -112,10 +112,10 @@ export function BulkProcessingPanel({ onSuccess }: BulkProcessingPanelProps) {
         employeeIds
       );
       setCalculations(results);
-      toast.success(`Calculated benefits for ${results.length} employees`);
+      showToast.success(`Calculated benefits for ${results.length} employees`);
     } catch (error) {
       console.error("Failed to calculate benefits:", error);
-      toast.error("Failed to calculate benefits");
+      showToast.error("Failed to calculate benefits");
     } finally {
       setCalculating(false);
     }
@@ -123,7 +123,7 @@ export function BulkProcessingPanel({ onSuccess }: BulkProcessingPanelProps) {
 
   const processBenefits = async () => {
     if (!selectedBenefitType || selectedEmployees.size === 0) {
-      toast.error("Please select employees to process");
+      showToast.error("Please select employees to process");
       return;
     }
 
@@ -138,7 +138,7 @@ export function BulkProcessingPanel({ onSuccess }: BulkProcessingPanelProps) {
         notes,
       });
 
-      toast.success(
+      showToast.success(
         `Successfully processed ${employeeIds.length} benefit records`
       );
       onSuccess();
@@ -150,7 +150,7 @@ export function BulkProcessingPanel({ onSuccess }: BulkProcessingPanelProps) {
       setCalculations([]);
     } catch (error) {
       console.error("Failed to process benefits:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to process benefits");
+      showToast.error(error instanceof Error ? error.message : "Failed to process benefits");
     } finally {
       setProcessing(false);
     }

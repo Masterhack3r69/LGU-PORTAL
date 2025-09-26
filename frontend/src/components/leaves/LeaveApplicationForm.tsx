@@ -13,7 +13,7 @@ import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { AlertCircle, Clock } from 'lucide-react';
-import { toast } from 'sonner';
+import { toastSuccess, toastError } from "@/lib/toast";
 import leaveService from '@/services/leaveService';
 import type { LeaveType, LeaveValidationResult } from '@/types/leave';
 
@@ -63,7 +63,7 @@ const LeaveApplicationForm: React.FC<LeaveApplicationFormProps> = ({
         const types = await leaveService.getLeaveTypes();
         setLeaveTypes(types);
       } catch {
-        toast.error('Failed to load leave types');
+        toastError('Failed to load leave types');
       }
     };
     loadLeaveTypes();
@@ -100,7 +100,7 @@ const LeaveApplicationForm: React.FC<LeaveApplicationFormProps> = ({
 
   const onSubmit = async (data: LeaveApplicationFormData) => {
     if (validation && !validation.isValid) {
-      toast.error('Please fix validation errors before submitting');
+      toastError('Please fix validation errors before submitting');
       return;
     }
 
@@ -115,13 +115,13 @@ const LeaveApplicationForm: React.FC<LeaveApplicationFormProps> = ({
         days_requested: validation?.calculatedDays
       });
 
-      toast.success('Leave application submitted successfully');
+      toastSuccess('Leave application submitted successfully');
       form.reset();
       setValidation(null);
       onSuccess?.();
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to submit leave application';
-      toast.error(errorMessage);
+      toastError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

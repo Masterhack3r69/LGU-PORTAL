@@ -12,7 +12,7 @@ import {
   FileText,
   Shield
 } from 'lucide-react';
-import { toast } from 'sonner';
+import { showToast} from "@/lib/toast";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -77,7 +77,7 @@ const AdminBackupManagement: React.FC = () => {
       }
     } catch (error) {
       console.error('Failed to load backup data:', error);
-      toast.error('Failed to load backup data');
+      showToast.error('Failed to load backup data');
     } finally {
       setIsLoading(false);
     }
@@ -94,14 +94,14 @@ const AdminBackupManagement: React.FC = () => {
       const response = await backupService.createBackup();
       
       if (response.success) {
-        toast.success('Backup created successfully');
+        showToast.success('Backup created successfully');
         await loadData(); // Reload data
       } else {
-        toast.error(response.error || 'Failed to create backup');
+        showToast.error(response.error || 'Failed to create backup');
       }
     } catch (error) {
       console.error('Failed to create backup:', error);
-      toast.error('Failed to create backup');
+      showToast.error('Failed to create backup');
     } finally {
       setIsCreatingBackup(false);
     }
@@ -111,10 +111,10 @@ const AdminBackupManagement: React.FC = () => {
   const handleDownloadBackup = async (backup: BackupFile) => {
     try {
       await backupService.downloadBackup(backup.filename);
-      toast.success('Backup download started');
+      showToast.success('Backup download started');
     } catch (error) {
       console.error('Failed to download backup:', error);
-      toast.error('Failed to download backup');
+      showToast.error('Failed to download backup');
     }
   };
 
@@ -127,15 +127,15 @@ const AdminBackupManagement: React.FC = () => {
       const response = await backupService.restoreBackup(selectedBackup.filename);
       
       if (response.success) {
-        toast.success('Database restored successfully');
+        showToast.success('Database restored successfully');
         setIsRestoreDialogOpen(false);
         setSelectedBackup(null);
       } else {
-        toast.error(response.error || 'Failed to restore backup');
+        showToast.error(response.error || 'Failed to restore backup');
       }
     } catch (error) {
       console.error('Failed to restore backup:', error);
-      toast.error('Failed to restore backup');
+      showToast.error('Failed to restore backup');
     } finally {
       setIsRestoring(false);
     }
@@ -149,16 +149,16 @@ const AdminBackupManagement: React.FC = () => {
       const response = await backupService.deleteBackup(selectedBackup.filename);
       
       if (response.success) {
-        toast.success('Backup deleted successfully');
+        showToast.success('Backup deleted successfully');
         setIsDeleteDialogOpen(false);
         setSelectedBackup(null);
         await loadData(); // Reload data
       } else {
-        toast.error(response.error || 'Failed to delete backup');
+        showToast.error(response.error || 'Failed to delete backup');
       }
     } catch (error) {
       console.error('Failed to delete backup:', error);
-      toast.error('Failed to delete backup');
+      showToast.error('Failed to delete backup');
     }
   };
 

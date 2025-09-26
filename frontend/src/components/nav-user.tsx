@@ -24,7 +24,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { useAuth } from "@/contexts/AuthContext"
-import { toast } from "sonner"
+import { showToast} from "@/lib/toast"
 
 export function NavUser({
   user,
@@ -45,9 +45,9 @@ export function NavUser({
   const handleLogout = async () => {
     try {
       await logout()
-      toast.success('Logged out successfully')
+      showToast.success('Logged out successfully')
     } catch {
-      toast.error('Failed to logout')
+      showToast.error('Failed to logout')
     }
   }
 

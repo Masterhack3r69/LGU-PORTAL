@@ -39,7 +39,7 @@ import type {
 } from "@/types/compensation";
 import { BENEFIT_TYPE_LABELS } from "@/types/compensation";
 import { compensationService } from "@/services/compensationService";
-import { toast } from "sonner";
+import { showToast } from "@/lib/toast"
 import { BenefitRecordDialog } from "./BenefitRecordDialog";
 
 interface BenefitRecordsTableProps {
@@ -76,7 +76,7 @@ export function BenefitRecordsTable({ onRefresh }: BenefitRecordsTableProps) {
       setTotal(response.total);
     } catch (error) {
       console.error("Failed to load records:", error);
-      toast.error("Failed to load benefit records");
+      showToast.error("Failed to load benefit records");
     } finally {
       setLoading(false);
     }
@@ -110,12 +110,12 @@ export function BenefitRecordsTable({ onRefresh }: BenefitRecordsTableProps) {
 
     try {
       await compensationService.deleteRecord(id);
-      toast.success("Benefit record deleted successfully");
+      showToast.success("Benefit record deleted successfully");
       loadRecords();
       onRefresh();
     } catch (error) {
       console.error("Failed to delete record:", error);
-      toast.error("Failed to delete benefit record");
+      showToast.error("Failed to delete benefit record");
     }
   };
 

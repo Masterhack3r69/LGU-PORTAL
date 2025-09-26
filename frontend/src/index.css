@@ -210,4 +210,47 @@
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 3;
   }
+}/* Toast col
+or variants */
+[data-sonner-toast][data-type="success"] {
+  background-color: rgb(240 253 244) !important;
+  border-color: rgb(187 247 208) !important;
+  color: rgb(22 101 52) !important;
+}
+
+[data-sonner-toast][data-type="error"] {
+  background-color: rgb(254 242 242) !important;
+  border-color: rgb(254 202 202) !important;
+  color: rgb(153 27 27) !important;
+}
+
+[data-sonner-toast][data-type="warning"] {
+  background-color: rgb(255 251 235) !important;
+  border-color: rgb(254 240 138) !important;
+  color: rgb(146 64 14) !important;
+}
+
+[data-sonner-toast][data-type="info"] {
+  background-color: rgb(239 246 255) !important;
+  border-color: rgb(191 219 254) !important;
+  color: rgb(30 64 175) !important;
+}
+
+/* Dark mode toast colors */
+.dark [data-sonner-toast][data-type="success"] {
+  background-color: rgb(20 83 45) !important;
+  border-color: rgb(22 101 52) !important;
+  color: rgb(187 247 208) !important;
+}
+
+.dark [data-sonner-toast][data-type="error"] {
+  background-color: rgb(127 29 29) !important;
+  border-color: rgb(153 27 27) !important;
+  color: rgb(254 202 202) !important;
+}
+
+.dark [data-sonner-toast][data-type="warning"] {
+  background-color: rgb(120 53 15) !important;
+  border-color: rgb(146 64 14) !important;
+  color: rgb(254 240 138) !important;
 }

@@ -11,7 +11,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { toast } from 'sonner';
+import { showToast } from "@/lib/toast"
 import { Edit, Clock } from 'lucide-react';
 import payrollService from '@/services/payrollService';
 import type { PayrollItem } from '@/types/payroll';
@@ -39,12 +39,12 @@ export function WorkingDaysAdjustmentDialog({
 
     const workingDays = parseFloat(formData.workingDays);
     if (isNaN(workingDays) || workingDays < 0 || workingDays > 31) {
-      toast.error('Please enter a valid number of working days (0-31)');
+      showToast.error('Please enter a valid number of working days (0-31)');
       return;
     }
 
     if (!formData.reason.trim()) {
-      toast.error('Please provide a reason for the adjustment');
+      showToast.error('Please provide a reason for the adjustment');
       return;
     }
 
@@ -58,7 +58,7 @@ export function WorkingDaysAdjustmentDialog({
       );
 
       if (response.success) {
-        toast.success('Working days adjusted successfully');
+        showToast.success('Working days adjusted successfully');
         onAdjustmentComplete(response.data);
         setOpen(false);
         setFormData({
@@ -66,11 +66,11 @@ export function WorkingDaysAdjustmentDialog({
           reason: ''
         });
       } else {
-        toast.error(response.message || 'Failed to adjust working days');
+        showToast.error(response.message || 'Failed to adjust working days');
       }
     } catch (error) {
       console.error('Failed to adjust working days:', error);
-      toast.error('Failed to adjust working days');
+      showToast.error('Failed to adjust working days');
     } finally {
       setLoading(false);
     }

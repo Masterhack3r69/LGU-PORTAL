@@ -12,7 +12,7 @@ import { Switch } from '@/components/ui/switch';
 import { format } from 'date-fns';
 import { CalendarIcon, Clock, MapPin, User, Check, ChevronsUpDown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { toast } from 'sonner';
+import { showToast } from "@/lib/toast"
 import { cn } from '@/lib/utils';
 import trainingService from '@/services/trainingService';
 import { employeeService } from '@/services/employeeService';
@@ -108,7 +108,7 @@ const TrainingForm: React.FC<TrainingFormProps> = ({
         }
       } catch (error) {
         console.error('Failed to load data:', error);
-        toast.error('Failed to load required data');
+        showToast.error('Failed to load required data');
       } finally {
         setIsLoadingData(false);
       }
@@ -161,7 +161,7 @@ const TrainingForm: React.FC<TrainingFormProps> = ({
       onSubmit(submissionData);
     } catch (error) {
       console.error('Form submission error:', error);
-      toast.error('Failed to process form data');
+      showToast.error('Failed to process form data');
     }
   };
 

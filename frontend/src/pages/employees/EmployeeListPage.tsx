@@ -37,7 +37,7 @@ import { documentService } from '@/services/documentService';
 import type { Employee, EmployeeFilters, Document } from '@/types/employee';
 import { Plus, Search, Eye, Edit, Trash2, FileText, MoreHorizontal, RefreshCw, Filter, ChevronDown } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { toast } from 'sonner';
+import { showToast } from "@/lib/toast";
 
 interface EmployeeViewDialogProps {
   employee: Employee | null;
@@ -150,7 +150,7 @@ function DocumentsDialog({ employee, open, onOpenChange }: DocumentsDialogProps)
         setDocumentTypes(types);
       } catch (error) {
         console.error('Failed to fetch data:', error);
-        toast.error('Failed to load documents');
+        showToast.error('Failed to load documents');
       } finally {
         setIsLoading(false);
       }
@@ -167,10 +167,10 @@ function DocumentsDialog({ employee, open, onOpenChange }: DocumentsDialogProps)
     try {
       await documentService.deleteDocument(documentId);
       setDocuments(prev => prev.filter(doc => doc.id !== documentId));
-      toast.success('Document deleted successfully');
+      showToast.success('Document deleted successfully');
     } catch (error) {
       console.error('Failed to delete document:', error);
-      toast.error('Failed to delete document');
+      showToast.error('Failed to delete document');
     }
   };
 
@@ -183,7 +183,7 @@ function DocumentsDialog({ employee, open, onOpenChange }: DocumentsDialogProps)
         if (documentType) {
           const validation = documentService.validateFile(file, documentType);
           if (!validation.isValid) {
-            toast.error(validation.error);
+            showToast.error(validation.error || 'Invalid type selected');
             e.target.value = ''; // Clear the input
             return;
           }
@@ -195,7 +195,7 @@ function DocumentsDialog({ employee, open, onOpenChange }: DocumentsDialogProps)
 
   const handleUpload = async () => {
     if (!employee?.id || !uploadData.file || !uploadData.document_type_id) {
-      toast.error('Please fill in all required fields');
+      showToast.error('Please fill in all required fields');
       return;
     }
 
@@ -223,10 +223,10 @@ function DocumentsDialog({ employee, open, onOpenChange }: DocumentsDialogProps)
       const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
       if (fileInput) fileInput.value = '';
       
-      toast.success('Document uploaded successfully');
+      showToast.success('Document uploaded successfully');
     } catch (error) {
       console.error('Failed to upload document:', error);
-      toast.error('Failed to upload document');
+      showToast.error('Failed to upload document');
     } finally {
       setIsUploading(false);
     }
@@ -237,7 +237,7 @@ function DocumentsDialog({ employee, open, onOpenChange }: DocumentsDialogProps)
       await documentService.downloadDocument(document.id, document.file_name);
     } catch (error) {
       console.error('Failed to download document:', error);
-      toast.error('Failed to download document');
+      showToast.error('Failed to download document');
     }
   };
 
@@ -532,7 +532,7 @@ export function EmployeeListPage() {
       });
     } catch (error) {
       console.error('Failed to fetch employees:', error);
-      toast.error('Failed to load employees');
+      showToast.error('Failed to load employees');
     } finally {
       setIsLoading(false);
     }
@@ -592,11 +592,11 @@ export function EmployeeListPage() {
 
     try {
       await employeeService.deleteEmployee(employeeId);
-      toast.success('Employee deleted successfully');
+      showToast.success('Employee deleted successfully');
       fetchEmployees();
     } catch (error) {
       console.error('Failed to delete employee:', error);
-      toast.error('Failed to delete employee');
+      showToast.error('Failed to delete employee');
     }
   };
 

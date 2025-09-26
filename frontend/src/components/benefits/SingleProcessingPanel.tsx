@@ -30,7 +30,7 @@ import {
 import type { Employee } from '@/types/employee';
 import { compensationService } from '@/services/compensationService';
 import { employeeService } from '@/services/employeeService';
-import { toast } from 'sonner';
+import { showToast} from "@/lib/toast"
 
 interface SingleProcessingPanelProps {
   onSuccess: () => void;
@@ -96,7 +96,7 @@ export function SingleProcessingPanel({ onSuccess }: SingleProcessingPanelProps)
       setEmployees(filteredEmployees);
     } catch (error) {
       console.error('Failed to load employees:', error);
-      toast.error('Failed to load employees');
+      showToast.error('Failed to load employees');
     } finally {
       setLoading(false);
     }
@@ -114,7 +114,7 @@ export function SingleProcessingPanel({ onSuccess }: SingleProcessingPanelProps)
       setCalculation(result);
     } catch (error) {
       console.error('Failed to calculate benefit:', error);
-      toast.error('Failed to calculate benefit');
+      showToast.error('Failed to calculate benefit');
     } finally {
       setCalculating(false);
     }
@@ -122,7 +122,7 @@ export function SingleProcessingPanel({ onSuccess }: SingleProcessingPanelProps)
 
   const processBenefit = async () => {
     if (!selectedBenefitType || !selectedEmployeeId) {
-      toast.error('Please select benefit type and employee');
+      showToast.error('Please select benefit type and employee');
       return;
     }
 
@@ -134,13 +134,13 @@ export function SingleProcessingPanel({ onSuccess }: SingleProcessingPanelProps)
     // For other benefits (like TERMINAL_LEAVE), allow 0 amounts as they are valid calculations
     if (selectedBenefitType === 'EC') {
       if (!amount || amount <= 0) {
-        toast.error('Please provide a valid amount');
+        showToast.error('Please provide a valid amount');
         return;
       }
     } else {
       // For calculated benefits, ensure we have a calculation result (amount can be 0)
       if (amount === undefined || amount === null) {
-        toast.error('Please calculate the benefit first');
+        showToast.error('Please calculate the benefit first');
         return;
       }
     }
@@ -155,7 +155,7 @@ export function SingleProcessingPanel({ onSuccess }: SingleProcessingPanelProps)
         notes
       });
       
-      toast.success('Benefit processed successfully');
+      showToast.success('Benefit processed successfully');
       onSuccess();
       
       // Reset form
@@ -166,7 +166,7 @@ export function SingleProcessingPanel({ onSuccess }: SingleProcessingPanelProps)
       setCalculation(null);
     } catch (error) {
       console.error('Failed to process benefit:', error);
-      toast.error('Failed to process benefit');
+      showToast.error('Failed to process benefit');
     } finally {
       setProcessing(false);
     }

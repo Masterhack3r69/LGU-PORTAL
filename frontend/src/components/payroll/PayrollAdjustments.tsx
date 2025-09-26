@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { toast } from 'sonner';
+import { showToast } from "@/lib/toast"
 import { RefreshCw, Plus, Edit, MoreHorizontal, Eye, Calendar, Settings } from 'lucide-react';
 import payrollService from '@/services/payrollService';
 import { ManualAdjustmentDialog } from './ManualAdjustmentDialog';
@@ -45,7 +45,7 @@ export function PayrollAdjustments({ selectedPeriod, onSummaryUpdate, onPayrollI
       }
     } catch (error) {
       console.error('Failed to load payroll items:', error);
-      toast.error('Failed to load payroll items');
+      showToast.error('Failed to load payroll items');
     } finally {
       setLoading(false);
     }
@@ -84,11 +84,11 @@ export function PayrollAdjustments({ selectedPeriod, onSummaryUpdate, onPayrollI
   };
 
   const handleChangeWorkingDays = (item: PayrollItem) => {
-    toast.info(`Use the edit button next to working days for ${item.employee?.full_name}`);
+    showToast.info(`Use the edit button next to working days for ${item.employee?.full_name}`);
   };
 
   const handleManualAdjustment = (item: PayrollItem) => {
-    toast.info(`Use the Manual button to add manual adjustments for ${item.employee?.full_name}`);
+    showToast.info(`Use the Manual button to add manual adjustments for ${item.employee?.full_name}`);
   };
 
   const formatCurrency = (amount: number) => {

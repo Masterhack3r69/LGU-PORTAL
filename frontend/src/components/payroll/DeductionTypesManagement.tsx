@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { toast } from 'sonner';
+import { showToast } from "@/lib/toast"
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -64,11 +64,11 @@ export function DeductionTypesManagement() {
         const deductionTypesData = Array.isArray(data) ? data : (data as { deduction_types?: DeductionType[] })?.deduction_types || [];
         setDeductionTypes(deductionTypesData);
       } else {
-        toast.error('Failed to load deduction types');
+        showToast.error('Failed to load deduction types');
       }
     } catch (error) {
       console.error('Failed to load deduction types:', error);
-      toast.error('Failed to load deduction types');
+      showToast.error('Failed to load deduction types');
     } finally {
       setLoading(false);
     }
@@ -126,16 +126,16 @@ export function DeductionTypesManagement() {
       }
 
       if (response.success) {
-        toast.success(editingType ? 'Deduction type updated successfully' : 'Deduction type created successfully');
+        showToast.success(editingType ? 'Deduction type updated successfully' : 'Deduction type created successfully');
         setDialogOpen(false);
         resetForm();
         loadDeductionTypes();
       } else {
-        toast.error('Failed to save deduction type');
+        showToast.error('Failed to save deduction type');
       }
     } catch (error) {
       console.error('Failed to save deduction type:', error);
-      toast.error('Failed to save deduction type');
+      showToast.error('Failed to save deduction type');
     }
   };
 
@@ -143,14 +143,14 @@ export function DeductionTypesManagement() {
     try {
       const response = await payrollService.deleteDeductionType(id);
       if (response.success) {
-        toast.success('Deduction type deleted successfully');
+        showToast.success('Deduction type deleted successfully');
         loadDeductionTypes();
       } else {
-        toast.error('Failed to delete deduction type');
+        showToast.error('Failed to delete deduction type');
       }
     } catch (error) {
       console.error('Failed to delete deduction type:', error);
-      toast.error('Failed to delete deduction type');
+      showToast.error('Failed to delete deduction type');
     }
   };
 
@@ -158,14 +158,14 @@ export function DeductionTypesManagement() {
     try {
       const response = await payrollService.toggleDeductionType(id);
       if (response.success) {
-        toast.success('Deduction type status updated successfully');
+        showToast.success('Deduction type status updated successfully');
         loadDeductionTypes();
       } else {
-        toast.error('Failed to update deduction type status');
+        showToast.error('Failed to update deduction type status');
       }
     } catch (error) {
       console.error('Failed to toggle deduction type:', error);
-      toast.error('Failed to update deduction type status');
+      showToast.error('Failed to update deduction type status');
     }
   };
 

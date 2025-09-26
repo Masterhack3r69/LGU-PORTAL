@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { toast } from 'sonner';
+import { showToast } from "@/lib/toast";
 import {
   FileText,
   Eye,
@@ -43,11 +43,11 @@ export function PayrollReportsPage() {
           setSelectedPeriod(periodsData[0]);
         }
       } else {
-        toast.error('Failed to load payroll periods');
+        showToast.error('Failed to load payroll periods');
       }
     } catch (error) {
       console.error('Failed to load payroll periods:', error);
-      toast.error('Failed to load payroll periods');
+      showToast.error('Failed to load payroll periods');
     } finally {
       setLoading(false);
     }
@@ -86,12 +86,12 @@ export function PayrollReportsPage() {
           document.body.removeChild(a);
         }, 100);
 
-        toast.success('Payslip PDF downloaded successfully');
+        showToast.success('Payslip PDF downloaded successfully');
       } else {
         throw new Error(`Invalid PDF response: ${response instanceof Blob ? 'Empty blob' : 'Not a blob'}`);
       }
     } catch (error) {
-      toast.error(`Failed to generate payslip PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      showToast.error(`Failed to generate payslip PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setDownloadingItems(prev => {
         const newSet = new Set(prev);
@@ -151,16 +151,16 @@ export function PayrollReportsPage() {
             document.body.removeChild(a);
           }, 100);
 
-          toast.success('Payslip downloaded successfully');
+          showToast.success('Payslip downloaded successfully');
         } catch (decodeError) {
-          toast.error(`Failed to process PDF data: ${decodeError instanceof Error ? decodeError.message : 'Unknown error'}`);
+          showToast.error(`Failed to process PDF data: ${decodeError instanceof Error ? decodeError.message : 'Unknown error'}`);
         }
       } else {
         const errorMsg = response.message || 'No data received from server';
-        toast.error(`Failed to download payslip: ${errorMsg}`);
+        showToast.error(`Failed to download payslip: ${errorMsg}`);
       }
     } catch (error) {
-      toast.error(`Failed to download payslip: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      showToast.error(`Failed to download payslip: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setDownloadingItems(prev => {
         const newSet = new Set(prev);

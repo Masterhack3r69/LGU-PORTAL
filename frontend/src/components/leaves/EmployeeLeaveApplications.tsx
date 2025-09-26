@@ -15,7 +15,7 @@ import { FileText, Edit, Trash2, Search, Clock, CalendarIcon, CheckCircle, XCirc
 import { format } from 'date-fns';
 import leaveService from '@/services/leaveService';
 import LeaveCard from './LeaveCard';
-import { toast } from 'sonner';
+import { showToast } from "@/lib/toast"
 import type { LeaveApplication } from '@/types/leave';
 
 const editLeaveSchema = z.object({
@@ -60,7 +60,7 @@ const EmployeeLeaveApplications: React.FC<EmployeeLeaveApplicationsProps> = ({
       console.log('Received applications:', response);
       setApplications(response.applications);
     } catch (error) {
-      toast.error('Failed to load leave applications');
+      showToast.error('Failed to load leave applications');
       console.error('Error loading applications:', error);
     } finally {
       setIsLoading(false);
@@ -73,7 +73,7 @@ const EmployeeLeaveApplications: React.FC<EmployeeLeaveApplicationsProps> = ({
 
   const handleEdit = (application: LeaveApplication) => {
     if (application.status !== 'Pending') {
-      toast.error('Only pending applications can be edited');
+      showToast.error('Only pending applications can be edited');
       return;
     }
     setSelectedApplication(application);
@@ -99,11 +99,11 @@ const EmployeeLeaveApplications: React.FC<EmployeeLeaveApplicationsProps> = ({
         reason: data.reason,
       });
       
-      toast.success('Leave application updated successfully');
+      showToast.success('Leave application updated successfully');
       setShowEditDialog(false);
       loadApplications();
     } catch (error) {
-      toast.error('Failed to update leave application');
+      showToast.error('Failed to update leave application');
       console.error('Error updating application:', error);
     } finally {
       setIsSubmitting(false);
@@ -119,22 +119,22 @@ const EmployeeLeaveApplications: React.FC<EmployeeLeaveApplicationsProps> = ({
 
   const handleCancel = async (application: LeaveApplication) => {
     if (application.status !== 'Pending') {
-      toast.error('Only pending applications can be cancelled');
+      showToast.error('Only pending applications can be cancelled');
       return;
     }
 
     try {
       await leaveService.cancelLeaveApplication(application.id);
-      toast.success('Leave application cancelled successfully');
+      showToast.success('Leave application cancelled successfully');
       loadApplications();
     } catch {
-      toast.error('Failed to cancel leave application');
+      showToast.error('Failed to cancel leave application');
     }
   };
 
   const handleDelete = async (application: LeaveApplication) => {
     if (application.status !== 'Pending') {
-      toast.error('Only pending applications can be deleted');
+      showToast.error('Only pending applications can be deleted');
       return;
     }
 
@@ -144,10 +144,10 @@ const EmployeeLeaveApplications: React.FC<EmployeeLeaveApplicationsProps> = ({
 
     try {
       await leaveService.deleteLeaveApplication(application.id);
-      toast.success('Leave application deleted successfully');
+      showToast.success('Leave application deleted successfully');
       loadApplications();
     } catch {
-      toast.error('Failed to delete leave application');
+      showToast.error('Failed to delete leave application');
     }
   };
 

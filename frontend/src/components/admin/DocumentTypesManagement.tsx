@@ -1,17 +1,37 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Edit, Trash2, AlertCircle, CheckCircle, FileType, Settings } from 'lucide-react';
-import { documentService } from '@/services/documentService';
-import type { DocumentType } from '@/types/employee';
+import { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Plus, Edit, Trash2, FileType, Settings } from "lucide-react";
+import { documentService } from "@/services/documentService";
+import type { DocumentType } from "@/types/employee";
+import { toastSuccess, toastError, toastWarning } from "@/lib/toast";
 
 interface DocumentTypeFormData {
   name: string;
@@ -27,19 +47,29 @@ export function DocumentTypesManagement() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingType, setEditingType] = useState<DocumentType | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  
+
   const [formData, setFormData] = useState<DocumentTypeFormData>({
-    name: '',
-    description: '',
+    name: "",
+    description: "",
     is_required: false,
     max_file_size: 5242880, // 5MB default
-    allowed_extensions: []
+    allowed_extensions: [],
   });
 
   // Common file extensions
   const commonExtensions = [
-    'pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'gif', 'txt', 'xls', 'xlsx', 'ppt', 'pptx'
+    "pdf",
+    "doc",
+    "docx",
+    "jpg",
+    "jpeg",
+    "png",
+    "gif",
+    "txt",
+    "xls",
+    "xlsx",
+    "ppt",
+    "pptx",
   ];
 
   // Load document types
@@ -53,8 +83,8 @@ export function DocumentTypesManagement() {
       const types = await documentService.getDocumentTypes();
       setDocumentTypes(types);
     } catch (error) {
-      console.error('Failed to load document types:', error);
-      setMessage({ type: 'error', text: 'Failed to load document types' });
+      console.error("Failed to load document types:", error);
+      toastError("Failed to load document types");
     } finally {
       setIsLoading(false);
     }
@@ -62,11 +92,11 @@ export function DocumentTypesManagement() {
 
   const resetForm = () => {
     setFormData({
-      name: '',
-      description: '',
+      name: "",
+      description: "",
       is_required: false,
       max_file_size: 5242880,
-      allowed_extensions: []
+      allowed_extensions: [],
     });
     setEditingType(null);
   };
@@ -75,10 +105,10 @@ export function DocumentTypesManagement() {
     setEditingType(docType);
     setFormData({
       name: docType.name,
-      description: docType.description || '',
+      description: docType.description || "",
       is_required: docType.is_required,
       max_file_size: docType.max_file_size,
-      allowed_extensions: docType.allowed_extensions || []
+      allowed_extensions: docType.allowed_extensions || [],
     });
     setIsDialogOpen(true);
   };
@@ -90,69 +120,72 @@ export function DocumentTypesManagement() {
 
   const handleSave = async () => {
     if (!formData.name.trim()) {
-      setMessage({ type: 'error', text: 'Document type name is required' });
+      toastWarning("Document type name is required");
       return;
     }
 
     try {
       setIsSaving(true);
-      
+
       // Here you would call the API to create/update document type
       // Since we don't have those endpoints yet, I'll simulate the operation
-      console.log('Saving document type:', formData);
-      
+      console.log("Saving document type:", formData);
+
       if (editingType) {
         // Update operation
-        setMessage({ type: 'success', text: 'Document type updated successfully' });
+        toastSuccess("Document type updated successfully");
       } else {
         // Create operation
-        setMessage({ type: 'success', text: 'Document type created successfully' });
+        toastSuccess("Document type created successfully");
       }
-      
+
       setIsDialogOpen(false);
       resetForm();
       // Reload data
       await loadDocumentTypes();
-      
     } catch (error) {
-      console.error('Failed to save document type:', error);
-      setMessage({ type: 'error', text: 'Failed to save document type' });
+      console.error("Failed to save document type:", error);
+      toastError("Failed to save document type");
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleDelete = async (docType: DocumentType) => {
-    if (!confirm(`Are you sure you want to delete the document type "${docType.name}"? This action cannot be undone.`)) {
+    if (
+      !confirm(
+        `Are you sure you want to delete the document type "${docType.name}"? This action cannot be undone.`
+      )
+    ) {
       return;
     }
 
     try {
       // Here you would call the API to delete the document type
-      console.log('Deleting document type:', docType.id);
-      setMessage({ type: 'success', text: 'Document type deleted successfully' });
+      console.log("Deleting document type:", docType.id);
+      toastSuccess("Document type deleted successfully");
       await loadDocumentTypes();
     } catch (error) {
-      console.error('Failed to delete document type:', error);
-      setMessage({ type: 'error', text: 'Failed to delete document type' });
+      console.error("Failed to delete document type:", error);
+      toastError("Failed to delete document type");
     }
   };
 
   const handleExtensionToggle = (extension: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       allowed_extensions: prev.allowed_extensions.includes(extension)
-        ? prev.allowed_extensions.filter(ext => ext !== extension)
-        : [...prev.allowed_extensions, extension]
+        ? prev.allowed_extensions.filter((ext) => ext !== extension)
+        : [...prev.allowed_extensions, extension],
     }));
   };
 
   const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return "0 Bytes";
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   const bytesToMB = (bytes: number) => bytes / (1024 * 1024);
@@ -190,20 +223,27 @@ export function DocumentTypesManagement() {
               <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                   <DialogTitle>
-                    {editingType ? 'Edit Document Type' : 'Create Document Type'}
+                    {editingType
+                      ? "Edit Document Type"
+                      : "Create Document Type"}
                   </DialogTitle>
                   <DialogDescription>
                     Configure the document type settings and file restrictions
                   </DialogDescription>
                 </DialogHeader>
-                
+
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="name">Name *</Label>
                     <Input
                       id="name"
                       value={formData.name}
-                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          name: e.target.value,
+                        }))
+                      }
                       placeholder="e.g., Birth Certificate, Resume, etc."
                     />
                   </div>
@@ -213,7 +253,12 @@ export function DocumentTypesManagement() {
                     <Textarea
                       id="description"
                       value={formData.description}
-                      onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          description: e.target.value,
+                        }))
+                      }
                       placeholder="Describe what this document type is for..."
                       rows={3}
                     />
@@ -223,15 +268,20 @@ export function DocumentTypesManagement() {
                     <Checkbox
                       id="is_required"
                       checked={formData.is_required}
-                      onCheckedChange={(checked: boolean) => 
-                        setFormData(prev => ({ ...prev, is_required: checked as boolean }))
+                      onCheckedChange={(checked: boolean) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          is_required: checked as boolean,
+                        }))
                       }
                     />
                     <Label htmlFor="is_required">Required document</Label>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="max_file_size">Maximum File Size (MB)</Label>
+                    <Label htmlFor="max_file_size">
+                      Maximum File Size (MB)
+                    </Label>
                     <Input
                       id="max_file_size"
                       type="number"
@@ -239,10 +289,12 @@ export function DocumentTypesManagement() {
                       max="100"
                       step="0.1"
                       value={bytesToMB(formData.max_file_size)}
-                      onChange={(e) => 
-                        setFormData(prev => ({ 
-                          ...prev, 
-                          max_file_size: mbToBytes(parseFloat(e.target.value) || 5) 
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          max_file_size: mbToBytes(
+                            parseFloat(e.target.value) || 5
+                          ),
                         }))
                       }
                     />
@@ -258,27 +310,34 @@ export function DocumentTypesManagement() {
                             checked={formData.allowed_extensions.includes(ext)}
                             onCheckedChange={() => handleExtensionToggle(ext)}
                           />
-                          <Label htmlFor={`ext-${ext}`} className="text-sm">{ext}</Label>
+                          <Label htmlFor={`ext-${ext}`} className="text-sm">
+                            {ext}
+                          </Label>
                         </div>
                       ))}
                     </div>
                     {formData.allowed_extensions.length === 0 && (
                       <p className="text-sm text-muted-foreground">
-                        No restrictions selected - all file types will be allowed
+                        No restrictions selected - all file types will be
+                        allowed
                       </p>
                     )}
                   </div>
 
                   <div className="flex justify-end gap-2">
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       onClick={() => setIsDialogOpen(false)}
                       disabled={isSaving}
                     >
                       Cancel
                     </Button>
                     <Button onClick={handleSave} disabled={isSaving}>
-                      {isSaving ? 'Saving...' : editingType ? 'Update' : 'Create'}
+                      {isSaving
+                        ? "Saving..."
+                        : editingType
+                        ? "Update"
+                        : "Create"}
                     </Button>
                   </div>
                 </div>
@@ -286,26 +345,15 @@ export function DocumentTypesManagement() {
             </Dialog>
           </div>
         </CardHeader>
-        
-        <CardContent>
-          {message && (
-            <Alert className={`mb-4 ${message.type === 'error' ? 'border-red-200 bg-red-50' : 'border-green-200 bg-green-50'}`}>
-              {message.type === 'success' ? (
-                <CheckCircle className="h-4 w-4 text-green-600" />
-              ) : (
-                <AlertCircle className="h-4 w-4 text-red-600" />
-              )}
-              <AlertDescription className={message.type === 'error' ? 'text-red-800' : 'text-green-800'}>
-                {message.text}
-              </AlertDescription>
-            </Alert>
-          )}
 
+        <CardContent>
           {documentTypes.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <FileType className="mx-auto h-12 w-12 mb-4 text-gray-400" />
               <p>No document types configured yet</p>
-              <p className="text-sm">Click "Add Document Type" to get started</p>
+              <p className="text-sm">
+                Click "Add Document Type" to get started
+              </p>
             </div>
           ) : (
             <Table>
@@ -322,10 +370,12 @@ export function DocumentTypesManagement() {
               <TableBody>
                 {documentTypes.map((docType) => (
                   <TableRow key={docType.id}>
-                    <TableCell className="font-medium">{docType.name}</TableCell>
+                    <TableCell className="font-medium">
+                      {docType.name}
+                    </TableCell>
                     <TableCell>
                       <div className="max-w-xs truncate">
-                        {docType.description || 'No description'}
+                        {docType.description || "No description"}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -335,23 +385,33 @@ export function DocumentTypesManagement() {
                         <Badge variant="secondary">Optional</Badge>
                       )}
                     </TableCell>
-                    <TableCell>{formatFileSize(docType.max_file_size)}</TableCell>
+                    <TableCell>
+                      {formatFileSize(docType.max_file_size)}
+                    </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
-                        {docType.allowed_extensions && docType.allowed_extensions.length > 0 ? (
+                        {docType.allowed_extensions &&
+                        docType.allowed_extensions.length > 0 ? (
                           docType.allowed_extensions.slice(0, 3).map((ext) => (
-                            <Badge key={ext} variant="outline" className="text-xs">
+                            <Badge
+                              key={ext}
+                              variant="outline"
+                              className="text-xs"
+                            >
                               {ext}
                             </Badge>
                           ))
                         ) : (
-                          <span className="text-sm text-muted-foreground">All types</span>
+                          <span className="text-sm text-muted-foreground">
+                            All types
+                          </span>
                         )}
-                        {docType.allowed_extensions && docType.allowed_extensions.length > 3 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{docType.allowed_extensions.length - 3} more
-                          </Badge>
-                        )}
+                        {docType.allowed_extensions &&
+                          docType.allowed_extensions.length > 3 && (
+                            <Badge variant="outline" className="text-xs">
+                              +{docType.allowed_extensions.length - 3} more
+                            </Badge>
+                          )}
                       </div>
                     </TableCell>
                     <TableCell>

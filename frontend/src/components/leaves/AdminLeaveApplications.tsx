@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Search, CheckCircle, XCircle, RefreshCw, FileText, Clock, CheckSquare, AlertCircle } from 'lucide-react';
 import leaveService from '@/services/leaveService';
 import LeaveCard from './LeaveCard';
-import { toast } from 'sonner';
+import { showToast } from "@/lib/toast";
 import type { LeaveApplication } from '@/types/leave';
 
 const AdminLeaveApplications: React.FC = () => {
@@ -33,7 +33,7 @@ const AdminLeaveApplications: React.FC = () => {
       setApplications(response.applications);
       setTotalPages(response.totalPages);
     } catch (error) {
-      toast.error('Failed to load leave applications');
+      showToast.error('Failed to load leave applications');
       console.error('Error loading applications:', error);
     } finally {
       setIsLoading(false);
@@ -70,10 +70,10 @@ const AdminLeaveApplications: React.FC = () => {
   const handleApprove = async (application: LeaveApplication) => {
     try {
       await leaveService.approveLeaveApplication(application.id, { review_notes: 'Approved' });
-      toast.success('Leave application approved successfully');
+      showToast.success('Leave application approved successfully');
       loadApplications();
     } catch {
-      toast.error('Failed to approve leave application');
+      showToast.error('Failed to approve leave application');
     }
   };
 
@@ -85,10 +85,10 @@ const AdminLeaveApplications: React.FC = () => {
       await leaveService.rejectLeaveApplication(application.id, {
         review_notes: reason
       });
-      toast.success('Leave application rejected');
+      showToast.success('Leave application rejected');
       loadApplications();
     } catch {
-      toast.error('Failed to reject leave application');
+      showToast.error('Failed to reject leave application');
     }
   };
 

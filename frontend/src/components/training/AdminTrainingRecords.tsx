@@ -11,7 +11,7 @@ import {
   Calendar,
   Award
 } from 'lucide-react';
-import { toast } from 'sonner';
+import { showToast } from "@/lib/toast"
 import TrainingForm from './TrainingForm';
 import TrainingCard from './TrainingCard';
 import TrainingFilters from './TrainingFilters';
@@ -58,12 +58,12 @@ const AdminTrainingRecords: React.FC<AdminTrainingRecordsProps> = ({
   const createMutation = useMutation({
     mutationFn: (data: CreateTrainingDTO) => trainingService.createTraining(data),
     onSuccess: () => {
-      toast.success('Training record created successfully');
+      showToast.success('Training record created successfully');
       queryClient.invalidateQueries({ queryKey: ['trainings'] });
       closeForm();
     },
     onError: (error: Error) => {
-      toast.error(`Failed to create training: ${error.message}`);
+      showToast.error(`Failed to create training: ${error.message}`);
     },
   });
 
@@ -72,12 +72,12 @@ const AdminTrainingRecords: React.FC<AdminTrainingRecordsProps> = ({
     mutationFn: ({ id, data }: { id: number; data: UpdateTrainingDTO }) => 
       trainingService.updateTraining(id, data),
     onSuccess: () => {
-      toast.success('Training record updated successfully');
+      showToast.success('Training record updated successfully');
       queryClient.invalidateQueries({ queryKey: ['trainings'] });
       closeForm();
     },
     onError: (error: Error) => {
-      toast.error(`Failed to update training: ${error.message}`);
+      showToast.error(`Failed to update training: ${error.message}`);
     },
   });
 
@@ -85,11 +85,11 @@ const AdminTrainingRecords: React.FC<AdminTrainingRecordsProps> = ({
   const deleteMutation = useMutation({
     mutationFn: (id: number) => trainingService.deleteTraining(id),
     onSuccess: () => {
-      toast.success('Training record deleted successfully');
+      showToast.success('Training record deleted successfully');
       queryClient.invalidateQueries({ queryKey: ['trainings'] });
     },
     onError: (error: Error) => {
-      toast.error(`Failed to delete training: ${error.message}`);
+      showToast.error(`Failed to delete training: ${error.message}`);
     },
   });
 
@@ -144,10 +144,10 @@ const AdminTrainingRecords: React.FC<AdminTrainingRecordsProps> = ({
 
   const handleExport = async () => {
     try {
-      toast.info('Export functionality will be implemented soon');
+      showToast.info('Export functionality will be implemented soon');
       // await trainingService.exportTrainingsToCSV(filters);
     } catch {
-      toast.error('Failed to export training records');
+      showToast.error('Failed to export training records');
     }
   };
 

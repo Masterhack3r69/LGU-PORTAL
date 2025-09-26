@@ -24,7 +24,8 @@ import {
 import type { Employee } from '@/types/employee';
 import { compensationService } from '@/services/compensationService';
 import { employeeService } from '@/services/employeeService';
-import { toast } from 'sonner';
+import { showToast} from "@/lib/toast"
+
 
 interface MonetizationPanelProps {
   onSuccess: () => void;
@@ -79,7 +80,7 @@ export function MonetizationPanel({ onSuccess }: MonetizationPanelProps) {
       setEmployees(response.employees);
     } catch (error) {
       console.error('Failed to load employees:', error);
-      toast.error('Failed to load employees');
+      showToast.error('Failed to load employees');
     } finally {
       setLoading(false);
     }
@@ -93,7 +94,7 @@ export function MonetizationPanel({ onSuccess }: MonetizationPanelProps) {
       setLeaveBalance(balance);
     } catch (error) {
       console.error('Failed to load leave balance:', error);
-      toast.error('Failed to load leave balance');
+      showToast.error('Failed to load leave balance');
     }
   };
 
@@ -125,7 +126,7 @@ export function MonetizationPanel({ onSuccess }: MonetizationPanelProps) {
       }
     } catch (error) {
       console.error('Failed to calculate monetization:', error);
-      toast.error('Failed to calculate monetization');
+      showToast.error('Failed to calculate monetization');
     } finally {
       setCalculating(false);
     }
@@ -133,18 +134,18 @@ export function MonetizationPanel({ onSuccess }: MonetizationPanelProps) {
 
   const processMonetization = async () => {
     if (!selectedEmployeeId || !daysToMonetize || !calculatedAmount) {
-      toast.error('Please complete all required fields');
+      showToast.error('Please complete all required fields');
       return;
     }
 
     const days = parseFloat(daysToMonetize);
     if (days <= 0) {
-      toast.error('Days to monetize must be greater than 0');
+      showToast.error('Days to monetize must be greater than 0');
       return;
     }
 
     if (leaveBalance && days > leaveBalance.total_balance) {
-      toast.error('Days to monetize cannot exceed available leave balance');
+      showToast.error('Days to monetize cannot exceed available leave balance');
       return;
     }
 
@@ -156,7 +157,7 @@ export function MonetizationPanel({ onSuccess }: MonetizationPanelProps) {
         notes
       });
       
-      toast.success('Leave monetization processed successfully');
+      showToast.success('Leave monetization processed successfully');
       onSuccess();
       
       // Reset form
@@ -167,7 +168,7 @@ export function MonetizationPanel({ onSuccess }: MonetizationPanelProps) {
       setLeaveBalance(null);
     } catch (error) {
       console.error('Failed to process monetization:', error);
-      toast.error('Failed to process monetization');
+      showToast.error('Failed to process monetization');
     } finally {
       setProcessing(false);
     }

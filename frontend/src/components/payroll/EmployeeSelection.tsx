@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { toast } from 'sonner';
+import { showToast } from "@/lib/toast"
 import {
   Search,
   CheckSquare,
@@ -63,7 +63,7 @@ export function EmployeeSelection({ onEmployeesSelected }: EmployeeSelectionProp
       setEmployees(employeeData);
     } catch (error) {
       console.error('Failed to load employees:', error);
-      toast.error('Failed to load employees');
+      showToast.error('Failed to load employees');
     } finally {
       setLoading(false);
     }

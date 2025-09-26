@@ -31,7 +31,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { employeeService } from "@/services/employeeService";
 import type { Employee, UpdateEmployeeDTO } from "@/types/employee";
 import { ArrowLeft, Save } from "lucide-react";
-import { toast } from "sonner";
+import { showToast } from "@/lib/toast";
 
 const employeeSchema = z.object({
   employee_number: z.string().min(1, "Employee number is required"),
@@ -196,7 +196,7 @@ export function EmployeeEditPage() {
         });
       } catch (error) {
         console.error("Failed to fetch employee:", error);
-        toast.error("Failed to load employee data");
+        showToast.error("Failed to load employee data");
         navigate("/employees");
       } finally {
         setIsLoadingEmployee(false);
@@ -293,11 +293,11 @@ export function EmployeeEditPage() {
       console.log("Sending update data:", updateData);
       console.log("Employment status being sent:", data.employment_status);
       await employeeService.updateEmployee(employee.id, updateData);
-      toast.success("Employee updated successfully");
+      showToast.success("Employee updated successfully");
       navigate("/employees");
     } catch (error) {
       console.error("Failed to update employee:", error);
-      toast.error("Failed to update employee");
+      showToast.error("Failed to update employee");
     } finally {
       setIsLoading(false);
     }

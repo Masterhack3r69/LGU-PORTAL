@@ -20,7 +20,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Calendar as CalendarIcon, TrendingUp } from "lucide-react";
 import { format, parseISO, isWithinInterval } from "date-fns";
 import leaveService from "@/services/leaveService";
-import { toast } from "sonner";
+import { showToast } from "@/lib/toast"
 import type { LeaveBalance, LeaveApplication } from "@/types/leave";
 
 interface EmployeeLeaveBalanceProps {
@@ -71,12 +71,12 @@ const EmployeeLeaveBalance: React.FC<EmployeeLeaveBalanceProps> = ({
         "status" in error.response &&
         error.response.status === 400
       ) {
-        toast.error(
+        showToast.error(
           "No leave balances found. Please contact your administrator to initialize your leave balances."
         );
         setBalances([]);
       } else {
-        toast.error("Failed to load leave balances");
+        showToast.error("Failed to load leave balances");
         setBalances([]);
       }
     } finally {

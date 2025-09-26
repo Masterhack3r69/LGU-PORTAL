@@ -20,7 +20,7 @@ import { DatePicker } from '@/components/ui/date-picker';
 import { employeeService } from '@/services/employeeService';
 import type { CreateEmployeeDTO } from '@/types/employee';
 import { ArrowLeft, Save, Copy, Eye, EyeOff } from 'lucide-react';
-import { toast } from 'sonner';
+import { showToast } from "@/lib/toast";
 
 const employeeSchema = z.object({
   employee_number: z.string().min(1, 'Employee number is required'),
@@ -113,7 +113,7 @@ export function EmployeeCreatePage() {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    toast.success('Copied to clipboard!');
+    showToast.success('Copied to clipboard!');
   };
 
   const onSubmit = async (data: EmployeeFormData) => {
@@ -181,7 +181,7 @@ export function EmployeeCreatePage() {
       
       setGeneratedCredentials(credentials);
       setShowCredentialsDialog(true);
-      toast.success('Employee created successfully');
+      showToast.success('Employee created successfully');
     } catch (error) {
       console.error('Failed to create employee:', error);
       // Log more detailed error information
@@ -190,7 +190,7 @@ export function EmployeeCreatePage() {
         console.error('Error response:', axiosError.response?.data);
         console.error('Error status:', axiosError.response?.status);
       }
-      toast.error('Failed to create employee');
+      showToast.error('Failed to create employee');
     } finally {
       setIsLoading(false);
     }

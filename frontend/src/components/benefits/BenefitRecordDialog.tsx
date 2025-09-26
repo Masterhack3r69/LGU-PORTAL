@@ -6,9 +6,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+import { showToast} from "@/lib/toast"
 import { 
   User, 
   Calendar, 
@@ -21,7 +21,7 @@ import {
 import type { CompensationBenefit } from '@/types/compensation';
 import { BENEFIT_TYPE_LABELS } from '@/types/compensation';
 import { compensationService } from '@/services/compensationService';
-import { toast } from 'sonner';
+// import { toast } from 'sonner';
 
 interface BenefitRecordDialogProps {
   recordId: number | null;
@@ -48,7 +48,7 @@ export function BenefitRecordDialog({ recordId, open, onOpenChange }: BenefitRec
       setRecord(data);
     } catch (error) {
       console.error('Failed to load record:', error);
-      toast.error('Failed to load benefit record details');
+      showToast.error('Failed to load benefit record details');
     } finally {
       setLoading(false);
     }

@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { CheckCircle, XCircle, Clock } from 'lucide-react';
 import leaveService from '@/services/leaveService';
 import LeaveCard from './LeaveCard';
-import { toast } from 'sonner';
+import { showToast} from "@/lib/toast"
 import type { LeaveApplication } from '@/types/leave';
 
 const AdminLeaveApprovals: React.FC = () => {
@@ -26,7 +26,7 @@ const AdminLeaveApprovals: React.FC = () => {
       });
       setPendingApplications(response.applications);
     } catch (error) {
-      toast.error('Failed to load pending applications');
+      showToast.error('Failed to load pending applications');
       console.error('Error loading pending applications:', error);
     } finally {
       setIsLoading(false);
@@ -36,10 +36,10 @@ const AdminLeaveApprovals: React.FC = () => {
   const handleApprove = async (application: LeaveApplication) => {
     try {
       await leaveService.approveLeaveApplication(application.id, { review_notes: 'Approved' });
-      toast.success('Leave application approved successfully');
+      showToast.success('Leave application approved successfully');
       loadPendingApplications();
     } catch {
-      toast.error('Failed to approve leave application');
+      showToast.error('Failed to approve leave application');
     }
   };
 
@@ -51,10 +51,10 @@ const AdminLeaveApprovals: React.FC = () => {
       await leaveService.rejectLeaveApplication(application.id, {
         review_notes: reason
       });
-      toast.success('Leave application rejected');
+      showToast.success('Leave application rejected');
       loadPendingApplications();
     } catch {
-      toast.error('Failed to reject leave application');
+      showToast.error('Failed to reject leave application');
     }
   };
 

@@ -22,7 +22,8 @@ import {
 } from 'lucide-react';
 import type { ImportExecutionResult } from '@/types/import';
 import { importService } from '@/services/importService';
-import { toast } from 'sonner';
+import { showToast} from "@/lib/toast"
+
 
 interface ImportResultsProps {
   result: ImportExecutionResult;
@@ -36,7 +37,7 @@ const ImportResults: React.FC<ImportResultsProps> = ({ result, onStartOver }) =>
   // Download password report as CSV
   const handleDownloadPasswordReport = () => {
     if (!result.userAccounts || result.userAccounts.length === 0) {
-      toast.error('No user accounts were created');
+      showToast.error('No user accounts were created');
       return;
     }
 
@@ -51,17 +52,17 @@ const ImportResults: React.FC<ImportResultsProps> = ({ result, onStartOver }) =>
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
       
-      toast.success('Password report downloaded successfully');
+      showToast.success('Password report downloaded successfully');
     } catch (error) {
       console.error('Error downloading password report:', error);
-      toast.error('Failed to download password report');
+      showToast.error('Failed to download password report');
     }
   };
 
   // Copy password report to clipboard
   const handleCopyPasswordReport = async () => {
     if (!result.userAccounts || result.userAccounts.length === 0) {
-      toast.error('No user accounts were created');
+      showToast.warning('No user accounts were created');
       return;
     }
 
@@ -74,10 +75,10 @@ const ImportResults: React.FC<ImportResultsProps> = ({ result, onStartOver }) =>
       ].join('\n');
 
       await navigator.clipboard.writeText(reportText);
-      toast.success('Password report copied to clipboard');
+      showToast.success('Password report copied to clipboard');
     } catch (error) {
       console.error('Error copying to clipboard:', error);
-      toast.error('Failed to copy password report');
+      showToast.error('Failed to copy password report');
     }
   };
 

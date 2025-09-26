@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { format, parseISO } from "date-fns";
 import { Search, Filter, Eye, Calendar, User, Database } from "lucide-react";
-import { toast } from "sonner";
+import { showToast} from "@/lib/toast";
 
 import {
   Card,
@@ -76,7 +76,7 @@ const AdminAuditLogsManagement: React.FC = () => {
       setPagination(response.pagination || null);
     } catch (error) {
       console.error("Failed to load audit logs:", error);
-      toast.error("Failed to load audit logs");
+      showToast.error("Failed to load audit logs");
     } finally {
       setIsLoading(false);
     }
@@ -275,7 +275,7 @@ const AdminAuditLogsManagement: React.FC = () => {
               />
             </div>
 
-             {/* End Date */}
+            {/* End Date */}
             <div className="space-y-2">
               <Label htmlFor="end-date-filter">End Date</Label>
               <DatePicker
@@ -284,15 +284,12 @@ const AdminAuditLogsManagement: React.FC = () => {
                 placeholder="Select end date"
               />
             </div>
-
           </div>
 
           {/* Second row for additional filters */}
           <div className="flex gap-4 mt-4">
-           
             {/* Page Size */}
             <div className="space-y-2">
-              
               <Select
                 value={filters.limit?.toString() || "50"}
                 onValueChange={(value) =>
@@ -319,10 +316,7 @@ const AdminAuditLogsManagement: React.FC = () => {
                 Clear Filters
               </Button>
             </div>
-            
           </div>
-
-        
         </CardContent>
       </Card>
 

@@ -1,5 +1,5 @@
 import axios, { type AxiosInstance, type AxiosResponse } from 'axios';
-import { toast } from 'sonner';
+import { showToast } from "@/lib/toast"
 
 class ApiService {
   private api: AxiosInstance;
@@ -37,7 +37,7 @@ class ApiService {
         
         // Don't show toast for authentication errors on initial load
         if (error.response?.status !== 401 || window.location.pathname !== '/') {
-          toast.error(message);
+          showToast.error(message);
         }
 
         return Promise.reject(error);

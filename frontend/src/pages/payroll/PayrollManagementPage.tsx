@@ -9,7 +9,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { showToast } from "@/lib/toast";
 import { Calculator, Settings, Calendar, DollarSign } from "lucide-react";
 import payrollService from "@/services/payrollService";
 import { PayrollAdjustments } from "@/components/payroll/PayrollAdjustments";
@@ -50,11 +50,11 @@ export function PayrollManagementPage() {
           setSelectedPeriod(periodsData[0]);
         }
       } else {
-        toast.error("Failed to load payroll periods");
+        showToast.error("Failed to load payroll periods");
       }
     } catch (error) {
       console.error("Failed to load payroll periods:", error);
-      toast.error("Failed to load payroll periods");
+      showToast.error("Failed to load payroll periods");
     } finally {
       setLoading(false);
     }

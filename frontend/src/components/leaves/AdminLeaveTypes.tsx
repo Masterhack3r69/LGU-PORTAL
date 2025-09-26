@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Settings, Plus, Edit, Trash2 } from 'lucide-react';
 import leaveService from '@/services/leaveService';
-import { toast } from 'sonner';
+import { showToast } from "@/lib/toast"
 import type { LeaveType } from '@/types/leave';
 
 const AdminLeaveTypes: React.FC = () => {
@@ -38,7 +38,7 @@ const AdminLeaveTypes: React.FC = () => {
       const data = await leaveService.getLeaveTypes();
       setLeaveTypes(data);
     } catch (error) {
-      toast.error('Failed to load leave types');
+      showToast.error('Failed to load leave types');
       console.error('Error loading leave types:', error);
     } finally {
       setIsLoading(false);
@@ -62,16 +62,16 @@ const AdminLeaveTypes: React.FC = () => {
 
       if (editingType) {
         await leaveService.updateLeaveType(editingType.id, payload);
-        toast.success('Leave type updated successfully');
+        showToast.success('Leave type updated successfully');
       } else {
         await leaveService.createLeaveType(payload);
-        toast.success('Leave type created successfully');
+        showToast.success('Leave type created successfully');
       }
 
       resetForm();
       loadLeaveTypes();
     } catch {
-      toast.error('Failed to save leave type');
+      showToast.error('Failed to save leave type');
     }
   };
 

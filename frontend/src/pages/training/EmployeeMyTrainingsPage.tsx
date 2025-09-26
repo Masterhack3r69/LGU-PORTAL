@@ -8,7 +8,7 @@ import {
   RefreshCw,
   Search
 } from 'lucide-react';
-import { toast } from 'sonner';
+import { showToast } from "@/lib/toast";
 import TrainingForm from '@/components/training/TrainingForm';
 import TrainingCard from '@/components/training/TrainingCard';
 import TrainingFilters from '@/components/training/TrainingFilters';
@@ -59,13 +59,13 @@ const EmployeeMyTrainingsPage: React.FC = () => {
       employee_id: user?.employee_id || 0
     }),
     onSuccess: () => {
-      toast.success('Training record created successfully');
+      showToast.success('Training record created successfully');
       queryClient.invalidateQueries({ queryKey: ['my-trainings'] });
       queryClient.invalidateQueries({ queryKey: ['employee-training-history'] });
       closeForm();
     },
     onError: (error: Error) => {
-      toast.error(`Failed to create training: ${error.message}`);
+      showToast.error(`Failed to create training: ${error.message}`);
     },
   });
 
@@ -74,13 +74,13 @@ const EmployeeMyTrainingsPage: React.FC = () => {
     mutationFn: ({ id, data }: { id: number; data: UpdateTrainingDTO }) => 
       trainingService.updateTraining(id, data),
     onSuccess: () => {
-      toast.success('Training record updated successfully');
+      showToast.success('Training record updated successfully');
       queryClient.invalidateQueries({ queryKey: ['my-trainings'] });
       queryClient.invalidateQueries({ queryKey: ['employee-training-history'] });
       closeForm();
     },
     onError: (error: Error) => {
-      toast.error(`Failed to update training: ${error.message}`);
+      showToast.error(`Failed to update training: ${error.message}`);
     },
   });
 
@@ -88,12 +88,12 @@ const EmployeeMyTrainingsPage: React.FC = () => {
   const deleteMutation = useMutation({
     mutationFn: (id: number) => trainingService.deleteTraining(id),
     onSuccess: () => {
-      toast.success('Training record deleted successfully');
+      showToast.success('Training record deleted successfully');
       queryClient.invalidateQueries({ queryKey: ['my-trainings'] });
       queryClient.invalidateQueries({ queryKey: ['employee-training-history'] });
     },
     onError: (error: Error) => {
-      toast.error(`Failed to delete training: ${error.message}`);
+      showToast.error(`Failed to delete training: ${error.message}`);
     },
   });
 

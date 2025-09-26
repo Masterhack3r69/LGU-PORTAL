@@ -27,7 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { toast } from "sonner";
+import { showToast } from "@/lib/toast";
 import {
   Plus,
   Eye,
@@ -93,11 +93,11 @@ export function PayrollPeriodsPage() {
           setSelectedPeriod(periodsData[0]);
         }
       } else {
-        toast.error("Failed to load payroll periods");
+        showToast.error("Failed to load payroll periods");
       }
     } catch (error) {
       console.error("Failed to load payroll periods:", error);
-      toast.error("Failed to load payroll periods");
+      showToast.error("Failed to load payroll periods");
     } finally {
       setLoading(false);
     }
@@ -149,7 +149,7 @@ export function PayrollPeriodsPage() {
 
       const response = await payrollService.createPeriod(periodData);
       if (response.success) {
-        toast.success("Payroll period created successfully");
+        showToast.success("Payroll period created successfully");
         loadPeriods();
         setNewPeriodData({
           year: new Date().getFullYear(),
@@ -157,11 +157,11 @@ export function PayrollPeriodsPage() {
           period_number: 1,
         });
       } else {
-        toast.error("Failed to create payroll period");
+        showToast.error("Failed to create payroll period");
       }
     } catch (error) {
       console.error("Failed to create payroll period:", error);
-      toast.error("Failed to create payroll period");
+      showToast.error("Failed to create payroll period");
     }
   };
 

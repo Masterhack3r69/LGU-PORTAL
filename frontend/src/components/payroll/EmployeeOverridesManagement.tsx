@@ -13,7 +13,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { toast } from 'sonner';
+import { showToast } from "@/lib/toast"
 import { Plus, Edit, Trash2, X, Check, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import payrollService from '@/services/payrollService';
@@ -105,7 +105,7 @@ export function EmployeeOverridesManagement() {
       }
     } catch (error) {
       console.error('Failed to load data:', error);
-      toast.error('Failed to load data');
+      showToast.error('Failed to load data');
     } finally {
       setLoading(false);
     }
@@ -141,7 +141,7 @@ export function EmployeeOverridesManagement() {
       }
     } catch (error) {
       console.error('Failed to load overrides:', error);
-      toast.error('Failed to load overrides');
+      showToast.error('Failed to load overrides');
     }
   };
 
@@ -205,16 +205,16 @@ export function EmployeeOverridesManagement() {
       }
 
       if (response.success) {
-        toast.success(editingOverride ? 'Override updated successfully' : 'Override created successfully');
+        showToast.success(editingOverride ? 'Override updated successfully' : 'Override created successfully');
         setDialogOpen(false);
         resetForm();
         loadOverrides();
       } else {
-        toast.error('Failed to save override');
+        showToast.error('Failed to save override');
       }
     } catch (error) {
       console.error('Failed to save override:', error);
-      toast.error('Failed to save override');
+      showToast.error('Failed to save override');
     }
   };
 
@@ -228,14 +228,14 @@ export function EmployeeOverridesManagement() {
       }
 
       if (response.success) {
-        toast.success('Override deleted successfully');
+        showToast.success('Override deleted successfully');
         loadOverrides();
       } else {
-        toast.error('Failed to delete override');
+        showToast.error('Failed to delete override');
       }
     } catch (error) {
       console.error('Failed to delete override:', error);
-      toast.error('Failed to delete override');
+      showToast.error('Failed to delete override');
     }
   };
 

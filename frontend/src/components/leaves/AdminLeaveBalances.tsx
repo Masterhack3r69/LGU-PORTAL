@@ -36,7 +36,7 @@ import { cn } from "@/lib/utils";
 import leaveService from "@/services/leaveService";
 import employeeService from "@/services/employeeService";
 import LeaveBalanceCard from "./LeaveBalanceCard";
-import { toast } from "sonner";
+import { showToast } from "@/lib/toast"
 import type {
   LeaveBalance,
   LeaveType,
@@ -82,7 +82,7 @@ const AdminLeaveBalances: React.FC = () => {
       );
     } catch (error) {
       console.error("Error loading employees:", error);
-      toast.error("Failed to load employees");
+      showToast.error("Failed to load employees");
     }
   }, []);
 
@@ -92,7 +92,7 @@ const AdminLeaveBalances: React.FC = () => {
       setLeaveTypes(types);
     } catch (error) {
       console.error("Error loading leave types:", error);
-      toast.error("Failed to load leave types");
+      showToast.error("Failed to load leave types");
     }
   }, []);
 
@@ -111,7 +111,7 @@ const AdminLeaveBalances: React.FC = () => {
         setBalances([]);
       }
     } catch (error) {
-      toast.error("Failed to load leave balances");
+      showToast.error("Failed to load leave balances");
       console.error("Error loading balances:", error);
     } finally {
       setIsLoading(false);
@@ -162,24 +162,24 @@ const AdminLeaveBalances: React.FC = () => {
 
   const handleCreateBalance = async () => {
     if (addBalanceForm.employee_id === 0) {
-      toast.error("Please select an employee");
+      showToast.error("Please select an employee");
       return;
     }
 
     if (addBalanceForm.leave_type_id === 0) {
-      toast.error("Please select a leave type");
+      showToast.error("Please select a leave type");
       return;
     }
 
     if (addBalanceForm.earned_days < 0) {
-      toast.error("Earned days cannot be negative");
+      showToast.error("Earned days cannot be negative");
       return;
     }
 
     try {
       setIsCreating(true);
       await leaveService.createLeaveBalance(addBalanceForm);
-      toast.success("Leave balance created successfully");
+      showToast.success("Leave balance created successfully");
       setShowAddDialog(false);
 
       // Reset form
@@ -202,7 +202,7 @@ const AdminLeaveBalances: React.FC = () => {
           ? (error as { response?: { data?: { message?: string } } }).response
               ?.data?.message || "Failed to create leave balance"
           : "Failed to create leave balance";
-      toast.error(message);
+      showToast.error(message);
     } finally {
       setIsCreating(false);
     }

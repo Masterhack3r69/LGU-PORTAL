@@ -9,7 +9,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { toast } from "sonner";
+import { showToast } from "@/lib/toast";
 import { Download, Eye, Calendar, DollarSign } from "lucide-react";
 import payrollService from "@/services/payrollService";
 import type { PayrollPeriod, PayrollItem, PayslipData } from "@/types/payroll";
@@ -83,11 +83,11 @@ export function EmployeePayrollViewPage() {
           setSelectedPeriod(periodsWithFinalizedPayroll[0]);
         }
       } else {
-        toast.error("Failed to load payroll periods");
+        showToast.error("Failed to load payroll periods");
       }
     } catch (error) {
       console.error("Failed to load payroll periods:", error);
-      toast.error("Failed to load payroll periods");
+      showToast.error("Failed to load payroll periods");
     } finally {
       setLoading(false);
     }
@@ -115,7 +115,7 @@ export function EmployeePayrollViewPage() {
       }
     } catch (error) {
       console.error("Failed to load payroll items:", error);
-      toast.error("Failed to load payroll items");
+      showToast.error("Failed to load payroll items");
     }
   };
 
@@ -126,11 +126,11 @@ export function EmployeePayrollViewPage() {
       if (response.success) {
         setSelectedPayslip(response.data);
       } else {
-        toast.error("Failed to load payslip");
+        showToast.error("Failed to load payslip");
       }
     } catch (error) {
       console.error("Failed to load payslip:", error);
-      toast.error("Failed to load payslip");
+      showToast.error("Failed to load payslip");
     } finally {
       setPayslipLoading(false);
     }
@@ -147,10 +147,10 @@ export function EmployeePayrollViewPage() {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      toast.success("Payslip downloaded successfully");
+      showToast.success("Payslip downloaded successfully");
     } catch (error) {
       console.error("Failed to download payslip:", error);
-      toast.error("Failed to download payslip");
+      showToast.error("Failed to download payslip");
     }
   };
 
