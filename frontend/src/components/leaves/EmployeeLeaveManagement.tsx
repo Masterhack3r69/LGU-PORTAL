@@ -34,17 +34,19 @@ const EmployeeLeaveManagement: React.FC = () => {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-3 md:space-y-0">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Leave Management</h1>
-          <p className="text-sm text-muted-foreground">
-            Manage your leave applications and view balances
-          </p>
+      <div className="sticky top-0 z-10 bg-background pb-4 pt-2 border-b border-border w-full">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-3 md:space-y-0">
+          <div>
+            <h1 className="text-xl font-semibold tracking-tight">Leave Management</h1>
+            <p className="text-muted-foreground text-sm sm:text-base">
+              Manage your leave applications and view balances
+            </p>
+          </div>
+          <Button onClick={() => setShowNewApplicationDialog(true)} className="w-full md:w-auto h-9">
+            <Plus className="h-4 w-4 mr-1" />
+            New Leave
+          </Button>
         </div>
-        <Button onClick={() => setShowNewApplicationDialog(true)} className="w-full md:w-auto h-9">
-          <Plus className="h-4 w-4 mr-1" />
-          New Leave
-        </Button>
       </div>
 
       {/* Main Content */}

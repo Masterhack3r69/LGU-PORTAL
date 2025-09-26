@@ -6,6 +6,7 @@ import { EmployeeListPage } from '@/pages/employees/EmployeeListPage';
 import { EmployeeCreatePage } from '@/pages/employees/EmployeeCreatePage';
 import { EmployeeEditPage } from '@/pages/employees/EmployeeEditPage';
 import { ProfilePage } from '@/pages/ProfilePage';
+import { SettingsPage } from '@/pages/SettingsPage';
 import { DocumentManagementPage } from '@/pages/employees/DocumentManagementPage';
 import { DocumentTypesManagement } from '@/components/admin/DocumentTypesManagement';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
@@ -30,6 +31,7 @@ import EmployeeMyTrainingsPage from '@/pages/training/EmployeeMyTrainingsPage';
 import EmployeeCertificatesPage from '@/pages/training/EmployeeCertificatesPage';
 import AuditLogsPage from '@/pages/admin/AuditLogsPage';
 import EmployeeImportPage from '@/pages/admin/EmployeeImportPage';
+import BackupManagementPage from '@/pages/admin/BackupManagementPage';
 
 // Payroll Management Pages
 import { EmployeePayrollPage } from '@/pages/payroll/EmployeePayrollPage';
@@ -358,6 +360,14 @@ function App() {
             } 
           />
           <Route 
+            path="backup" 
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <BackupManagementPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
             path="*" 
             element={
               <ProtectedRoute allowedRoles={['admin']}>
@@ -372,7 +382,7 @@ function App() {
           path="settings" 
           element={
             <ProtectedRoute allowedRoles={['admin', 'employee']}>
-              <div>Settings - Coming Soon</div>
+              <SettingsPage />
             </ProtectedRoute>
           } 
         />

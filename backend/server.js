@@ -29,6 +29,7 @@ const jobRoutes = require('./routes/jobRoutes');
 const compensationBenefitRoutes = require('./routes/compensationBenefitRoutes');
 const importRoutes = require('./routes/importRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
+const backupRoutes = require('./routes/backupRoutes');
 
 const trainingRoutes = require('./routes/trainingRoutes');
 
@@ -261,6 +262,7 @@ app.use('/api/reports', authMiddleware.requireAuth, auditLogger, reportsRoutes);
 app.use('/api/jobs', authMiddleware.requireAuth, auditLogger, jobRoutes);
 app.use('/api/compensation-benefits', authMiddleware.requireAuth, auditLogger, compensationBenefitRoutes);
 app.use('/api/import', authMiddleware.requireAuth, auditLogger, importRoutes);
+app.use('/api/backup', authMiddleware.requireAuth, auditLogger, backupRoutes);
 
 app.use('/api', authMiddleware.requireAuth, auditLogger, trainingRoutes);
 

@@ -34,6 +34,8 @@ export interface AuditLogResponse {
     totalPages: number;
     hasNext: boolean;
     hasPrevious: boolean;
+    startRecord: number;
+    endRecord: number;
   };
 }
 
@@ -57,6 +59,10 @@ export const AUDIT_ACTIONS: AuditAction[] = [
   { value: 'LEAVE_APPROVE', label: 'Leave Approve', color: 'bg-emerald-100 text-emerald-800' },
   { value: 'LEAVE_REJECT', label: 'Leave Reject', color: 'bg-orange-100 text-orange-800' },
   { value: 'LEAVE_CANCEL', label: 'Leave Cancel', color: 'bg-gray-100 text-gray-800' },
+  { value: 'BACKUP_CREATE', label: 'Backup Create', color: 'bg-purple-100 text-purple-800' },
+  { value: 'BACKUP_RESTORE', label: 'Backup Restore', color: 'bg-orange-100 text-orange-800' },
+  { value: 'BACKUP_DELETE', label: 'Backup Delete', color: 'bg-red-100 text-red-800' },
+  { value: 'BACKUP_DOWNLOAD', label: 'Backup Download', color: 'bg-blue-100 text-blue-800' },
 ];
 
 export const AUDIT_TABLES: AuditTable[] = [
@@ -67,4 +73,5 @@ export const AUDIT_TABLES: AuditTable[] = [
   { value: 'employee_trainings', label: 'Employee Trainings' },
   { value: 'employee_compensation', label: 'Employee Compensation' },
   { value: 'users', label: 'Users' },
+  { value: 'database', label: 'Database' },
 ];

@@ -117,9 +117,11 @@ class CompensationBenefit {
             SELECT cbr.*, 
                    CONCAT(e.first_name, ' ', IFNULL(e.middle_name, ''), ' ', e.last_name) as employee_name,
                    e.employee_number,
-                   e.current_monthly_salary as monthly_salary
+                   e.current_monthly_salary as monthly_salary,
+                   u.username as processed_by_name
             FROM comp_benefit_records cbr
             JOIN employees e ON cbr.employee_id = e.id
+            LEFT JOIN users u ON cbr.processed_by = u.id
             WHERE cbr.id = ?
         `;
         
@@ -140,9 +142,11 @@ class CompensationBenefit {
             SELECT cbr.*, 
                    CONCAT(e.first_name, ' ', IFNULL(e.middle_name, ''), ' ', e.last_name) as employee_name,
                    e.employee_number,
-                   e.current_monthly_salary as monthly_salary
+                   e.current_monthly_salary as monthly_salary,
+                   u.username as processed_by_name
             FROM comp_benefit_records cbr
             JOIN employees e ON cbr.employee_id = e.id
+            LEFT JOIN users u ON cbr.processed_by = u.id
             WHERE 1=1
         `;
         

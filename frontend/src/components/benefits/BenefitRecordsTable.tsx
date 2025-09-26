@@ -1,39 +1,46 @@
-  import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
+import { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   Select,
-  SelectContent,  
+  SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { 
-  Search, 
-  Filter, 
+} from "@/components/ui/select";
+import {
+  Search,
+  Filter,
   Trash2,
   ChevronLeft,
   ChevronRight,
-  Eye
-} from 'lucide-react';
-import type { 
-  CompensationBenefit, 
-  CompensationFilters, 
-  BenefitType
-} from '@/types/compensation';
-import { BENEFIT_TYPE_LABELS } from '@/types/compensation';
-import { compensationService } from '@/services/compensationService';
-import { toast } from 'sonner';
+  Eye,
+} from "lucide-react";
+import type {
+  CompensationBenefit,
+  CompensationFilters,
+  BenefitType,
+} from "@/types/compensation";
+import { BENEFIT_TYPE_LABELS } from "@/types/compensation";
+import { compensationService } from "@/services/compensationService";
+import { toast } from "sonner";
+import { BenefitRecordDialog } from "./BenefitRecordDialog";
 
 interface BenefitRecordsTableProps {
   onRefresh: () => void;
@@ -44,69 +51,89 @@ export function BenefitRecordsTable({ onRefresh }: BenefitRecordsTableProps) {
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<CompensationFilters>({
     page: 1,
-    limit: 10
+    limit: 10,
   });
   const [totalPages, setTotalPages] = useState(0);
   const [total, setTotal] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedRecordId, setSelectedRecordId] = useState<number | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
     loadRecords();
-  }, [filters]);
+  }, [filters, searchTerm]);
 
   const loadRecords = async () => {
     try {
       setLoading(true);
-      const response = await compensationService.getRecords(filters);
+      const filtersWithSearch = {
+        ...filters,
+        ...(searchTerm && { search: searchTerm }),
+      };
+      const response = await compensationService.getRecords(filtersWithSearch);
       setRecords(response.records);
       setTotalPages(response.totalPages);
       setTotal(response.total);
     } catch (error) {
-      console.error('Failed to load records:', error);
-      toast.error('Failed to load benefit records');
+      console.error("Failed to load records:", error);
+      toast.error("Failed to load benefit records");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleFilterChange = (key: keyof CompensationFilters, value: string | number | undefined) => {
-    setFilters(prev => ({
+  const handleFilterChange = (
+    key: keyof CompensationFilters,
+    value: string | number | undefined
+  ) => {
+    setFilters((prev) => ({
       ...prev,
       [key]: value,
-      page: key !== 'page' ? 1 : (value as number) // Reset to page 1 when changing other filters
+      page: key !== "page" ? 1 : (value as number), // Reset to page 1 when changing other filters
     }));
   };
 
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setFilters((prev) => ({ ...prev, page: 1 })); // Reset to page 1 when searching
+  };
+
+  const handleViewRecord = (recordId: number) => {
+    setSelectedRecordId(recordId);
+    setDialogOpen(true);
+  };
+
   const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this benefit record?')) {
+    if (!confirm("Are you sure you want to delete this benefit record?")) {
       return;
     }
 
     try {
       await compensationService.deleteRecord(id);
-      toast.success('Benefit record deleted successfully');
+      toast.success("Benefit record deleted successfully");
       loadRecords();
       onRefresh();
     } catch (error) {
-      console.error('Failed to delete record:', error);
-      toast.error('Failed to delete benefit record');
+      console.error("Failed to delete record:", error);
+      toast.error("Failed to delete benefit record");
     }
   };
 
   const getBenefitTypeBadgeVariant = (type: BenefitType) => {
     switch (type) {
-      case 'TERMINAL_LEAVE':
-        return 'destructive';
-      case 'PBB':
-        return 'default';
-      case 'MID_YEAR_BONUS':
-      case 'YEAR_END_BONUS':
-        return 'secondary';
-      case 'MONETIZATION':
-        return 'outline';
-      case 'LOYALTY':
-        return 'default';
+      case "TERMINAL_LEAVE":
+        return "destructive";
+      case "PBB":
+        return "default";
+      case "MID_YEAR_BONUS":
+      case "YEAR_END_BONUS":
+        return "secondary";
+      case "MONETIZATION":
+        return "outline";
+      case "LOYALTY":
+        return "default";
       default:
-        return 'secondary';
+        return "secondary";
     }
   };
 
@@ -127,16 +154,19 @@ export function BenefitRecordsTable({ onRefresh }: BenefitRecordsTableProps) {
               <Input
                 placeholder="Search by employee name or number..."
                 className="pl-10"
-                onChange={() => {
-                  // Note: This would need to be implemented in the backend
-                  // For now, we'll just show the input
-                }}
+                value={searchTerm}
+                onChange={(e) => handleSearchChange(e.target.value)}
               />
             </div>
           </div>
           <Select
-            value={filters.benefit_type || 'all'}
-            onValueChange={(value) => handleFilterChange('benefit_type', value === 'all' ? undefined : value as BenefitType)}
+            value={filters.benefit_type || "all"}
+            onValueChange={(value) =>
+              handleFilterChange(
+                "benefit_type",
+                value === "all" ? undefined : (value as BenefitType)
+              )
+            }
           >
             <SelectTrigger className="w-48">
               <SelectValue placeholder="Filter by benefit type" />
@@ -180,7 +210,10 @@ export function BenefitRecordsTable({ onRefresh }: BenefitRecordsTableProps) {
                 ))
               ) : records.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  <TableCell
+                    colSpan={7}
+                    className="text-center py-8 text-muted-foreground"
+                  >
                     No benefit records found
                   </TableCell>
                 </TableRow>
@@ -189,19 +222,25 @@ export function BenefitRecordsTable({ onRefresh }: BenefitRecordsTableProps) {
                   <TableRow key={record.id}>
                     <TableCell>
                       <div>
-                        <div className="font-medium">{record.employee_name}</div>
+                        <div className="font-medium">
+                          {record.employee_name}
+                        </div>
                         <div className="text-sm text-muted-foreground">
                           {record.employee_number}
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={getBenefitTypeBadgeVariant(record.benefit_type)}>
+                      <Badge
+                        variant={getBenefitTypeBadgeVariant(
+                          record.benefit_type
+                        )}
+                      >
                         {BENEFIT_TYPE_LABELS[record.benefit_type]}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {record.days_used ? `${record.days_used} days` : '-'}
+                      {record.days_used ? `${record.days_used} days` : "-"}
                     </TableCell>
                     <TableCell className="text-right font-medium">
                       {compensationService.formatCurrency(record.amount)}
@@ -210,15 +249,21 @@ export function BenefitRecordsTable({ onRefresh }: BenefitRecordsTableProps) {
                       {compensationService.formatDate(record.processed_at)}
                     </TableCell>
                     <TableCell>
-                      <div className="text-sm">{record.processed_by_name}</div>
+                      <div className="text-sm">
+                        {record.processed_by_name || "System"}
+                      </div>
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <Button variant="ghost" size="icon">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleViewRecord(record.id)}
+                        >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button 
-                          variant="ghost" 
+                        <Button
+                          variant="ghost"
                           size="icon"
                           onClick={() => handleDelete(record.id)}
                         >
@@ -255,24 +300,34 @@ export function BenefitRecordsTable({ onRefresh }: BenefitRecordsTableProps) {
             </Card>
           ) : (
             records.map((record) => (
-              <Card key={record.id} className="hover:shadow-md transition-shadow">
+              <Card
+                key={record.id}
+                className="hover:shadow-md transition-shadow"
+              >
                 <CardContent className="p-4">
                   <div className="space-y-3">
                     {/* Header */}
                     <div className="flex items-start justify-between">
                       <div>
-                        <div className="font-medium">{record.employee_name}</div>
+                        <div className="font-medium">
+                          {record.employee_name}
+                        </div>
                         <div className="text-sm text-muted-foreground">
                           {record.employee_number}
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => handleViewRecord(record.id)}
+                        >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           className="h-8 w-8"
                           onClick={() => handleDelete(record.id)}
                         >
@@ -283,7 +338,11 @@ export function BenefitRecordsTable({ onRefresh }: BenefitRecordsTableProps) {
 
                     {/* Benefit Type and Amount */}
                     <div className="flex items-center justify-between">
-                      <Badge variant={getBenefitTypeBadgeVariant(record.benefit_type)}>
+                      <Badge
+                        variant={getBenefitTypeBadgeVariant(
+                          record.benefit_type
+                        )}
+                      >
                         {BENEFIT_TYPE_LABELS[record.benefit_type]}
                       </Badge>
                       <div className="text-lg font-semibold">
@@ -294,13 +353,17 @@ export function BenefitRecordsTable({ onRefresh }: BenefitRecordsTableProps) {
                     {/* Details */}
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
-                        <span className="text-muted-foreground">Days Used:</span>
+                        <span className="text-muted-foreground">
+                          Days Used:
+                        </span>
                         <div className="font-medium">
-                          {record.days_used ? `${record.days_used} days` : '-'}
+                          {record.days_used ? `${record.days_used} days` : "-"}
                         </div>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">Processed:</span>
+                        <span className="text-muted-foreground">
+                          Processed:
+                        </span>
                         <div className="font-medium">
                           {compensationService.formatDate(record.processed_at)}
                         </div>
@@ -309,8 +372,12 @@ export function BenefitRecordsTable({ onRefresh }: BenefitRecordsTableProps) {
 
                     {/* Processed By */}
                     <div className="text-sm">
-                      <span className="text-muted-foreground">Processed by:</span>
-                      <span className="ml-1 font-medium">{record.processed_by_name}</span>
+                      <span className="text-muted-foreground">
+                        Processed by:
+                      </span>
+                      <span className="ml-1 font-medium">
+                        {record.processed_by_name || "System"}
+                      </span>
                     </div>
                   </div>
                 </CardContent>
@@ -328,7 +395,9 @@ export function BenefitRecordsTable({ onRefresh }: BenefitRecordsTableProps) {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => handleFilterChange('page', Math.max(1, filters.page! - 1))}
+              onClick={() =>
+                handleFilterChange("page", Math.max(1, filters.page! - 1))
+              }
               disabled={filters.page === 1}
               className="flex items-center gap-1"
             >
@@ -343,7 +412,12 @@ export function BenefitRecordsTable({ onRefresh }: BenefitRecordsTableProps) {
             </div>
             <Button
               size="sm"
-              onClick={() => handleFilterChange('page', Math.min(totalPages, filters.page! + 1))}
+              onClick={() =>
+                handleFilterChange(
+                  "page",
+                  Math.min(totalPages, filters.page! + 1)
+                )
+              }
               disabled={filters.page === totalPages}
             >
               Next
@@ -352,6 +426,13 @@ export function BenefitRecordsTable({ onRefresh }: BenefitRecordsTableProps) {
           </div>
         </div>
       </CardContent>
+
+      {/* Detail Dialog */}
+      <BenefitRecordDialog
+        recordId={selectedRecordId}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+      />
     </Card>
   );
 }

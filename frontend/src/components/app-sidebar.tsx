@@ -206,40 +206,20 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     });
   }
 
-  // Settings for admins, direct Profile link for employees
-  if (user?.role === "admin") {
-    navMain.push({
-      title: "Settings",
-      url: "/settings",
-      icon: Settings,
-      items: [
-        {
-          title: "Profile",
-          url: "/settings/profile",
-        },
-        // {
-        //   title: "Preferences",
-        //   url: "/settings/preferences",
-        // },
-        // {
-        //   title: "Security",
-        //   url: "/settings/security",
-        // },
-        {
-          title: "System Settings",
-          url: "/settings/system",
-        },
-      ],
-    });
-  } else {
-    // For employees - direct link to profile without dropdown
-    navMain.push({
-      title: "My Profile",
-      url: "/profile",
-      icon: Settings,
-      items: [], // No dropdown items
-    });
-  }
+  // Settings and Profile for all users
+  navMain.push({
+    title: "My Profile",
+    url: "/profile",
+    icon: Users,
+    items: [], // No dropdown items
+  });
+
+  navMain.push({
+    title: "Settings",
+    url: "/settings",
+    icon: Settings,
+    items: [], // No dropdown items - direct link to account settings
+  });
 
   const userData = {
     name: user?.full_name || user?.username || "User",

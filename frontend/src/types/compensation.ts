@@ -73,6 +73,7 @@ export interface CompensationFilters {
   start_date?: string;
   end_date?: string;
   processed_by?: number;
+  search?: string;
 }
 
 export interface CompensationResponse {

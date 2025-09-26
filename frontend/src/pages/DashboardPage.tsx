@@ -206,14 +206,13 @@ export function DashboardPage() {
   if (error) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="sticky top-0 z-10 bg-background pb-4 pt-2 border-b border-border w-full">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-xl font-semibold tracking-tight">Dashboard</h1>
+            <p className="text-muted-foreground text-sm sm:text-base">
               Welcome back, {user?.full_name || user?.username}!
             </p>
           </div>
-
         </div>
         <Card>
           <CardContent className="pt-6">
@@ -229,10 +228,10 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="sticky top-0 z-10 bg-background pb-4 pt-2 border-b border-border w-full">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-xl font-semibold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">
             Welcome back, {user?.full_name || user?.username}!
           </p>
         </div>

@@ -199,21 +199,14 @@ export function EmployeePayrollViewPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="sticky top-0 z-10 bg-background pb-4 pt-2 border-b border-border w-full">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <DollarSign className="h-6 w-6" />
+          <h1 className="text-xl font-semibold tracking-tight flex items-center gap-2">
             My Payroll
           </h1>
-          <p className="text-muted-foreground">
-            View your processed and finalized payroll history and download
-            payslips
+          <p className="text-muted-foreground text-sm sm:text-base">
+            View your processed and finalized payroll history and download payslips
           </p>
-          <div className="flex items-center gap-2 mt-2">
-            <Badge variant="outline" className="text-xs">
-              Showing processed and finalized payroll
-            </Badge>
-          </div>
         </div>
       </div>
 

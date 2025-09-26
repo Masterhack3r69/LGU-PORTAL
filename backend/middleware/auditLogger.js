@@ -272,10 +272,67 @@ const sanitizeForAudit = (data) => {
     return sanitized;
 };
 
-// Get audit logs for a specific record or user
+// Get audit logs for a specific record or user with pagination
 const getAuditLogs = async (filters = {}) => {
     try {
-        let query = `
+        // Build WHERE clause for both count and data queries
+        let whereClause = 'WHERE 1=1';
+        const params = [];
+
+        if (filters.userId) {
+            whereClause += ' AND al.user_id = ?';
+            params.push(parseInt(filters.userId));
+        }
+
+        if (filters.tableName) {
+            whereClause += ' AND al.table_name = ?';
+            params.push(filters.tableName);
+        }
+
+        if (filters.recordId) {
+            whereClause += ' AND al.record_id = ?';
+            params.push(parseInt(filters.recordId));
+        }
+
+        if (filters.action) {
+            whereClause += ' AND al.action LIKE ?';
+            params.push(`%${filters.action}%`);
+        }
+
+        if (filters.startDate) {
+            whereClause += ' AND al.created_at >= ?';
+            params.push(filters.startDate);
+        }
+
+        if (filters.endDate) {
+            whereClause += ' AND al.created_at <= ?';
+            params.push(filters.endDate);
+        }
+
+        // Get total count first
+        const countQuery = `
+            SELECT COUNT(*) as total
+            FROM audit_logs al
+            LEFT JOIN users u ON al.user_id = u.id
+            LEFT JOIN employees e ON u.id = e.user_id
+            ${whereClause}
+        `;
+
+        const countResult = await executeQuery(countQuery, params);
+        if (!countResult.success) {
+            throw new Error(countResult.error);
+        }
+
+        const totalRecords = countResult.data[0].total;
+
+        // Calculate pagination
+        const page = parseInt(filters.page) || 1;
+        const limit = Math.min(parseInt(filters.limit) || 50, 1000); // Max 1000 records per page
+        const offset = (page - 1) * limit;
+        const totalPages = Math.ceil(totalRecords / limit);
+
+        // Build main data query with pagination
+        const dataQuery = `
             SELECT 
                 al.id,
                 al.user_id,
@@ -292,54 +349,30 @@ const getAuditLogs = async (filters = {}) => {
             FROM audit_logs al
             LEFT JOIN users u ON al.user_id = u.id
             LEFT JOIN employees e ON u.id = e.user_id
-            WHERE 1=1
+            ${whereClause}
+            ORDER BY al.created_at DESC
+            LIMIT ${limit} OFFSET ${offset}
         `;
-        
-        const params = [];
 
-        if (filters.userId) {
-            query += ' AND al.user_id = ?';
-            params.push(parseInt(filters.userId));
+        const dataResult = await executeQuery(dataQuery, params);
+        if (!dataResult.success) {
+            throw new Error(dataResult.error);
         }
 
-        if (filters.tableName) {
-            query += ' AND al.table_name = ?';
-            params.push(filters.tableName);
-        }
-
-        if (filters.recordId) {
-            query += ' AND al.record_id = ?';
-            params.push(parseInt(filters.recordId));
-        }
-
-        if (filters.action) {
-            query += ' AND al.action LIKE ?';
-            params.push(`%${filters.action}%`);
-        }
-
-        if (filters.startDate) {
-            query += ' AND al.created_at >= ?';
-            params.push(filters.startDate);
-        }
-
-        if (filters.endDate) {
-            query += ' AND al.created_at <= ?';
-            params.push(filters.endDate);
-        }
-
-        query += ' ORDER BY al.created_at DESC';
-
-        // Handle LIMIT without prepared statement parameter to avoid MySQL issues
-        if (filters.limit) {
-            const limit = parseInt(filters.limit);
-            // Validate limit to prevent SQL injection
-            if (limit > 0 && limit <= 1000) {
-                query += ` LIMIT ${limit}`;
+        return {
+            success: true,
+            data: dataResult.data,
+            pagination: {
+                currentPage: page,
+                pageSize: limit,
+                totalRecords: totalRecords,
+                totalPages: totalPages,
+                hasNext: page < totalPages,
+                hasPrevious: page > 1,
+                startRecord: offset + 1,
+                endRecord: Math.min(offset + limit, totalRecords)
             }
-        }
-
-        const result = await executeQuery(query, params);
-        return result;
+        };
     } catch (error) {
         console.error('Failed to get audit logs:', error);
         return { success: false, error: error.message };

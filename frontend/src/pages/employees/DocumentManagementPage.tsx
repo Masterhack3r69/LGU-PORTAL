@@ -1,34 +1,79 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { FileText, Download, CheckCircle, CircleX, X, Clock, AlertCircle, Eye, Search, RefreshCw, Filter, ChevronDown } from 'lucide-react';
-import { documentService } from '@/services/documentService';
-import type { Document, DocumentType, DocumentStatistics } from '@/types/employee';
+import { useState, useEffect, useCallback } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
+  FileText,
+  Download,
+  CheckCircle,
+  CircleX,
+  X,
+  Clock,
+  AlertCircle,
+  Eye,
+  Search,
+  RefreshCw,
+  Filter,
+  ChevronDown,
+} from "lucide-react";
+import { documentService } from "@/services/documentService";
+import type {
+  Document,
+  DocumentType,
+  DocumentStatistics,
+} from "@/types/employee";
 
 export function DocumentManagementPage() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [documentTypes, setDocumentTypes] = useState<DocumentType[]>([]);
   const [statistics, setStatistics] = useState<DocumentStatistics | null>(null);
-  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
-  const [reviewNotes, setReviewNotes] = useState('');
+  const [selectedDocument, setSelectedDocument] = useState<Document | null>(
+    null
+  );
+  const [reviewNotes, setReviewNotes] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isReviewing, setIsReviewing] = useState(false);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false); // Collapsible state for filters
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [message, setMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
   const [filters, setFilters] = useState({
-    status: 'all',
-    document_type_id: 'all',
-    employee_search: ''
+    status: "all",
+    document_type_id: "all",
+    employee_search: "",
   });
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
 
@@ -38,19 +83,28 @@ export function DocumentManagementPage() {
       setIsLoading(true);
       const [docsResult, typesResult, statsResult] = await Promise.all([
         documentService.getDocuments({
-          ...(filters.status !== 'all' && { status: filters.status as 'Pending' | 'Approved' | 'Rejected' }),
-          ...(filters.document_type_id !== 'all' && { document_type_id: parseInt(filters.document_type_id) }),
-          limit: 100
+          ...(filters.status !== "all" && {
+            status: filters.status as "Pending" | "Approved" | "Rejected",
+          }),
+          ...(filters.document_type_id !== "all" && {
+            document_type_id: parseInt(filters.document_type_id),
+          }),
+          limit: 100,
         }),
         documentService.getDocumentTypes(),
-        documentService.getDocumentStatistics()
+        documentService.getDocumentStatistics(),
       ]);
 
       let filteredDocs = docsResult;
       if (filters.employee_search) {
-        filteredDocs = docsResult.filter(doc => 
-          doc.employee_name?.toLowerCase().includes(filters.employee_search.toLowerCase()) ||
-          doc.employee_number?.toLowerCase().includes(filters.employee_search.toLowerCase())
+        filteredDocs = docsResult.filter(
+          (doc) =>
+            doc.employee_name
+              ?.toLowerCase()
+              .includes(filters.employee_search.toLowerCase()) ||
+            doc.employee_number
+              ?.toLowerCase()
+              .includes(filters.employee_search.toLowerCase())
         );
       }
 
@@ -58,8 +112,8 @@ export function DocumentManagementPage() {
       setDocumentTypes(typesResult);
       setStatistics(statsResult);
     } catch (error) {
-      console.error('Failed to load data:', error);
-      setMessage({ type: 'error', text: 'Failed to load document data' });
+      console.error("Failed to load data:", error);
+      setMessage({ type: "error", text: "Failed to load document data" });
     } finally {
       setIsLoading(false);
     }
@@ -71,7 +125,7 @@ export function DocumentManagementPage() {
 
   const handleReview = (document: Document) => {
     setSelectedDocument(document);
-    setReviewNotes('');
+    setReviewNotes("");
     setReviewDialogOpen(true);
   };
 
@@ -81,12 +135,12 @@ export function DocumentManagementPage() {
     try {
       setIsReviewing(true);
       await documentService.approveDocument(selectedDocument.id, reviewNotes);
-      setMessage({ type: 'success', text: 'Document approved successfully' });
+      setMessage({ type: "success", text: "Document approved successfully" });
       setReviewDialogOpen(false);
       loadData();
     } catch (error) {
-      console.error('Failed to approve document:', error);
-      setMessage({ type: 'error', text: 'Failed to approve document' });
+      console.error("Failed to approve document:", error);
+      setMessage({ type: "error", text: "Failed to approve document" });
     } finally {
       setIsReviewing(false);
     }
@@ -94,19 +148,22 @@ export function DocumentManagementPage() {
 
   const handleReject = async () => {
     if (!selectedDocument || !reviewNotes.trim()) {
-      setMessage({ type: 'error', text: 'Review notes are required when rejecting a document' });
+      setMessage({
+        type: "error",
+        text: "Review notes are required when rejecting a document",
+      });
       return;
     }
 
     try {
       setIsReviewing(true);
       await documentService.rejectDocument(selectedDocument.id, reviewNotes);
-      setMessage({ type: 'success', text: 'Document rejected successfully' });
+      setMessage({ type: "success", text: "Document rejected successfully" });
       setReviewDialogOpen(false);
       loadData();
     } catch (error) {
-      console.error('Failed to reject document:', error);
-      setMessage({ type: 'error', text: 'Failed to reject document' });
+      console.error("Failed to reject document:", error);
+      setMessage({ type: "error", text: "Failed to reject document" });
     } finally {
       setIsReviewing(false);
     }
@@ -116,22 +173,25 @@ export function DocumentManagementPage() {
     try {
       await documentService.downloadDocument(document.id, document.file_name);
     } catch (error) {
-      console.error('Download failed:', error);
-      setMessage({ type: 'error', text: 'Failed to download document' });
+      console.error("Download failed:", error);
+      setMessage({ type: "error", text: "Failed to download document" });
     }
   };
 
   const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return "0 Bytes";
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
-  const getPendingDocuments = () => documents.filter(doc => doc.status === 'Pending');
-  const getApprovedDocuments = () => documents.filter(doc => doc.status === 'Approved');
-  const getRejectedDocuments = () => documents.filter(doc => doc.status === 'Rejected');
+  const getPendingDocuments = () =>
+    documents.filter((doc) => doc.status === "Pending");
+  const getApprovedDocuments = () =>
+    documents.filter((doc) => doc.status === "Approved");
+  const getRejectedDocuments = () =>
+    documents.filter((doc) => doc.status === "Rejected");
 
   if (isLoading) {
     return (
@@ -146,7 +206,9 @@ export function DocumentManagementPage() {
       <div className="sticky top-0 z-10 bg-background pb-4 pt-2 border-b border-border w-full">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-semibold tracking-tight">Document Management</h1>
+            <h1 className="text-xl font-semibold tracking-tight">
+              Document Management
+            </h1>
             <p className="text-muted-foreground text-sm sm:text-base">
               Review and manage employee document submissions
             </p>
@@ -155,13 +217,23 @@ export function DocumentManagementPage() {
       </div>
 
       {message && (
-        <Alert className={message.type === 'error' ? 'border-red-200 bg-red-50' : 'border-green-200 bg-green-50'}>
-          {message.type === 'success' ? (
+        <Alert
+          className={
+            message.type === "error"
+              ? "border-red-200 bg-red-50"
+              : "border-green-200 bg-green-50"
+          }
+        >
+          {message.type === "success" ? (
             <CheckCircle className="h-4 w-4 text-green-600" />
           ) : (
             <AlertCircle className="h-4 w-4 text-red-600" />
           )}
-          <AlertDescription className={message.type === 'error' ? 'text-red-800' : 'text-green-800'}>
+          <AlertDescription
+            className={
+              message.type === "error" ? "text-red-800" : "text-green-800"
+            }
+          >
             {message.text}
           </AlertDescription>
         </Alert>
@@ -173,12 +245,16 @@ export function DocumentManagementPage() {
           {/* Total Documents Card */}
           <Card className="border-l-4 border-l-blue-500">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Documents</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Total Documents
+              </CardTitle>
               <FileText className="h-4 w-4 text-blue-600" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{statistics.total}</div>
-              <p className="text-xs text-muted-foreground">all submitted documents</p>
+              <p className="text-xs text-muted-foreground">
+                all submitted documents
+              </p>
             </CardContent>
           </Card>
 
@@ -202,7 +278,9 @@ export function DocumentManagementPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{statistics.approved}</div>
-              <p className="text-xs text-muted-foreground">successfully approved</p>
+              <p className="text-xs text-muted-foreground">
+                successfully approved
+              </p>
             </CardContent>
           </Card>
 
@@ -214,7 +292,9 @@ export function DocumentManagementPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{statistics.rejected}</div>
-              <p className="text-xs text-muted-foreground">requires resubmission</p>
+              <p className="text-xs text-muted-foreground">
+                requires resubmission
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -227,14 +307,19 @@ export function DocumentManagementPage() {
           <div className="lg:hidden mb-4">
             <Collapsible open={isFiltersOpen} onOpenChange={setIsFiltersOpen}>
               <CollapsibleTrigger asChild>
-                <Button variant="outline" className="w-full justify-between hover:bg-slate-50 transition-colors duration-200">
+                <Button
+                  variant="outline"
+                  className="w-full justify-between hover:bg-slate-50 transition-colors duration-200"
+                >
                   <div className="flex items-center gap-2">
                     <Filter className="h-4 w-4" />
                     Filters & Search
                   </div>
-                  <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${
-                    isFiltersOpen ? 'rotate-180' : ''
-                  }`} />
+                  <ChevronDown
+                    className={`h-4 w-4 transition-transform duration-200 ${
+                      isFiltersOpen ? "rotate-180" : ""
+                    }`}
+                  />
                 </Button>
               </CollapsibleTrigger>
               <CollapsibleContent className="space-y-4 mt-4">
@@ -244,11 +329,21 @@ export function DocumentManagementPage() {
                     <Input
                       placeholder="Search by name or employee number..."
                       value={filters.employee_search}
-                      onChange={(e) => setFilters({...filters, employee_search: e.target.value})}
+                      onChange={(e) =>
+                        setFilters({
+                          ...filters,
+                          employee_search: e.target.value,
+                        })
+                      }
                       className="pl-10 w-full transition-all duration-200 focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
-                  <Select value={filters.document_type_id} onValueChange={(value) => setFilters({...filters, document_type_id: value})}>
+                  <Select
+                    value={filters.document_type_id}
+                    onValueChange={(value) =>
+                      setFilters({ ...filters, document_type_id: value })
+                    }
+                  >
                     <SelectTrigger className="w-full transition-all duration-200 hover:border-slate-400">
                       <SelectValue placeholder="All types" />
                     </SelectTrigger>
@@ -261,7 +356,12 @@ export function DocumentManagementPage() {
                       ))}
                     </SelectContent>
                   </Select>
-                  <Select value={filters.status} onValueChange={(value) => setFilters({...filters, status: value})}>
+                  <Select
+                    value={filters.status}
+                    onValueChange={(value) =>
+                      setFilters({ ...filters, status: value })
+                    }
+                  >
                     <SelectTrigger className="w-full transition-all duration-200 hover:border-slate-400">
                       <SelectValue placeholder="All statuses" />
                     </SelectTrigger>
@@ -278,8 +378,12 @@ export function DocumentManagementPage() {
                     disabled={isLoading}
                     className="w-full transition-all duration-200 hover:bg-slate-50 hover:shadow-md"
                   >
-                    <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-                    {isLoading ? 'Refreshing...' : 'Refresh'}
+                    <RefreshCw
+                      className={`h-4 w-4 mr-2 ${
+                        isLoading ? "animate-spin" : ""
+                      }`}
+                    />
+                    {isLoading ? "Refreshing..." : "Refresh"}
                   </Button>
                 </div>
               </CollapsibleContent>
@@ -294,13 +398,20 @@ export function DocumentManagementPage() {
                 <Input
                   placeholder="Search by name or employee number..."
                   value={filters.employee_search}
-                  onChange={(e) => setFilters({...filters, employee_search: e.target.value})}
+                  onChange={(e) =>
+                    setFilters({ ...filters, employee_search: e.target.value })
+                  }
                   className="pl-10 w-full transition-all duration-200 focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
             <div className="w-[200px]">
-              <Select value={filters.document_type_id} onValueChange={(value) => setFilters({...filters, document_type_id: value})}>
+              <Select
+                value={filters.document_type_id}
+                onValueChange={(value) =>
+                  setFilters({ ...filters, document_type_id: value })
+                }
+              >
                 <SelectTrigger className="w-full transition-all duration-200 hover:border-slate-400">
                   <SelectValue placeholder="All types" />
                 </SelectTrigger>
@@ -315,7 +426,12 @@ export function DocumentManagementPage() {
               </Select>
             </div>
             <div className="w-[140px]">
-              <Select value={filters.status} onValueChange={(value) => setFilters({...filters, status: value})}>
+              <Select
+                value={filters.status}
+                onValueChange={(value) =>
+                  setFilters({ ...filters, status: value })
+                }
+              >
                 <SelectTrigger className="transition-all duration-200 hover:border-slate-400 w-full">
                   <SelectValue placeholder="All statuses" />
                 </SelectTrigger>
@@ -333,8 +449,10 @@ export function DocumentManagementPage() {
               disabled={isLoading}
               className="w-[140px] transition-all duration-200 hover:bg-slate-50 hover:shadow-md"
             >
-              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-              {isLoading ? 'Refreshing...' : 'Refresh'}
+              <RefreshCw
+                className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
+              />
+              {isLoading ? "Refreshing..." : "Refresh"}
             </Button>
           </div>
         </CardContent>
@@ -346,7 +464,10 @@ export function DocumentManagementPage() {
           <TabsTrigger value="pending" className="relative">
             Pending
             {getPendingDocuments().length > 0 && (
-              <Badge variant="destructive" className="ml-2 h-5 w-5 rounded-full p-0 text-xs">
+              <Badge
+                variant="destructive"
+                className="ml-2 h-5 w-5 rounded-full p-0 text-xs"
+              >
                 {getPendingDocuments().length}
               </Badge>
             )}
@@ -357,8 +478,8 @@ export function DocumentManagementPage() {
         </TabsList>
 
         <TabsContent value="pending">
-          <DocumentTable 
-            documents={getPendingDocuments()} 
+          <DocumentTable
+            documents={getPendingDocuments()}
             onReview={handleReview}
             onDownload={handleDownload}
             showReviewActions={true}
@@ -366,24 +487,24 @@ export function DocumentManagementPage() {
         </TabsContent>
 
         <TabsContent value="approved">
-          <DocumentTable 
-            documents={getApprovedDocuments()} 
+          <DocumentTable
+            documents={getApprovedDocuments()}
             onDownload={handleDownload}
             showReviewActions={false}
           />
         </TabsContent>
 
         <TabsContent value="rejected">
-          <DocumentTable 
-            documents={getRejectedDocuments()} 
+          <DocumentTable
+            documents={getRejectedDocuments()}
             onDownload={handleDownload}
             showReviewActions={false}
           />
         </TabsContent>
 
         <TabsContent value="all">
-          <DocumentTable 
-            documents={documents} 
+          <DocumentTable
+            documents={documents}
             onReview={handleReview}
             onDownload={handleDownload}
             showReviewActions={true}
@@ -400,13 +521,16 @@ export function DocumentManagementPage() {
               Review and approve or reject this document submission
             </DialogDescription>
           </DialogHeader>
-          
+
           {selectedDocument && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <Label className="font-semibold">Employee:</Label>
-                  <p>{selectedDocument.employee_name} ({selectedDocument.employee_number})</p>
+                  <p>
+                    {selectedDocument.employee_name} (
+                    {selectedDocument.employee_number})
+                  </p>
                 </div>
                 <div>
                   <Label className="font-semibold">Document Type:</Label>
@@ -425,7 +549,9 @@ export function DocumentManagementPage() {
               {selectedDocument.description && (
                 <div>
                   <Label className="font-semibold">Description:</Label>
-                  <p className="text-sm text-muted-foreground mt-1">{selectedDocument.description}</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {selectedDocument.description}
+                  </p>
                 </div>
               )}
 
@@ -455,14 +581,11 @@ export function DocumentManagementPage() {
                     disabled={isReviewing}
                   >
                     <X className="mr-2 h-4 w-4" />
-                    {isReviewing ? 'Rejecting...' : 'Reject'}
+                    {isReviewing ? "Rejecting..." : "Reject"}
                   </Button>
-                  <Button
-                    onClick={handleApprove}
-                    disabled={isReviewing}
-                  >
+                  <Button onClick={handleApprove} disabled={isReviewing}>
                     <CheckCircle className="mr-2 h-4 w-4" />
-                    {isReviewing ? 'Approving...' : 'Approve'}
+                    {isReviewing ? "Approving..." : "Approve"}
                   </Button>
                 </div>
               </div>
@@ -482,24 +605,44 @@ interface DocumentTableProps {
   showReviewActions: boolean;
 }
 
-function DocumentTable({ documents, onReview, onDownload, showReviewActions }: DocumentTableProps) {
+function DocumentTable({
+  documents,
+  onReview,
+  onDownload,
+  showReviewActions,
+}: DocumentTableProps) {
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'Approved':
-        return <Badge className="bg-green-100 text-green-800"><CheckCircle className="w-3 h-3 mr-1" />Approved</Badge>;
-      case 'Rejected':
-        return <Badge variant="destructive"><X className="w-3 h-3 mr-1" />Rejected</Badge>;
+      case "Approved":
+        return (
+          <Badge className="bg-green-100 text-green-800">
+            <CheckCircle className="w-3 h-3 mr-1" />
+            Approved
+          </Badge>
+        );
+      case "Rejected":
+        return (
+          <Badge variant="destructive">
+            <X className="w-3 h-3 mr-1" />
+            Rejected
+          </Badge>
+        );
       default:
-        return <Badge variant="secondary"><Clock className="w-3 h-3 mr-1" />Pending</Badge>;
+        return (
+          <Badge variant="secondary">
+            <Clock className="w-3 h-3 mr-1" />
+            Pending
+          </Badge>
+        );
     }
   };
 
   const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return "0 Bytes";
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   if (documents.length === 0) {
@@ -533,16 +676,26 @@ function DocumentTable({ documents, onReview, onDownload, showReviewActions }: D
               <TableRow key={document.id}>
                 <TableCell>
                   <div>
-                    <div className="font-medium">{document.employee_name || 'Unknown'}</div>
-                    <div className="text-sm text-muted-foreground">{document.employee_number}</div>
+                    <div className="font-medium">
+                      {document.employee_name || "Unknown"}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {document.employee_number}
+                    </div>
                   </div>
                 </TableCell>
-                <TableCell>{document.document_type_name || 'Unknown'}</TableCell>
-                <TableCell className="font-medium">{document.file_name}</TableCell>
+                <TableCell>
+                  {document.document_type_name || "Unknown"}
+                </TableCell>
+                <TableCell className="font-medium">
+                  {document.file_name}
+                </TableCell>
                 <TableCell>{formatFileSize(document.file_size)}</TableCell>
                 <TableCell>{getStatusBadge(document.status)}</TableCell>
                 <TableCell>
-                  {document.upload_date ? new Date(document.upload_date).toLocaleDateString() : 'N/A'}
+                  {document.upload_date
+                    ? new Date(document.upload_date).toLocaleDateString()
+                    : "N/A"}
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
@@ -553,15 +706,17 @@ function DocumentTable({ documents, onReview, onDownload, showReviewActions }: D
                     >
                       <Download className="h-4 w-4" />
                     </Button>
-                    {showReviewActions && document.status === 'Pending' && onReview && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => onReview(document)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                    )}
+                    {showReviewActions &&
+                      document.status === "Pending" &&
+                      onReview && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onReview(document)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      )}
                   </div>
                 </TableCell>
               </TableRow>

@@ -13,13 +13,16 @@ router.use(authMiddleware.requireAuth);
 router.get('/audit-logs', authMiddleware.requireAdmin, asyncHandler(async (req, res) => {
     const { page = 1, limit = 50, user_id, table_name, action, start_date, end_date } = req.query;
     
-    const filters = {};
+    const filters = {
+        page: parseInt(page),
+        limit: parseInt(limit)
+    };
+    
     if (user_id) filters.userId = user_id;
     if (table_name) filters.tableName = table_name;
     if (action) filters.action = action;
     if (start_date) filters.startDate = start_date;
     if (end_date) filters.endDate = end_date;
-    if (limit) filters.limit = parseInt(limit);
     
     const result = await getAuditLogs(filters);
     
@@ -29,7 +32,8 @@ router.get('/audit-logs', authMiddleware.requireAdmin, asyncHandler(async (req, 
     
     res.json({
         success: true,
-        data: result.data
+        data: result.data,
+        pagination: result.pagination
     });
 }));
 

@@ -625,6 +625,7 @@ export function EmployeeListPage() {
               <PaginationPrevious 
                 onClick={() => handleFilterChange('page', filters.page - 1)}
                 className="cursor-pointer"
+                size="default"
               />
             </PaginationItem>
           )}
@@ -635,6 +636,7 @@ export function EmployeeListPage() {
                 <PaginationLink 
                   onClick={() => handleFilterChange('page', 1)}
                   className="cursor-pointer"
+                  size="default"
                 >
                   1
                 </PaginationLink>
@@ -653,6 +655,7 @@ export function EmployeeListPage() {
                 onClick={() => handleFilterChange('page', page)}
                 isActive={page === filters.page}
                 className="cursor-pointer"
+                size="default"
               >
                 {page}
               </PaginationLink>
@@ -670,6 +673,7 @@ export function EmployeeListPage() {
                 <PaginationLink 
                   onClick={() => handleFilterChange('page', pagination.totalPages)}
                   className="cursor-pointer"
+                  size="default"
                 >
                   {pagination.totalPages}
                 </PaginationLink>
@@ -682,6 +686,7 @@ export function EmployeeListPage() {
               <PaginationNext 
                 onClick={() => handleFilterChange('page', filters.page + 1)}
                 className="cursor-pointer"
+                size="default"
               />
             </PaginationItem>
           )}

@@ -110,14 +110,14 @@ export function EmployeeBenefitsPage() {
     return benefits.reduce((total, benefit) => total + benefit.amount, 0);
   };
 
-  const getAvailableYears = () => {
-    const currentYear = new Date().getFullYear();
-    const years = [];
-    for (let year = currentYear; year >= currentYear - 5; year--) {
-      years.push(year);
-    }
-    return years;
-  };
+  // const getAvailableYears = () => {
+  //   const currentYear = new Date().getFullYear();
+  //   const years = [];
+  //   for (let year = currentYear; year >= currentYear - 5; year--) {
+  //     years.push(year);
+  //   }
+  //   return years;
+  // };
 
   if (loading) {
     return <div className="flex items-center justify-center h-96">Loading...</div>;
@@ -128,14 +128,15 @@ export function EmployeeBenefitsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="sticky top-0 z-10 bg-background pb-4 pt-2 border-b border-border w-full">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">My Benefits & Compensation</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-xl font-semibold tracking-tight">My Benefits & Compensation</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">
             View your compensation and benefits history
           </p>
         </div>
-        <div className="flex items-center gap-2">
+      
+        {/* <div className="flex items-center gap-2">
           <select
             value={selectedYear}
             onChange={(e) => setSelectedYear(Number(e.target.value))}
@@ -147,7 +148,7 @@ export function EmployeeBenefitsPage() {
               </option>
             ))}
           </select>
-        </div>
+        </div> */}
       </div>
 
       {/* Summary Cards */}

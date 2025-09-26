@@ -22,24 +22,27 @@ class CompensationService {
       ...(filters.start_date && { start_date: filters.start_date }),
       ...(filters.end_date && { end_date: filters.end_date }),
       ...(filters.processed_by && { processed_by: filters.processed_by }),
+      ...(filters.search && { search: filters.search }),
     };
+
+
 
     const response = await apiService.get<{
       success: boolean;
       data: CompensationBenefit[];
       pagination: {
         currentPage: number;
-        pageSize: number;
+        recordsPerPage: number;
         totalRecords: number;
         totalPages: number;
       };
-    }>('/compensation-benefits', params);
+    }>('/compensation-benefits', { params });
 
     return {
       records: response.data || [],
       total: response.pagination?.totalRecords || 0,
       page: response.pagination?.currentPage || 1,
-      limit: response.pagination?.pageSize || 10,
+      limit: response.pagination?.recordsPerPage || 10,
       totalPages: response.pagination?.totalPages || 0,
     };
   }
@@ -59,17 +62,17 @@ class CompensationService {
       data: CompensationBenefit[];
       pagination: {
         currentPage: number;
-        pageSize: number;
+        recordsPerPage: number;
         totalRecords: number;
         totalPages: number;
       };
-    }>('/compensation-benefits/employee', params);
+    }>('/compensation-benefits/employee', { params });
 
     return {
       records: response.data || [],
       total: response.pagination?.totalRecords || 0,
       page: response.pagination?.currentPage || 1,
-      limit: response.pagination?.pageSize || 10,
+      limit: response.pagination?.recordsPerPage || 10,
       totalPages: response.pagination?.totalPages || 0,
     };
   }
@@ -94,7 +97,7 @@ class CompensationService {
     const response = await apiService.get<{
       success: boolean;
       data: BenefitStatistics;
-    }>('/compensation-benefits/statistics', params);
+    }>('/compensation-benefits/statistics', { params });
     return response.data;
   }
 
@@ -167,15 +170,6 @@ class CompensationService {
   // Delete compensation benefit record (admin only)
   async deleteRecord(id: number): Promise<void> {
     await apiService.delete(`/compensation-benefits/${id}`);
-  }
-
-  // Helper method to format currency
-  formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('en-PH', {
-      style: 'currency',
-      currency: 'PHP',
-      minimumFractionDigits: 2,
-    }).format(amount);
   }
 
   // Get employee leave balance

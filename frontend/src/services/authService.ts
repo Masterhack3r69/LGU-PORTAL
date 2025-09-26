@@ -25,13 +25,14 @@ class AuthService {
 
   async changePassword(currentPassword: string, newPassword: string): Promise<void> {
     await apiService.post('/auth/change-password', {
-      current_password: currentPassword,
-      new_password: newPassword,
+      currentPassword: currentPassword,
+      newPassword: newPassword,
+      confirmPassword: newPassword,
     });
   }
 
   async updateProfile(profileData: Partial<User>): Promise<User> {
-    return await apiService.put<User>('/auth/profile', profileData);
+    return await apiService.put<User>('/auth/update-profile', profileData);
   }
 }
 

@@ -37,7 +37,7 @@ import { MonetizationPanel } from "@/components/benefits/MonetizationPanel";
 export function CompensationBenefitsPage() {
   const [statistics, setStatistics] = useState<BenefitStatistics | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState("records");
 
   useEffect(() => {
     loadStatistics();
@@ -62,30 +62,185 @@ export function CompensationBenefitsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-            Compensation & Benefits
-          </h1>
-          <p className="text-muted-foreground text-sm md:text-base">
-            Manage employee benefits, bonuses, and compensation processing
-          </p>
+      <div className="sticky top-0 z-10 bg-background pb-4 pt-2 border-b border-border w-full">
+         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-semibold tracking-tight">
+              Compensation & Benefits
+            </h1>
+            <p className="text-muted-foreground text-sm sm:text-base">
+              Manage employee benefits, bonuses, and compensation processing
+            </p>
+          </div>
+          <Button
+            onClick={handleRefresh}
+            variant="outline"
+            disabled={loading}
+            className="w-full sm:w-auto"
+          >
+            <RefreshCw
+              className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`}
+            />
+            Refresh Data
+          </Button>
         </div>
-        <Button
-          onClick={handleRefresh}
-          variant="outline"
-          disabled={loading}
-          className="w-full sm:w-auto"
-        >
-          <RefreshCw
-            className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`}
-          />
-          Refresh Data
-        </Button>
       </div>
+     
 
       {/* Statistics Cards */}
       <BenefitStatisticsCards statistics={statistics} loading={loading} />
+
+      {/* Overview Content */}
+      <div className="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        {/* Quick Actions */}
+        <Card className="hover:shadow-md transition-shadow">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Award className="h-5 w-5 text-primary" />
+              Quick Actions
+            </CardTitle>
+            <CardDescription>Common benefit processing tasks</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Button
+              className="w-full justify-start hover:bg-blue-50 hover:border-blue-200 transition-colors"
+              variant="outline"
+              onClick={() => setActiveTab("bulk")}
+            >
+              <Users className="mr-2 h-4 w-4 text-blue-600" />
+              <span className="font-medium">Process PBB for All</span>
+            </Button>
+            <Button
+              className="w-full justify-start hover:bg-green-50 hover:border-green-200 transition-colors"
+              variant="outline"
+              onClick={() => setActiveTab("bulk")}
+            >
+              <DollarSign className="mr-2 h-4 w-4 text-green-600" />
+              <span className="font-medium">Process 13th Month</span>
+            </Button>
+            <Button
+              className="w-full justify-start hover:bg-purple-50 hover:border-purple-200 transition-colors"
+              variant="outline"
+              onClick={() => setActiveTab("monetization")}
+            >
+              <Calendar className="mr-2 h-4 w-4 text-purple-600" />
+              <span className="font-medium">Leave Monetization</span>
+            </Button>
+            <Button
+              className="w-full justify-start hover:bg-orange-50 hover:border-orange-200 transition-colors"
+              variant="outline"
+              onClick={() => setActiveTab("single")}
+            >
+              <Plus className="mr-2 h-4 w-4 text-orange-600" />
+              <span className="font-medium">Terminal Leave Benefit</span>
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Recent Activity */}
+        <Card className="hover:shadow-md transition-shadow">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Activity className="h-5 w-5 text-primary" />
+              Recent Processing
+            </CardTitle>
+            <CardDescription>Latest benefit transactions</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {statistics?.by_benefit_type &&
+              statistics.by_benefit_type.length > 0 ? (
+                statistics.by_benefit_type
+                  .sort((a, b) => b.total_amount - a.total_amount)
+                  .slice(0, 4)
+                  .map((item, index) => (
+                    <div
+                      key={item.benefit_type}
+                      className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div
+                          className={`w-2 h-2 rounded-full ${
+                            index === 0
+                              ? "bg-green-500"
+                              : index === 1
+                              ? "bg-blue-500"
+                              : index === 2
+                              ? "bg-purple-500"
+                              : "bg-orange-500"
+                          }`}
+                        />
+                        <Badge variant="secondary" className="text-xs">
+                          {item.benefit_type}
+                        </Badge>
+                        <span className="text-sm text-muted-foreground">
+                          {item.count}
+                        </span>
+                      </div>
+                      <span className="text-sm font-medium">
+                        {compensationService.formatCurrency(item.total_amount)}
+                      </span>
+                    </div>
+                  ))
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No recent activity</p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* System Status */}
+        <Card className="hover:shadow-md transition-shadow">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <TrendingUp className="h-5 w-5 text-primary" />
+              System Status
+            </CardTitle>
+            <CardDescription>Current system information</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center p-3 rounded-lg bg-muted/50">
+                <div className="text-2xl font-bold text-primary">
+                  {statistics?.total_records || 0}
+                </div>
+                <p className="text-xs text-muted-foreground">Total Records</p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-muted/50">
+                <div className="text-lg font-bold text-primary">
+                  {statistics?.by_benefit_type?.length || 0}
+                </div>
+                <p className="text-xs text-muted-foreground">Benefit Types</p>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Total Amount</span>
+                <Badge variant="outline" className="font-mono">
+                  {statistics
+                    ? compensationService.formatCurrency(
+                        statistics.total_amount
+                      )
+                    : "₱0.00"}
+                </Badge>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm">System Status</span>
+                <Badge
+                  variant="default"
+                  className="bg-green-500 hover:bg-green-600"
+                >
+                  <div className="w-2 h-2 bg-white rounded-full mr-1" />
+                  Active
+                </Badge>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Main Content Tabs */}
       <Tabs
@@ -94,26 +249,7 @@ export function CompensationBenefitsPage() {
         className="space-y-6"
       >
         <TooltipProvider>
-          <TabsList className="grid w-full grid-cols-5 h-auto p-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <TabsTrigger
-                  value="overview"
-                  className={`flex items-center gap-2 px-2 py-2 md:px-4 rounded-md transition-all ${
-                    activeTab === "overview"
-                      ? "bg-white dark:bg-gray-700 shadow-sm border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100"
-                      : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700"
-                  }`}
-                >
-                  <TrendingUp className="h-4 w-4" />
-                  <span className="hidden md:inline">Overview</span>
-                </TabsTrigger>
-              </TooltipTrigger>
-              <TooltipContent className="md:hidden">
-                <p>Overview</p>
-              </TooltipContent>
-            </Tooltip>
-
+          <TabsList className="grid w-full grid-cols-4 h-auto p-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
             <Tooltip>
               <TooltipTrigger asChild>
                 <TabsTrigger
@@ -210,168 +346,6 @@ export function CompensationBenefitsPage() {
             </Tooltip> */}
           </TabsList>
         </TooltipProvider>
-
-        {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-6">
-          <div className="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-            {/* Quick Actions */}
-            <Card className="hover:shadow-md transition-shadow">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Award className="h-5 w-5 text-primary" />
-                  Quick Actions
-                </CardTitle>
-                <CardDescription>
-                  Common benefit processing tasks
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button
-                  className="w-full justify-start hover:bg-blue-50 hover:border-blue-200 transition-colors"
-                  variant="outline"
-                  onClick={() => setActiveTab("bulk")}
-                >
-                  <Users className="mr-2 h-4 w-4 text-blue-600" />
-                  <span className="font-medium">Process PBB for All</span>
-                </Button>
-                <Button
-                  className="w-full justify-start hover:bg-green-50 hover:border-green-200 transition-colors"
-                  variant="outline"
-                  onClick={() => setActiveTab("bulk")}
-                >
-                  <DollarSign className="mr-2 h-4 w-4 text-green-600" />
-                  <span className="font-medium">Process 13th Month</span>
-                </Button>
-                <Button
-                  className="w-full justify-start hover:bg-purple-50 hover:border-purple-200 transition-colors"
-                  variant="outline"
-                  onClick={() => setActiveTab("monetization")}
-                >
-                  <Calendar className="mr-2 h-4 w-4 text-purple-600" />
-                  <span className="font-medium">Leave Monetization</span>
-                </Button>
-                <Button
-                  className="w-full justify-start hover:bg-orange-50 hover:border-orange-200 transition-colors"
-                  variant="outline"
-                  onClick={() => setActiveTab("single")}
-                >
-                  <Plus className="mr-2 h-4 w-4 text-orange-600" />
-                  <span className="font-medium">Terminal Leave Benefit</span>
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Recent Activity */}
-            <Card className="hover:shadow-md transition-shadow">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Activity className="h-5 w-5 text-primary" />
-                  Recent Processing
-                </CardTitle>
-                <CardDescription>Latest benefit transactions</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {statistics?.by_benefit_type &&
-                  statistics.by_benefit_type.length > 0 ? (
-                    statistics.by_benefit_type
-                      .sort((a, b) => b.total_amount - a.total_amount)
-                      .slice(0, 4)
-                      .map((item, index) => (
-                        <div
-                          key={item.benefit_type}
-                          className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors"
-                        >
-                          <div className="flex items-center gap-2">
-                            <div
-                              className={`w-2 h-2 rounded-full ${
-                                index === 0
-                                  ? "bg-green-500"
-                                  : index === 1
-                                  ? "bg-blue-500"
-                                  : index === 2
-                                  ? "bg-purple-500"
-                                  : "bg-orange-500"
-                              }`}
-                            />
-                            <Badge variant="secondary" className="text-xs">
-                              {item.benefit_type}
-                            </Badge>
-                            <span className="text-sm text-muted-foreground">
-                              {item.count}
-                            </span>
-                          </div>
-                          <span className="text-sm font-medium">
-                            {compensationService.formatCurrency(
-                              item.total_amount
-                            )}
-                          </span>
-                        </div>
-                      ))
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">No recent activity</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* System Status */}
-            <Card className="hover:shadow-md transition-shadow">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <TrendingUp className="h-5 w-5 text-primary" />
-                  System Status
-                </CardTitle>
-                <CardDescription>Current system information</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center p-3 rounded-lg bg-muted/50">
-                    <div className="text-2xl font-bold text-primary">
-                      {statistics?.total_records || 0}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Total Records
-                    </p>
-                  </div>
-                  <div className="text-center p-3 rounded-lg bg-muted/50">
-                    <div className="text-lg font-bold text-primary">
-                      {statistics?.by_benefit_type?.length || 0}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Benefit Types
-                    </p>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Total Amount</span>
-                    <Badge variant="outline" className="font-mono">
-                      {statistics
-                        ? compensationService.formatCurrency(
-                            statistics.total_amount
-                          )
-                        : "₱0.00"}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">System Status</span>
-                    <Badge
-                      variant="default"
-                      className="bg-green-500 hover:bg-green-600"
-                    >
-                      <div className="w-2 h-2 bg-white rounded-full mr-1" />
-                      Active
-                    </Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
 
         {/* Records Tab */}
         <TabsContent value="records" className="space-y-4">
