@@ -7,8 +7,16 @@ import {
   Shield,
   Home,
   GraduationCap,
-  DollarSign,
+  Banknote,
   Award,
+  UserCheck,
+  CalendarDays,
+  BookOpen,
+  Wallet,
+  Gift,
+  BarChart3,
+  User,
+  Cog,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -50,7 +58,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     navMain.push({
       title: "Employee Management",
       url: "/employees",
-      icon: Users,
+      icon: UserCheck,
       isActive: false,
       items: [
         {
@@ -78,7 +86,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   navMain.push({
     title: "Leave Management",
     url: user?.role === "admin" ? "/leaves" : "/leaves/employee",
-    icon: Calendar,
+    icon: CalendarDays,
     items: [], // No dropdown items since everything is in tabs
   });
 
@@ -87,7 +95,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     title: "Training Management",
     url:
       user?.role === "admin" ? "/training/records" : "/training/my-trainings",
-    icon: GraduationCap,
+    icon: BookOpen,
     items:
       user?.role === "admin"
         ? [
@@ -120,7 +128,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   navMain.push({
     title: "Payroll Management",
     url: user?.role === "admin" ? "/payroll/periods" : "/payroll/employee",
-    icon: DollarSign,
+    icon: Wallet,
     items:
       user?.role === "admin"
         ? [
@@ -148,7 +156,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   navMain.push({
     title: "Compensation & Benefits",
     url: user?.role === "admin" ? "/benefits" : "/benefits/employee",
-    icon: Award,
+    icon: Gift,
     items: [], // No dropdown items for now
   });
 
@@ -210,14 +218,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   navMain.push({
     title: "My Profile",
     url: "/profile",
-    icon: Users,
+    icon: User,
     items: [], // No dropdown items
   });
 
   navMain.push({
     title: "Settings",
     url: "/settings",
-    icon: Settings,
+    icon: Cog,
     items: [], // No dropdown items - direct link to account settings
   });
 

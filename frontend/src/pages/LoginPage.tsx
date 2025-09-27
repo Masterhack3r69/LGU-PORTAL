@@ -69,7 +69,7 @@ export function LoginPage() {
       <div className="w-full max-w-md space-y-8 relative z-10">
         <div className="text-center">
           <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-            Employee Management System
+            LGU Portal
           </h1>
         </div>
 
@@ -77,7 +77,7 @@ export function LoginPage() {
           <CardHeader className="text-center">
             <CardTitle className="text-xl">Welcome back</CardTitle>
             <CardDescription>
-              Enter your credentials to access the system
+              Enter your credentials to access the LGU Portal
             </CardDescription>
           </CardHeader>
           <CardContent>

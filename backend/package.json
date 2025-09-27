@@ -1,7 +1,7 @@
 {
-  "name": "employee-management-system",
+  "name": "lgu-portal",
   "version": "1.0.0",
-  "description": "Employee Management System (HRIS) - Internal intranet application for employee records, leave management, payroll, and benefits tracking",
+  "description": "LGU Portal - Local Government Unit management system for employee records, leave management, payroll, and benefits tracking",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -12,11 +12,6 @@
     "setup": "node scripts/setup.js",
     "setup:compensation": "node scripts/setup-compensation-benefits.js",
     "seed": "node scripts/seed.js",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
-    "test:compensation": "jest tests/compensationBenefits.test.js",
-    "test:compensation:watch": "jest tests/compensationBenefits.test.js --watch",
     "test:cors": "node scripts/test-cors.js",
     "kill:port": "npx kill-port 3000",
     "restart": "npm run kill:port && npm run dev",
@@ -24,13 +19,14 @@
     "debug:cors": "echo Testing CORS... && npm run test:cors"
   },
   "keywords": [
-    "employee-management",
+    "lgu-portal",
+    "local-government",
     "hris",
     "payroll",
     "leave-management",
     "intranet"
   ],
-  "author": "EMS Development Team",
+  "author": " Student of Don Jose Ecleo Memorial College",
   "license": "MIT",
   "dependencies": {
     "axios": "^1.11.0",

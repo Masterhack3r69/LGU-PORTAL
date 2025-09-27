@@ -1,8 +1,8 @@
-# Employee Management System - Test Suite
+# LGU Portal - Test Suite
 
 ## Overview
 
-This directory contains comprehensive test suites for the Employee Management System backend components. The tests are built using Jest and focus on ensuring reliability, accuracy, and proper error handling across all modules. All test files follow consistent code formatting standards with proper indentation and quote usage for improved maintainability.
+This directory contains comprehensive test suites for the LGU Portal backend components. The tests are built using Jest and focus on ensuring reliability, accuracy, and proper error handling across all modules. All test files follow consistent code formatting standards with proper indentation and quote usage for improved maintainability.
 
 ## Test Structure
 

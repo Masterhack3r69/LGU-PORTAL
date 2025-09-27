@@ -305,7 +305,7 @@ export function EmployeeOverridesManagement() {
               value={filters.employee_id || 'all'}
               onValueChange={(value) => setFilters({ ...filters, employee_id: value === 'all' ? '' : value })}
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="All employees" />
               </SelectTrigger>
               <SelectContent>
@@ -324,7 +324,7 @@ export function EmployeeOverridesManagement() {
               value={filters.type || 'all'}
               onValueChange={(value: 'allowance' | 'deduction' | 'all') => setFilters({ ...filters, type: value === 'all' ? '' : value })}
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="All types" />
               </SelectTrigger>
               <SelectContent>
