@@ -1,8 +1,15 @@
 # Employee Management System (EMS)
 
-A comprehensive Human Resource Information System (HRIS) built with Node.js, Express, React, and MySQL. This system provides complete employee lifecycle management, leave tracking, payroll processing, benefits administration, and comprehensive audit logging.
+A comprehensive **Intranet-based** Human Resource Information System (HRIS) built with Node.js, Express, React, and MySQL. Designed specifically for internal company networks, this system provides complete employee lifecycle management, leave tracking, payroll processing, benefits administration, and comprehensive audit logging within a secure corporate environment.
 
-## 🚀 Features
+## 🌐 Intranet Application Features
+
+### Designed for Corporate Networks
+- **Internal Network Deployment**: Optimized for company intranet environments
+- **Secure Corporate Access**: No external internet exposure required
+- **Local Network Performance**: Fast access within corporate infrastructure
+- **Centralized HR Management**: Single source of truth for all employee data
+- **Offline-Capable**: Works within isolated corporate networks
 
 ### Core Modules
 - **Employee Management**: Complete CRUD operations, profile management, document handling
@@ -114,18 +121,25 @@ npm run dev
 ```
 
 ### 5. Access Application
+
+#### Local Development
 - **Frontend**: http://localhost:5173
 - **Backend API**: http://localhost:3000/api
+
+#### Intranet Deployment
+- **Frontend**: http://10.0.0.73:5173 (or your intranet IP)
+- **Backend API**: http://10.0.0.73:3000/api
 - **Default Admin**: username: `admin`, password: `admin123`
 
 ## 📖 Documentation
 
 ### Comprehensive Guides
-- **[System Workflow](SYSTEM_WORKFLOW.md)**: Complete system architecture and workflows
-- **[Technical Specification](TECHNICAL_SPECIFICATION.md)**: Detailed technical implementation
-- **[API Documentation](API_DOCUMENTATION.md)**: Complete API reference
-- **[Deployment Guide](DEPLOYMENT_GUIDE.md)**: Production deployment instructions
-- **[Testing Guide](TESTING_GUIDE.md)**: Testing strategies and implementation
+- **[Intranet Setup Guide](docs/INTRANET_SETUP.md)**: Quick intranet deployment for corporate networks
+- **[System Workflow](docs/SYSTEM_WORKFLOW.md)**: Complete system architecture and workflows
+- **[Technical Specification](docs/TECHNICAL_SPECIFICATION.md)**: Detailed technical implementation
+- **[API Documentation](docs/API_DOCUMENTATION.md)**: Complete API reference
+- **[Deployment Guide](docs/DEPLOYMENT_GUIDE.md)**: Production deployment instructions
+- **[Testing Guide](docs/TESTING_GUIDE.md)**: Testing strategies and implementation
 
 ### Quick References
 - **Database Schema**: See `backend/scripts/database_schema.sql`
@@ -201,9 +215,35 @@ npx playwright test
 }
 ```
 
-## 🏢 Deployment
+## 🏢 Deployment Options
 
-### Development Environment
+### 🌐 Intranet Deployment (Recommended)
+**Perfect for corporate environments - runs entirely on your internal network**
+
+```bash
+# Quick intranet setup (replace with your server IP)
+# Backend - Accessible from corporate network
+cd backend && npm run start:intranet
+
+# Frontend - Available to all network devices
+cd frontend && npm run preview:intranet
+
+# Access from any device on your corporate network:
+# http://YOUR_SERVER_IP:5173 (from desktops, laptops, mobile devices)
+# No internet required - works offline within your network!
+```
+
+**Benefits of Intranet Deployment:**
+- ✅ **Complete Data Privacy**: All data stays within your corporate network
+- ✅ **Lightning Fast**: Local network speeds, no internet latency
+- ✅ **Always Available**: Works even when internet is down
+- ✅ **Cost Effective**: No cloud hosting fees
+- ✅ **IT Controlled**: Managed by your existing IT infrastructure
+- ✅ **Multi-Device Access**: Desktops, laptops, tablets, phones on company WiFi
+
+📖 **See [Intranet Setup Guide](docs/INTRANET_SETUP.md) for detailed instructions**
+
+### 💻 Development Environment
 ```bash
 # Backend (Terminal 1)
 cd backend && npm run dev
@@ -212,17 +252,8 @@ cd backend && npm run dev
 cd frontend && npm run dev
 ```
 
-### Intranet Deployment
-```bash
-# Backend
-cd backend && npm run dev:intranet
-
-# Frontend
-cd frontend && npm run dev:intranet
-```
-
-### Production Deployment
-See [Deployment Guide](DEPLOYMENT_GUIDE.md) for comprehensive production setup including:
+### 🚀 Production Deployment
+See [Deployment Guide](docs/DEPLOYMENT_GUIDE.md) for comprehensive production setup including:
 - PM2 process management
 - Nginx reverse proxy configuration
 - SSL/HTTPS setup

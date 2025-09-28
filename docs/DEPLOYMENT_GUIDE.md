@@ -3,6 +3,7 @@
 ## Prerequisites
 
 ### System Requirements
+
 - **Operating System**: Windows 10/11, Linux (Ubuntu 18.04+), macOS 10.15+
 - **Node.js**: Version 16.0.0 or higher
 - **MySQL**: Version 8.0 or higher
@@ -10,6 +11,7 @@
 - **Storage**: Minimum 10GB free space
 
 ### Development Tools
+
 - **Git**: For version control
 - **npm**: Node package manager (comes with Node.js)
 - **MySQL Workbench**: For database management (optional)
@@ -20,6 +22,7 @@
 ### 1. Database Setup
 
 #### Install MySQL Server
+
 ```bash
 # Ubuntu/Debian
 sudo apt update
@@ -31,6 +34,7 @@ brew install mysql
 ```
 
 #### Create Database and User
+
 ```sql
 -- Connect to MySQL as root
 mysql -u root -p
@@ -52,17 +56,20 @@ EXIT;
 ### 2. Project Setup
 
 #### Clone Repository
+
 ```bash
 git clone <repository-url>
 cd employee-management-system
 ```
 
 #### Install Root Dependencies
+
 ```bash
 npm install
 ```
 
 #### Backend Setup
+
 ```bash
 cd backend
 
@@ -78,6 +85,7 @@ nano .env
 ```
 
 #### Configure Backend Environment (.env)
+
 ```bash
 # Database Configuration
 DB_HOST=localhost
@@ -112,6 +120,7 @@ LOG_FILE_PATH=./logs
 ```
 
 #### Frontend Setup
+
 ```bash
 cd ../frontend
 
@@ -122,6 +131,7 @@ npm install
 ### 3. Database Initialization
 
 #### Run Database Setup Script
+
 ```bash
 cd backend
 
@@ -133,6 +143,7 @@ npm run seed
 ```
 
 #### Manual Database Setup (Alternative)
+
 ```bash
 # If setup script fails, run SQL manually
 mysql -u ems_user -p employee_management_system < scripts/database_schema.sql
@@ -141,6 +152,7 @@ mysql -u ems_user -p employee_management_system < scripts/database_schema.sql
 ## Development Deployment
 
 ### 1. Start Backend Server
+
 ```bash
 cd backend
 
@@ -152,6 +164,7 @@ curl http://localhost:3000/api/health
 ```
 
 ### 2. Start Frontend Development Server
+
 ```bash
 cd frontend
 
@@ -162,6 +175,7 @@ npm run dev
 ```
 
 ### 3. Verify Installation
+
 1. Open browser to `http://localhost:5173`
 2. Login with default admin credentials:
    - Username: `admin`
@@ -173,6 +187,7 @@ npm run dev
 ### 1. Environment Configuration
 
 #### Backend Production Environment
+
 ```bash
 # backend/.env.production
 NODE_ENV=production
@@ -184,6 +199,7 @@ SESSION_SECRET=your-production-session-secret
 ```
 
 #### Frontend Production Build
+
 ```bash
 cd frontend
 
@@ -197,40 +213,43 @@ npm run preview
 ### 2. Process Management with PM2
 
 #### Install PM2
+
 ```bash
 npm install -g pm2
 ```
 
 #### Create PM2 Ecosystem File
+
 ```javascript
 // ecosystem.config.js
 module.exports = {
   apps: [
     {
-      name: 'ems-backend',
-      script: './backend/server.js',
-      cwd: './',
+      name: "ems-backend",
+      script: "./backend/server.js",
+      cwd: "./",
       env: {
-        NODE_ENV: 'development'
+        NODE_ENV: "development",
       },
       env_production: {
-        NODE_ENV: 'production',
-        PORT: 3000
+        NODE_ENV: "production",
+        PORT: 3000,
       },
       instances: 1,
-      exec_mode: 'fork',
+      exec_mode: "fork",
       watch: false,
-      max_memory_restart: '1G',
-      error_file: './logs/pm2-error.log',
-      out_file: './logs/pm2-out.log',
-      log_file: './logs/pm2-combined.log',
-      time: true
-    }
-  ]
+      max_memory_restart: "1G",
+      error_file: "./logs/pm2-error.log",
+      out_file: "./logs/pm2-out.log",
+      log_file: "./logs/pm2-combined.log",
+      time: true,
+    },
+  ],
 };
 ```
 
 #### Start with PM2
+
 ```bash
 # Start application
 pm2 start ecosystem.config.js --env production
@@ -245,6 +264,7 @@ pm2 startup
 ### 3. Nginx Configuration (Recommended)
 
 #### Install Nginx
+
 ```bash
 # Ubuntu/Debian
 sudo apt install nginx
@@ -255,6 +275,7 @@ sudo systemctl enable nginx
 ```
 
 #### Configure Nginx
+
 ```nginx
 # /etc/nginx/sites-available/employee-management-system
 server {
@@ -265,7 +286,7 @@ server {
     location / {
         root /path/to/employee-management-system/frontend/dist;
         try_files $uri $uri/ /index.html;
-        
+
         # Security headers
         add_header X-Frame-Options "SAMEORIGIN" always;
         add_header X-XSS-Protection "1; mode=block" always;
@@ -285,7 +306,7 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_cache_bypass $http_upgrade;
-        
+
         # Timeout settings
         proxy_connect_timeout 60s;
         proxy_send_timeout 60s;
@@ -295,7 +316,7 @@ server {
     # File uploads
     location /uploads/ {
         alias /path/to/employee-management-system/backend/uploads/;
-        
+
         # Security for uploaded files
         location ~* \.(php|jsp|asp|sh|cgi)$ {
             deny all;
@@ -312,6 +333,7 @@ server {
 ```
 
 #### Enable Site
+
 ```bash
 # Create symbolic link
 sudo ln -s /etc/nginx/sites-available/employee-management-system /etc/nginx/sites-enabled/
@@ -323,11 +345,54 @@ sudo nginx -t
 sudo systemctl reload nginx
 ```
 
-## Intranet Deployment
+## Intranet Deployment (Primary Use Case)
 
-### 1. Network Configuration
+The Employee Management System is specifically designed as an **intranet application** for corporate environments. This deployment method provides secure, fast access within company networks without requiring external internet connectivity.
 
-#### Configure for Specific IP (10.0.0.73)
+### 1. Intranet Benefits
+
+#### Security Advantages
+
+- **No External Exposure**: Application remains within corporate firewall
+- **Network Isolation**: Protected from external threats and attacks
+- **Corporate Authentication**: Can integrate with existing AD/LDAP systems
+- **Data Privacy**: Sensitive HR data never leaves the corporate network
+
+#### Performance Benefits
+
+- **Local Network Speed**: Fast access from any device on the network
+- **Reduced Latency**: No internet routing delays
+- **Bandwidth Efficiency**: No external bandwidth consumption
+- **Offline Capability**: Works even when internet is down
+
+#### Administrative Benefits
+
+- **Centralized Control**: IT department manages all aspects
+- **Corporate Compliance**: Meets internal security policies
+- **Easy Maintenance**: Direct server access for updates
+- **Cost Effective**: No cloud hosting or external service fees
+
+### 2. Network Configuration
+
+#### Determine Your Intranet IP
+
+```bash
+# Windows
+ipconfig
+
+# Linux/Mac
+ifconfig
+# or
+ip addr show
+
+# Look for your internal network IP (usually 192.168.x.x or 10.x.x.x)
+# Example: 10.0.0.73, 192.168.1.100, etc.
+```
+
+#### Configure Application for Intranet IP
+
+Replace `10.0.0.73` with your actual intranet server IP address:
+
 ```bash
 # Backend - Update package.json scripts
 "dev:intranet": "cross-env NODE_ENV=development HOST=10.0.0.73 nodemon server.js",
@@ -335,26 +400,108 @@ sudo systemctl reload nginx
 
 # Frontend - Update package.json scripts
 "dev:intranet": "vite --host 10.0.0.73 --port 5173",
-"preview:intranet": "vite preview --host 10.0.0.73 --port 4173"
+"preview:intranet": "vite preview --host 10.0.0.73 --port 4173",
+"build:intranet": "tsc && vite build --mode intranet"
 ```
 
 #### Update Frontend API Configuration
+
 ```typescript
 // frontend/src/services/api.ts
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'http://10.0.0.73:3000/api'
-  : 'http://localhost:3000/api';
+const getApiBaseUrl = () => {
+  if (process.env.NODE_ENV === "production") {
+    return "http://10.0.0.73:3000/api"; // Your intranet IP
+  }
+  return "http://localhost:3000/api";
+};
+
+const API_BASE_URL = getApiBaseUrl();
 ```
 
-### 2. Start Intranet Services
-```bash
-# Backend
-cd backend
-npm run dev:intranet
+### 3. Intranet Deployment Steps
 
-# Frontend (in another terminal)
+#### Step 1: Prepare Server
+
+```bash
+# On your intranet server (Windows/Linux)
+git clone <repository-url>
+cd employee-management-system
+
+# Install Node.js and MySQL on the server
+# Ensure firewall allows ports 3000 and 5173
+```
+
+#### Step 2: Database Setup on Intranet
+
+```bash
+# Connect to MySQL on intranet server
+mysql -u root -p
+
+# Create database
+CREATE DATABASE employee_management_system;
+CREATE USER 'ems_user'@'%' IDENTIFIED BY 'secure_password';
+GRANT ALL PRIVILEGES ON employee_management_system.* TO 'ems_user'@'%';
+FLUSH PRIVILEGES;
+EXIT;
+
+# Initialize schema
+cd backend
+mysql -u ems_user -p employee_management_system < scripts/database_schema.sql
+```
+
+#### Step 3: Configure and Start Services
+
+```bash
+# Backend setup
+cd backend
+npm install
+cp .env.example .env.intranet
+# Edit .env.intranet with your intranet settings
+
+# Start backend service
+npm run start:intranet
+
+# Frontend setup (new terminal)
 cd frontend
-npm run dev:intranet
+npm install
+
+# Build for intranet production
+npm run build:intranet
+
+# Start frontend service
+npm run preview:intranet
+```
+
+#### Step 4: Access from Network Devices
+
+Once deployed, users can access the application from any device on the corporate network:
+
+```
+Frontend Application: http://10.0.0.73:5173
+API Endpoints: http://10.0.0.73:3000/api
+
+# From employee workstations, mobile devices, tablets, etc.
+# No VPN or external access required
+```
+
+### 4. Employee Access Instructions
+
+Provide these instructions to your employees:
+
+```
+Employee Management System Access
+
+1. Open any web browser (Chrome, Firefox, Edge, Safari)
+2. Navigate to: http://10.0.0.73:5173
+3. Login with your provided credentials
+4. Access available from:
+   - Desktop computers
+   - Laptops
+   - Tablets
+   - Mobile phones (on company WiFi)
+
+No internet connection required!
+Works entirely within our company network.
 ```
 
 ## SSL/HTTPS Configuration
@@ -362,6 +509,7 @@ npm run dev:intranet
 ### 1. Obtain SSL Certificate
 
 #### Using Let's Encrypt (Free)
+
 ```bash
 # Install Certbot
 sudo apt install certbot python3-certbot-nginx
@@ -375,6 +523,7 @@ sudo crontab -e
 ```
 
 #### Using Self-Signed Certificate (Development)
+
 ```bash
 # Generate self-signed certificate
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
@@ -383,6 +532,7 @@ openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
 ```
 
 ### 2. Update Nginx for HTTPS
+
 ```nginx
 server {
     listen 443 ssl http2;
@@ -390,7 +540,7 @@ server {
 
     ssl_certificate /etc/letsencrypt/live/your-domain.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/your-domain.com/privkey.pem;
-    
+
     # SSL configuration
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384;
@@ -412,6 +562,7 @@ server {
 ## Database Backup and Maintenance
 
 ### 1. Automated Backup Script
+
 ```bash
 #!/bin/bash
 # backup-database.sh
@@ -438,6 +589,7 @@ echo "Backup completed: ems_backup_$DATE.sql.gz"
 ```
 
 ### 2. Setup Cron Job for Automated Backups
+
 ```bash
 # Edit crontab
 crontab -e
@@ -449,6 +601,7 @@ crontab -e
 ## Monitoring and Logging
 
 ### 1. Application Monitoring
+
 ```bash
 # Monitor PM2 processes
 pm2 monit
@@ -461,6 +614,7 @@ pm2 restart ems-backend
 ```
 
 ### 2. Log Rotation
+
 ```bash
 # Create logrotate configuration
 sudo nano /etc/logrotate.d/employee-management-system
@@ -483,6 +637,7 @@ sudo nano /etc/logrotate.d/employee-management-system
 ## Security Hardening
 
 ### 1. Firewall Configuration
+
 ```bash
 # Ubuntu UFW
 sudo ufw enable
@@ -493,6 +648,7 @@ sudo ufw allow 3000/tcp  # Only if direct access needed
 ```
 
 ### 2. Database Security
+
 ```sql
 -- Remove anonymous users
 DELETE FROM mysql.user WHERE User='';
@@ -509,6 +665,7 @@ FLUSH PRIVILEGES;
 ```
 
 ### 3. File Permissions
+
 ```bash
 # Set proper permissions
 chmod 600 backend/.env
@@ -522,6 +679,7 @@ chmod 755 frontend/dist
 ### Common Issues
 
 #### 1. Database Connection Issues
+
 ```bash
 # Check MySQL service
 sudo systemctl status mysql
@@ -534,6 +692,7 @@ sudo ufw status
 ```
 
 #### 2. Port Already in Use
+
 ```bash
 # Find process using port 3000
 lsof -i :3000
@@ -546,6 +705,7 @@ npm run kill:port
 ```
 
 #### 3. Permission Denied Errors
+
 ```bash
 # Fix file permissions
 sudo chown -R $USER:$USER /path/to/employee-management-system
@@ -553,6 +713,7 @@ chmod -R 755 /path/to/employee-management-system
 ```
 
 #### 4. Frontend Build Issues
+
 ```bash
 # Clear npm cache
 npm cache clean --force
@@ -566,6 +727,7 @@ node --version  # Should be 16.0.0 or higher
 ```
 
 ### Health Check Endpoints
+
 ```bash
 # Backend health check
 curl http://localhost:3000/api/health
@@ -585,6 +747,7 @@ curl http://localhost:3000/api/health/database
 ## Performance Optimization
 
 ### 1. Database Optimization
+
 ```sql
 -- Add indexes for better performance
 CREATE INDEX idx_employees_search ON employees(first_name, last_name, employee_number);
@@ -601,6 +764,7 @@ query_cache_type = 1
 ```
 
 ### 2. Application Optimization
+
 ```bash
 # Enable gzip compression in Express
 # Already configured in server.js
