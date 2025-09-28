@@ -126,7 +126,7 @@ app.use(cors({
                 origin.startsWith('http://10.0.0.73:') ||
                 origin.startsWith('https://localhost:') || 
                 origin.startsWith('https://127.0.0.1:') ||
-                origin.startsWith('https://10.0.0.73:')) {
+                origin.startsWith('https://10.0.0.1:')) {
                 return callback(null, true);
             }
         }
