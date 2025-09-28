@@ -110,12 +110,16 @@ app.use(cors({
                 'http://localhost:5173',
                 'http://127.0.0.1:5173', 
                 'http://10.0.0.73:5173',
+                'http://10.0.0.1:5173',
                 'http://10.0.0.73:3000',
+                'http://10.0.0.1:3000',
                 'http://localhost:3000',
                 'https://localhost:5173',
                 'https://127.0.0.1:5173', 
                 'https://10.0.0.73:5173',
+                'https://10.0.0.1:5173',
                 'https://10.0.0.73:3000',
+                'https://10.0.0.1:3000',
                 'https://localhost:3000'
             ];
         
@@ -124,9 +128,11 @@ app.use(cors({
             if (origin.startsWith('http://localhost:') || 
                 origin.startsWith('http://127.0.0.1:') ||
                 origin.startsWith('http://10.0.0.73:') ||
+                origin.startsWith('http://10.0.0.1:') ||
                 origin.startsWith('https://localhost:') || 
                 origin.startsWith('https://127.0.0.1:') ||
-                origin.startsWith('https://10.0.0.73:')) {
+                origin.startsWith('https://10.0.0.73:') ||
+                origin.startsWith('https://10.0.0.1:')) {
                 return callback(null, true);
             }
         }
