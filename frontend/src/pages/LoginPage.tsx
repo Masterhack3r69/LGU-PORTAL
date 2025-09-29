@@ -48,7 +48,7 @@ export function LoginPage() {
       showToast.success("Login successful");
     } catch (error) {
       console.error("Login error:", error);
-      showToast.error("Invalid credentials");
+      // showToast.error("Invalid credentials");
     } finally {
       setIsLoading(false);
     }

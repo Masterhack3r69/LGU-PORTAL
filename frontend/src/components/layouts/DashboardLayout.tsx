@@ -4,6 +4,7 @@ import { AppSidebar } from '@/components/app-sidebar';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Separator } from '@/components/ui/separator';
 import { DynamicBreadcrumb } from '@/components/DynamicBreadcrumb';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 export function DashboardLayout() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -29,6 +30,9 @@ export function DashboardLayout() {
             <SidebarTrigger className="-ml-1" />
             <Separator orientation="vertical" className="mr-2 h-4" />
             <DynamicBreadcrumb />
+          </div>
+          <div className="ml-auto px-4">
+            <NotificationBell />
           </div>
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">

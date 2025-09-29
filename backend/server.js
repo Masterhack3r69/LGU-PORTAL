@@ -32,6 +32,7 @@ const dashboardRoutes = require('./routes/dashboardRoutes');
 const backupRoutes = require('./routes/backupRoutes');
 
 const trainingRoutes = require('./routes/trainingRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 
 
 // Import job system
@@ -271,6 +272,7 @@ app.use('/api/import', authMiddleware.requireAuth, auditLogger, importRoutes);
 app.use('/api/backup', authMiddleware.requireAuth, auditLogger, backupRoutes);
 
 app.use('/api', authMiddleware.requireAuth, auditLogger, trainingRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Serve frontend application (if using server-side rendering or static files)
 if (process.env.NODE_ENV === 'production') {
@@ -313,16 +315,16 @@ const startServer = async () => {
         monthlyAccrualJob.startScheduledJob(); // Add this line
 
         // Start server
-        const server = app.listen(PORT, '10.0.0.73', () => {
+        const server = app.listen(PORT, 'localhost', () => {
             console.log(`
 🚀 Employee Management System Server Started
 🌐 Environment: ${process.env.NODE_ENV || 'development'}
-🔌 Host: 10.0.0.73:${PORT}
+🔌 Host: localhost:${PORT}
 📊 Database: Connected
 🔒 Security: Enabled
 📁 Upload Path: ${process.env.UPLOAD_PATH || './uploads'}
 ⏰ Started at: ${new Date().toISOString()}
-🌍 Intranet Access: http://10.0.0.73:${PORT}
+🌍 Local Access: http://localhost:${PORT}
             `);
         });
 

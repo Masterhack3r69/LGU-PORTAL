@@ -3,6 +3,7 @@ const { body, validationResult } = require("express-validator");
 const CompensationBenefit = require("../models/CompensationBenefit");
 const CompensationBenefitService = require("../services/compensationBenefitService");
 const Employee = require("../models/Employee");
+const notificationService = require("../services/notificationService");
 
 class CompensationBenefitController {
   constructor() {
@@ -378,6 +379,28 @@ class CompensationBenefitController {
         return res.status(400).json(result);
       }
 
+      // Send notification to employee
+      try {
+        const { pool } = require('../config/database');
+        const [employeeRows] = await pool.execute(
+          'SELECT u.id, e.first_name, e.last_name FROM users u JOIN employees e ON u.employee_id = e.id WHERE e.id = ?',
+          [benefitData.employee_id]
+        );
+        
+        if (employeeRows.length > 0) {
+          const employee = employeeRows[0];
+          await notificationService.sendBenefitNotification({
+            id: result.data.id,
+            benefit_type: benefitData.benefit_type,
+            amount: benefitData.amount,
+            employee_id: benefitData.employee_id
+          }, [employee.id]);
+        }
+      } catch (notificationError) {
+        console.error('Failed to send benefit notification:', notificationError);
+        // Don't fail the request if notification fails
+      }
+
       res.status(201).json({
         success: true,
         data: result.data,
@@ -434,6 +457,30 @@ class CompensationBenefitController {
 
       if (!result.success) {
         return res.status(400).json(result);
+      }
+
+      // Send notifications to all affected employees
+      try {
+        const { pool } = require('../config/database');
+        for (const record of result.data) {
+          const [employeeRows] = await pool.execute(
+            'SELECT u.id, e.first_name, e.last_name FROM users u JOIN employees e ON u.employee_id = e.id WHERE e.id = ?',
+            [record.employee_id]
+          );
+          
+          if (employeeRows.length > 0) {
+            const employee = employeeRows[0];
+            await notificationService.sendBenefitNotification({
+              id: record.id,
+              benefit_type: record.benefit_type,
+              amount: record.amount,
+              employee_id: record.employee_id
+            }, [employee.id]);
+          }
+        }
+      } catch (notificationError) {
+        console.error('Failed to send bulk benefit notifications:', notificationError);
+        // Don't fail the request if notification fails
       }
 
       res.status(201).json({

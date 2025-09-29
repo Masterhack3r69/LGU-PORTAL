@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:intranet": "vite --host 10.0.0.73 --port 5173",
+    "dev:intranet": "vite --host localhost --port 5173",
     "dev:https": "cross-env VITE_HTTPS=true vite",
     "dev:intranet:https": "cross-env VITE_HTTPS=true vite --host 10.0.0.73 --port 5173",
     "build": "tsc -b && vite build",

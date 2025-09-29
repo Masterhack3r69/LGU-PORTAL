@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings, Lock, User, CheckCircle, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { Settings, Lock, User, CheckCircle, AlertCircle, Eye, EyeOff, Bell } from 'lucide-react';
 import { authService } from '@/services/authService';
 
 interface PasswordChangeForm {
@@ -164,9 +164,19 @@ export function ProfileSettings() {
       )}
 
       <Tabs defaultValue="profile" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="profile">Profile Information</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="profile" className="flex items-center gap-2">
+            <User className="h-4 w-4" />
+            Profile Information
+          </TabsTrigger>
+          <TabsTrigger value="notifications" className="flex items-center gap-2">
+            <Bell className="h-4 w-4" />
+            Notifications
+          </TabsTrigger>
+          <TabsTrigger value="security" className="flex items-center gap-2">
+            <Lock className="h-4 w-4" />
+            Security
+          </TabsTrigger>
           <TabsTrigger value="preferences">Preferences</TabsTrigger>
         </TabsList>
 
@@ -242,6 +252,78 @@ export function ProfileSettings() {
                   </Button>
                 </div>
               </form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="notifications" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bell className="h-5 w-5" />
+                Notification Preferences
+              </CardTitle>
+              <CardDescription>
+                Manage how you receive notifications
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="space-y-1">
+                    <p className="font-medium">Leave Applications</p>
+                    <p className="text-sm text-muted-foreground">
+                      Get notified about leave application updates
+                    </p>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input type="checkbox" defaultChecked className="rounded" />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="space-y-1">
+                    <p className="font-medium">Payroll Updates</p>
+                    <p className="text-sm text-muted-foreground">
+                      Receive notifications when payroll is processed
+                    </p>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input type="checkbox" defaultChecked className="rounded" />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="space-y-1">
+                    <p className="font-medium">Training Programs</p>
+                    <p className="text-sm text-muted-foreground">
+                      Get notified about new training assignments
+                    </p>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input type="checkbox" defaultChecked className="rounded" />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="space-y-1">
+                    <p className="font-medium">System Announcements</p>
+                    <p className="text-sm text-muted-foreground">
+                      Receive important system announcements
+                    </p>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input type="checkbox" defaultChecked className="rounded" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t">
+                <Button className="w-full">
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Save Notification Preferences
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

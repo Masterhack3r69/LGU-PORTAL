@@ -31,13 +31,13 @@ export default defineConfig({
     },
   },
   server: {
-    host: '10.0.0.73',
+    host: 'localhost',
     port: 5173,
     strictPort: true,
     https: httpsConfig(),
   },
   preview: {
-    host: '10.0.0.73',
+    host: 'localhost',
     port: 4173,
     strictPort: true,
     https: httpsConfig(),

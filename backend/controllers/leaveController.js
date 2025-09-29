@@ -3,6 +3,7 @@ const { Leave, LeaveBalance, LeaveType, LeaveReports } = require('../models/Leav
 const { asyncHandler, ValidationError, NotFoundError } = require('../middleware/errorHandler');
 const { body, validationResult, query } = require('express-validator');
 const helpers = require('../utils/helpers');
+const notificationService = require('../services/notificationService');
 
 // Enhanced validation rules for leave application
 const leaveValidationRules = [
@@ -220,6 +221,26 @@ const createLeave = asyncHandler(async (req, res) => {
     if (!result.success) {
         throw new Error(result.error || 'Failed to create leave application');
     }
+
+    // Send notification to HR/Admin users
+    try {
+        const hrUsers = await notificationService.getHRUsers();
+        const hrUserIds = hrUsers.map(user => user.id);
+        
+        if (hrUserIds.length > 0) {
+            await notificationService.sendLeaveNotification({
+                id: result.data.id,
+                employee_id: result.data.employee_id,
+                employee_name: currentUser.full_name || currentUser.username,
+                leave_type: leaveType.data.name,
+                start_date: result.data.start_date,
+                end_date: result.data.end_date
+            }, notificationService.notificationTypes.LEAVE_SUBMITTED, hrUserIds);
+        }
+    } catch (notificationError) {
+        console.error('Failed to send leave submission notification:', notificationError);
+        // Don't fail the request if notification fails
+    }
     
     res.status(201).json({
         success: true,
@@ -305,6 +326,30 @@ const approveLeave = asyncHandler(async (req, res) => {
     if (!result.success) {
         throw new Error(result.error || 'Failed to approve leave application');
     }
+
+    // Send notification to employee
+    try {
+        const { pool } = require('../config/database');
+        const [employeeRows] = await pool.execute(
+            'SELECT u.id, u.first_name, u.last_name FROM users u JOIN employees e ON u.employee_id = e.id WHERE e.id = ?',
+            [leave.employee_id]
+        );
+        
+        if (employeeRows.length > 0) {
+            const employee = employeeRows[0];
+            await notificationService.sendLeaveNotification({
+                id: leave.id,
+                employee_id: leave.employee_id,
+                employee_name: `${employee.first_name} ${employee.last_name}`,
+                leave_type: leave.leave_type_name || 'Leave',
+                start_date: leave.start_date,
+                end_date: leave.end_date
+            }, notificationService.notificationTypes.LEAVE_APPROVED, [employee.id]);
+        }
+    } catch (notificationError) {
+        console.error('Failed to send leave approval notification:', notificationError);
+        // Don't fail the request if notification fails
+    }
     
     res.json({
         success: true,
@@ -344,6 +389,30 @@ const rejectLeave = asyncHandler(async (req, res) => {
     
     if (!result.success) {
         throw new Error(result.error || 'Failed to reject leave application');
+    }
+
+    // Send notification to employee
+    try {
+        const { pool } = require('../config/database');
+        const [employeeRows] = await pool.execute(
+            'SELECT u.id, u.first_name, u.last_name FROM users u JOIN employees e ON u.employee_id = e.id WHERE e.id = ?',
+            [leave.employee_id]
+        );
+        
+        if (employeeRows.length > 0) {
+            const employee = employeeRows[0];
+            await notificationService.sendLeaveNotification({
+                id: leave.id,
+                employee_id: leave.employee_id,
+                employee_name: `${employee.first_name} ${employee.last_name}`,
+                leave_type: leave.leave_type_name || 'Leave',
+                start_date: leave.start_date,
+                end_date: leave.end_date
+            }, notificationService.notificationTypes.LEAVE_REJECTED, [employee.id]);
+        }
+    } catch (notificationError) {
+        console.error('Failed to send leave rejection notification:', notificationError);
+        // Don't fail the request if notification fails
     }
     
     res.json({

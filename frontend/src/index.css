@@ -254,3 +254,103 @@ or variants */
   border-color: rgb(146 64 14) !important;
   color: rgb(254 240 138) !important;
 }
+
+/* Notification Animations */
+@keyframes notification-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes notification-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes notification-bounce {
+  0%, 20%, 53%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40%, 43% {
+    transform: translateY(-8px);
+  }
+  70% {
+    transform: translateY(-4px);
+  }
+  90% {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes notification-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(59, 130, 246, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
+  }
+}
+
+.notification-item {
+  animation: notification-slide-in 0.3s ease-out;
+}
+
+.notification-item:hover {
+  animation: notification-pulse 0.3s ease-in-out;
+}
+
+.notification-bell-ring {
+  animation: notification-bounce 1s ease-in-out;
+}
+
+.notification-badge-glow {
+  animation: notification-glow 2s ease-in-out infinite;
+}
+
+/* Smooth transitions for notification states */
+.notification-unread {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(147, 197, 253, 0.05) 100%);
+  border-left: 4px solid rgb(59, 130, 246);
+  transition: all 0.3s ease;
+}
+
+.notification-read {
+  background: transparent;
+  border-left: 4px solid transparent;
+  transition: all 0.3s ease;
+}
+
+/* Loading skeleton for notifications */
+.notification-skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Dark mode adjustments */
+.dark .notification-skeleton {
+  background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
+  background-size: 200% 100%;
+}
+
+.dark .notification-unread {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 197, 253, 0.1) 100%);
+}
