@@ -332,10 +332,10 @@ router.put('/update-profile',
                 const { executeQuery } = require('../config/database');
                 const updatedUserQuery = `
                     SELECT u.id, u.username, u.email, u.role, u.employee_id,
-                           e.employee_number, 
+                           e.employee_number,
                            CONCAT(e.first_name, ' ', e.last_name) as full_name
                     FROM users u
-                    LEFT JOIN employees e ON u.employee_id = e.id
+                    LEFT JOIN employees e ON e.user_id = u.id
                     WHERE u.id = ?
                 `;
                 const updatedUserResult = await executeQuery(updatedUserQuery, [userId]);

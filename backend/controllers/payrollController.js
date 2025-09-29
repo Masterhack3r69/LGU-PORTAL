@@ -6,6 +6,7 @@ const PayrollCalculationEngine = require('../utils/payrollCalculations');
 const PayrollValidationEngine = require('../utils/payrollValidation');
 const { logPayrollAudit } = require('../middleware/payrollAudit');
 const ApiResponse = require('../utils/apiResponse');
+const notificationService = require('../services/notificationService');
 
 class PayrollController {
     constructor() {
@@ -265,6 +266,38 @@ class PayrollController {
             const result = await period.finalize(userId);
 
             if (result.success) {
+                // Send notifications to all employees in the period
+                try {
+                    const { pool } = require('../config/database');
+                    const [employeeRows] = await pool.execute(
+                        `SELECT DISTINCT u.id, e.first_name, e.last_name
+                         FROM users u
+                         JOIN employees e ON e.user_id = u.id
+                         JOIN payroll_items pi ON pi.employee_id = e.id
+                         WHERE pi.period_id = ? AND u.is_active = 1`,
+                        [id]
+                    );
+                    
+                    for (const employee of employeeRows) {
+                        await notificationService.createNotification({
+                            user_id: employee.id,
+                            type: 'payroll_finalized',
+                            title: 'Payroll Period Finalized',
+                            message: `The payroll period "${period.period_name}" has been finalized. Your payroll is now ready for review.`,
+                            priority: 'HIGH',
+                            reference_type: 'payroll_period',
+                            reference_id: id,
+                            metadata: {
+                                period_name: period.period_name,
+                                period_id: id
+                            }
+                        });
+                    }
+                } catch (notificationError) {
+                    console.error('Failed to send payroll finalization notifications:', notificationError);
+                    // Don't fail the request if notification fails
+                }
+
                 const response = ApiResponse.success(result.data, 'Payroll period finalized successfully');
                 return res.status(200).json(response);
             }
@@ -457,6 +490,29 @@ class PayrollController {
                 if (period.status === 'Draft') {
                     period.status = 'Processing';
                     await period.update();
+                }
+
+                // Send notifications to all processed employees
+                try {
+                    const { pool } = require('../config/database');
+                    for (const employeeId of employeeIds) {
+                        const [employeeRows] = await pool.execute(
+                            'SELECT u.id, e.first_name, e.last_name FROM users u JOIN employees e ON e.user_id = u.id WHERE e.id = ? AND u.is_active = 1',
+                            [employeeId]
+                        );
+                        
+                        if (employeeRows.length > 0) {
+                            const employee = employeeRows[0];
+                            await notificationService.sendPayrollNotification({
+                                period_id: id,
+                                period_name: period.period_name,
+                                employee_id: employeeId
+                            }, [employee.id]);
+                        }
+                    }
+                } catch (notificationError) {
+                    console.error('Failed to send bulk payroll notifications:', notificationError);
+                    // Don't fail the request if notification fails
                 }
 
                 const response = ApiResponse.success(result.data, 'Employees processed successfully');

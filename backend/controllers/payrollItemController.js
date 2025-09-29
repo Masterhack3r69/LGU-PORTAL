@@ -6,6 +6,7 @@ const PayrollCalculationEngine = require('../utils/payrollCalculations');
 const PayrollValidationEngine = require('../utils/payrollValidation');
 const { logPayrollAudit } = require('../middleware/payrollAudit');
 const { successResponse, errorResponse } = require('../utils/apiResponse');
+const notificationService = require('../services/notificationService');
 
 class PayrollItemController {
     constructor() {
@@ -194,6 +195,27 @@ class PayrollItemController {
             const result = await payrollItem.finalize();
 
             if (result.success) {
+                // Send notification to employee
+                try {
+                    const { pool } = require('../config/database');
+                    const [employeeRows] = await pool.execute(
+                        'SELECT u.id, e.first_name, e.last_name, pp.period_name FROM users u JOIN employees e ON e.user_id = u.id JOIN payroll_periods pp ON pp.id = ? WHERE e.id = ? AND u.is_active = 1',
+                        [payrollItem.period_id, payrollItem.employee_id]
+                    );
+                    
+                    if (employeeRows.length > 0) {
+                        const employee = employeeRows[0];
+                        await notificationService.sendPayrollNotification({
+                            period_id: payrollItem.period_id,
+                            period_name: employee.period_name,
+                            employee_id: payrollItem.employee_id
+                        }, [employee.id]);
+                    }
+                } catch (notificationError) {
+                    console.error('Failed to send payroll finalization notification:', notificationError);
+                    // Don't fail the request if notification fails
+                }
+
                 return successResponse(res, result.data, 'Payroll item finalized successfully');
             }
 
@@ -220,6 +242,35 @@ class PayrollItemController {
             const result = await payrollItem.markAsPaid(userId);
 
             if (result.success) {
+                // Send notification to employee about payment
+                try {
+                    const { pool } = require('../config/database');
+                    const [employeeRows] = await pool.execute(
+                        'SELECT u.id, e.first_name, e.last_name, pp.period_name FROM users u JOIN employees e ON e.user_id = u.id JOIN payroll_periods pp ON pp.id = ? WHERE e.id = ? AND u.is_active = 1',
+                        [payrollItem.period_id, payrollItem.employee_id]
+                    );
+                    
+                    if (employeeRows.length > 0) {
+                        const employee = employeeRows[0];
+                        await notificationService.createNotification({
+                            user_id: employee.id,
+                            type: 'payroll_paid',
+                            title: 'Payroll Payment Processed',
+                            message: `Your payroll for ${employee.period_name} has been processed and payment has been released.`,
+                            priority: 'HIGH',
+                            reference_type: 'payroll_item',
+                            reference_id: payrollItem.id,
+                            metadata: {
+                                period_name: employee.period_name,
+                                employee_id: payrollItem.employee_id
+                            }
+                        });
+                    }
+                } catch (notificationError) {
+                    console.error('Failed to send payroll payment notification:', notificationError);
+                    // Don't fail the request if notification fails
+                }
+
                 return successResponse(res, result.data, 'Payroll item marked as paid successfully');
             }
 

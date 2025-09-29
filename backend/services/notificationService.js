@@ -7,7 +7,10 @@ class NotificationService {
       LEAVE_SUBMITTED: "leave_submitted",
       LEAVE_APPROVED: "leave_approved",
       LEAVE_REJECTED: "leave_rejected",
+      LEAVE_MONETIZED: "leave_monetized",
       PAYROLL_GENERATED: "payroll_generated",
+      PAYROLL_FINALIZED: "payroll_finalized",
+      PAYROLL_PAID: "payroll_paid",
       BENEFIT_PROCESSED: "benefit_processed",
       TRAINING_ASSIGNED: "training_assigned",
       DOCUMENT_UPLOADED: "document_uploaded",
@@ -116,22 +119,32 @@ class NotificationService {
   // Send benefit processing notifications
   async sendBenefitNotification(benefitData, recipientIds = []) {
     try {
-      const notifications = recipientIds.map((userId) => ({
-        user_id: userId,
-        type: this.notificationTypes.BENEFIT_PROCESSED,
-        title: "Benefit Processed",
-        message: `Your ${
-          benefitData.benefit_type
-        } benefit has been processed. Amount: ₱${benefitData.amount.toLocaleString()}`,
-        priority: this.priorities.MEDIUM,
-        reference_type: "compensation_benefit",
-        reference_id: benefitData.id,
-        metadata: {
-          benefit_type: benefitData.benefit_type,
-          amount: benefitData.amount,
-          employee_id: benefitData.employee_id,
-        },
-      }));
+      // DEBUG: Log the benefit data being passed
+      console.log(`DEBUG: BENEFIT-NOTIFICATION - Benefit data received:`, benefitData);
+      console.log(`DEBUG: BENEFIT-NOTIFICATION - Benefit type: "${benefitData.benefit_type}"`);
+      console.log(`DEBUG: BENEFIT-NOTIFICATION - Amount: ${benefitData.amount}`);
+      console.log(`DEBUG: BENEFIT-NOTIFICATION - Employee ID: ${benefitData.employee_id}`);
+      console.log(`DEBUG: BENEFIT-NOTIFICATION - Full data keys:`, Object.keys(benefitData));
+
+      const notifications = recipientIds.map((userId) => {
+        const benefitType = benefitData.benefit_type || "Benefit"; // Fallback if undefined
+        const amount = benefitData.amount || 0;
+
+        return {
+          user_id: userId,
+          type: this.notificationTypes.BENEFIT_PROCESSED,
+          title: "Benefit Processed",
+          message: `Your ${benefitType} benefit has been processed. Amount: ₱${amount.toLocaleString()}`,
+          priority: this.priorities.MEDIUM,
+          reference_type: "compensation_benefit",
+          reference_id: benefitData.id,
+          metadata: {
+            benefit_type: benefitData.benefit_type,
+            amount: benefitData.amount,
+            employee_id: benefitData.employee_id,
+          },
+        };
+      });
 
       if (notifications.length > 0) {
         return await Notification.bulkCreate(notifications);

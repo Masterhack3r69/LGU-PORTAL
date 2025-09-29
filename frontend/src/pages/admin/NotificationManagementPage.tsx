@@ -38,6 +38,13 @@ export function NotificationManagementPage() {
     priority: 'MEDIUM' as 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT',
     recipientIds: [] as number[]
   });
+  const [testEmployeeId, setTestEmployeeId] = useState('');
+  const [testNotificationType, setTestNotificationType] = useState('system_announcement');
+  const [testResult, setTestResult] = useState<{
+    success: boolean;
+    message: string;
+    data?: any;
+  } | null>(null);
 
   useEffect(() => {
     fetchStats();
@@ -59,6 +66,50 @@ export function NotificationManagementPage() {
       toast.success('Test notification sent successfully!');
     } catch (error) {
       toast.error('Failed to send test notification');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSendSpecificTest = async (type: string) => {
+    try {
+      setIsLoading(true);
+      
+      const testMessages = {
+        leave_approved: {
+          title: 'Leave Application Approved',
+          message: 'Your leave application for Annual Leave from 2024-01-15 to 2024-01-20 has been approved.',
+          priority: 'HIGH' as const
+        },
+        payroll_generated: {
+          title: 'Payroll Generated',
+          message: 'Your payroll for January 2024 has been generated and is ready for review.',
+          priority: 'MEDIUM' as const
+        },
+        benefit_processed: {
+          title: 'Benefit Processed',
+          message: 'Your Terminal Leave benefit has been processed. Amount: ₱25,000.00',
+          priority: 'MEDIUM' as const
+        },
+        payroll_paid: {
+          title: 'Payroll Payment Processed',
+          message: 'Your payroll for January 2024 has been processed and payment has been released.',
+          priority: 'HIGH' as const
+        }
+      };
+
+      const testData = testMessages[type as keyof typeof testMessages];
+      if (testData) {
+        await notificationService.createAnnouncement({
+          title: `[TEST] ${testData.title}`,
+          message: testData.message,
+          priority: testData.priority,
+          recipientIds: [] // Send to all users
+        });
+        toast.success(`Test ${type} notification sent!`);
+      }
+    } catch (error) {
+      toast.error(`Failed to send ${type} test notification`);
     } finally {
       setIsLoading(false);
     }
@@ -104,6 +155,40 @@ export function NotificationManagementPage() {
       fetchStats(); // Refresh stats
     } catch (error) {
       toast.error('Failed to clean old notifications');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleTestEmployeeNotification = async () => {
+    if (!testEmployeeId) {
+      toast.error('Please enter an employee ID');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setTestResult(null);
+      
+      const result = await notificationService.testEmployeeNotification(
+        parseInt(testEmployeeId),
+        testNotificationType
+      );
+      
+      setTestResult(result);
+      
+      if (result.success) {
+        toast.success(result.message);
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      const errorMessage = 'Failed to send test notification to employee';
+      setTestResult({
+        success: false,
+        message: errorMessage
+      });
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -370,44 +455,124 @@ export function NotificationManagementPage() {
         </TabsContent>
 
         <TabsContent value="manage" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Trash2 className="h-5 w-5 text-red-600" />
-                Cleanup Operations
-              </CardTitle>
-              <CardDescription>
-                Manage and clean up old notifications to optimize system performance
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  This will permanently delete notifications older than 90 days. This action cannot be undone.
-                </AlertDescription>
-              </Alert>
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Employee Notification Testing */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TestTube className="h-5 w-5 text-blue-600" />
+                  Employee Notification Test
+                </CardTitle>
+                <CardDescription>
+                  Test notifications for specific employees to verify they can receive messages
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="test-employee-id">Employee ID</Label>
+                  <Input
+                    id="test-employee-id"
+                    type="number"
+                    placeholder="Enter employee ID"
+                    value={testEmployeeId}
+                    onChange={(e) => setTestEmployeeId(e.target.value)}
+                  />
+                </div>
 
-              <Button 
-                onClick={handleCleanOldNotifications}
-                disabled={isLoading}
-                variant="destructive"
-                className="w-full"
-              >
-                {isLoading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
-                    Cleaning...
-                  </>
-                ) : (
-                  <>
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Clean Old Notifications (90+ days)
-                  </>
+                <div className="space-y-2">
+                  <Label htmlFor="test-notification-type">Notification Type</Label>
+                  <Select 
+                    value={testNotificationType} 
+                    onValueChange={setTestNotificationType}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="system_announcement">System Announcement</SelectItem>
+                      <SelectItem value="leave_approved">Leave Approved</SelectItem>
+                      <SelectItem value="payroll_generated">Payroll Generated</SelectItem>
+                      <SelectItem value="benefit_processed">Benefit Processed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <Button 
+                  onClick={handleTestEmployeeNotification}
+                  disabled={isLoading || !testEmployeeId}
+                  className="w-full"
+                >
+                  {isLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <TestTube className="h-4 w-4 mr-2" />
+                      Send Test to Employee
+                    </>
+                  )}
+                </Button>
+
+                {testResult && (
+                  <Alert className={testResult.success ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"}>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      {testResult.message}
+                      {testResult.data && (
+                        <div className="mt-2 text-sm">
+                          <strong>Employee:</strong> {testResult.data.employee_name}<br/>
+                          <strong>User ID:</strong> {testResult.data.user_id}<br/>
+                          <strong>Type:</strong> {testResult.data.notification_type}
+                        </div>
+                      )}
+                    </AlertDescription>
+                  </Alert>
                 )}
-              </Button>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+
+            {/* Cleanup Operations */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Trash2 className="h-5 w-5 text-red-600" />
+                  Cleanup Operations
+                </CardTitle>
+                <CardDescription>
+                  Manage and clean up old notifications to optimize system performance
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    This will permanently delete notifications older than 90 days. This action cannot be undone.
+                  </AlertDescription>
+                </Alert>
+
+                <Button 
+                  onClick={handleCleanOldNotifications}
+                  disabled={isLoading}
+                  variant="destructive"
+                  className="w-full"
+                >
+                  {isLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
+                      Cleaning...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Clean Old Notifications (90+ days)
+                    </>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

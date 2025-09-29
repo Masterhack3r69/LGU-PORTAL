@@ -383,7 +383,7 @@ class CompensationBenefitController {
       try {
         const { pool } = require('../config/database');
         const [employeeRows] = await pool.execute(
-          'SELECT u.id, e.first_name, e.last_name FROM users u JOIN employees e ON u.employee_id = e.id WHERE e.id = ?',
+          'SELECT u.id, e.first_name, e.last_name FROM users u JOIN employees e ON e.user_id = u.id WHERE e.id = ? AND u.is_active = 1',
           [benefitData.employee_id]
         );
         
@@ -464,7 +464,7 @@ class CompensationBenefitController {
         const { pool } = require('../config/database');
         for (const record of result.data) {
           const [employeeRows] = await pool.execute(
-            'SELECT u.id, e.first_name, e.last_name FROM users u JOIN employees e ON u.employee_id = e.id WHERE e.id = ?',
+            'SELECT u.id, e.first_name, e.last_name FROM users u JOIN employees e ON e.user_id = u.id WHERE e.id = ? AND u.is_active = 1',
             [record.employee_id]
           );
           
@@ -520,6 +520,60 @@ class CompensationBenefitController {
 
       if (!result.success) {
         return res.status(400).json(result);
+      }
+
+      // Send notification to employee about monetization
+      try {
+        const { pool } = require('../config/database');
+
+        // DEBUG: Log the employee_id we're trying to find
+        console.log(`DEBUG: BENEFIT-MONETIZATION - Looking for employee with ID: ${employee_id}`);
+
+        // DEBUG: First check if employee exists
+        const [empCheck] = await pool.execute(
+          "SELECT id, user_id FROM employees WHERE id = ?",
+          [employee_id]
+        );
+        console.log(`DEBUG: BENEFIT-MONETIZATION - Employee exists check:`, empCheck);
+
+        // DEBUG: Check if user exists and relationship
+        const [userCheck] = await pool.execute(
+          "SELECT u.id, u.email, u.is_active FROM users u WHERE u.id = (SELECT user_id FROM employees WHERE id = ?)",
+          [employee_id]
+        );
+        console.log(`DEBUG: BENEFIT-MONETIZATION - User relationship check:`, userCheck);
+
+        const [employeeRows] = await pool.execute(
+          "SELECT u.id, e.first_name, e.last_name FROM users u JOIN employees e ON e.user_id = u.id WHERE e.id = ? AND u.is_active = 1",
+          [employee_id]
+        );
+
+        console.log(`DEBUG: BENEFIT-MONETIZATION - Notification query result:`, employeeRows);
+
+        if (employeeRows.length > 0) {
+          const employee = employeeRows[0];
+          console.log(`DEBUG: BENEFIT-MONETIZATION - Sending notification to user ID: ${employee.id}`);
+
+          // DEBUG: Log the result data structure
+          console.log(`DEBUG: BENEFIT-MONETIZATION - Result data:`, result.data);
+
+          await notificationService.sendBenefitNotification({
+            id: result.data.id || Date.now(),
+            benefit_type: "MONETIZATION",
+            amount: result.data.monetization_amount || result.data.amount || 0,
+            employee_id: employee_id
+          }, [employee.id]);
+
+          console.log(`DEBUG: BENEFIT-MONETIZATION - Notification sent successfully`);
+        } else {
+          console.log(`DEBUG: BENEFIT-MONETIZATION - No active user found for employee ID: ${employee_id}`);
+        }
+      } catch (notificationError) {
+        console.error(
+          "Failed to send benefit monetization notification:",
+          notificationError
+        );
+        // Don't fail the request if notification fails
       }
 
       res.status(201).json({

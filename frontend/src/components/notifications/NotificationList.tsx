@@ -251,6 +251,8 @@ function NotificationItem({
       leave_approved: <CheckCircle2 className="h-4 w-4 text-green-500" />,
       leave_rejected: <X className="h-4 w-4 text-red-500" />,
       payroll_generated: <Zap className="h-4 w-4 text-blue-500" />,
+      payroll_finalized: <CheckCircle2 className="h-4 w-4 text-emerald-500" />,
+      payroll_paid: <CheckCircle2 className="h-4 w-4 text-green-600" />,
       benefit_processed: <CheckCircle2 className="h-4 w-4 text-purple-500" />,
       training_assigned: <Info className="h-4 w-4 text-indigo-500" />,
       document_uploaded: <Info className="h-4 w-4 text-gray-500" />,
