@@ -47,18 +47,52 @@ export const formatDateForInput = (dateString: string | null | undefined): strin
       return dateString;
     }
     
-    // Convert to yyyy-MM-dd format for input
+    // Convert to yyyy-MM-dd format for input using UTC to avoid timezone issues
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return '';
     
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(date.getUTCDate()).padStart(2, '0');
     
     return `${year}-${month}-${day}`;
   } catch {
     return '';
   }
+};
+
+// Convert yyyy-MM-dd string to Date object for DatePicker (avoids timezone issues)
+export const dateStringToDateObject = (dateString: string | null | undefined): Date | undefined => {
+  if (!dateString) return undefined;
+  
+  try {
+    // Parse yyyy-MM-dd format directly to avoid timezone issues
+    const match = dateString.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (match) {
+      const year = parseInt(match[1], 10);
+      const month = parseInt(match[2], 10) - 1; // Month is 0-indexed
+      const day = parseInt(match[3], 10);
+      return new Date(year, month, day);
+    }
+    
+    // Fallback for other formats
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return undefined;
+    return date;
+  } catch {
+    return undefined;
+  }
+};
+
+// Convert Date object to yyyy-MM-dd string (avoids timezone issues)
+export const dateObjectToDateString = (date: Date | null | undefined): string => {
+  if (!date || !(date instanceof Date) || isNaN(date.getTime())) return '';
+  
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  
+  return `${year}-${month}-${day}`;
 };
 
 // Currency formatting

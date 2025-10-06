@@ -21,6 +21,7 @@ import { employeeService } from '@/services/employeeService';
 import type { CreateEmployeeDTO } from '@/types/employee';
 import { ArrowLeft, Save, Copy, Eye, EyeOff } from 'lucide-react';
 import { showToast } from "@/lib/toast";
+import { dateStringToDateObject, dateObjectToDateString } from '@/utils/helpers';
 
 const employeeSchema = z.object({
   employee_number: z.string().min(1, 'Employee number is required'),
@@ -170,17 +171,14 @@ export function EmployeeCreatePage() {
         employment_status: createData.employment_status
       });
       
-      await employeeService.createEmployee(createData);
+      const result = await employeeService.createEmployee(createData);
       
-      // Generate credentials for the new employee
-      const credentials = generateCredentials(
-        data.first_name, 
-        data.last_name, 
-        data.employee_number
-      );
+      // Use credentials from backend if user account was created
+      if (result.userAccount) {
+        setGeneratedCredentials(result.userAccount);
+        setShowCredentialsDialog(true);
+      }
       
-      setGeneratedCredentials(credentials);
-      setShowCredentialsDialog(true);
       showToast.success('Employee created successfully');
     } catch (error) {
       console.error('Failed to create employee:', error);
@@ -300,8 +298,8 @@ export function EmployeeCreatePage() {
                         id="birth_date"
                         label="Birth Date"
                         placeholder="Select birth date"
-                        value={field.value ? new Date(field.value) : undefined}
-                        onChange={(date) => field.onChange(date ? date.toISOString().split('T')[0] : '')}
+                        value={dateStringToDateObject(field.value)}
+                        onChange={(date) => field.onChange(dateObjectToDateString(date))}
                       />
                       <FormMessage />
                     </FormItem>
@@ -481,8 +479,8 @@ export function EmployeeCreatePage() {
                             id="appointment_date"
                             label="Appointment Date"
                             placeholder="Select appointment date"
-                            value={field.value ? new Date(field.value) : undefined}
-                            onChange={(date) => field.onChange(date ? date.toISOString().split('T')[0] : '')}
+                            value={dateStringToDateObject(field.value)}
+                            onChange={(date) => field.onChange(dateObjectToDateString(date))}
                             required
                           />
                           <FormMessage />
@@ -599,8 +597,8 @@ export function EmployeeCreatePage() {
                               id="separation_date"
                               label="Separation Date"
                               placeholder="Select separation date"
-                              value={field.value ? new Date(field.value) : undefined}
-                              onChange={(date) => field.onChange(date ? date.toISOString().split('T')[0] : '')}
+                              value={dateStringToDateObject(field.value)}
+                              onChange={(date) => field.onChange(dateObjectToDateString(date))}
                             />
                             <FormMessage />
                           </FormItem>

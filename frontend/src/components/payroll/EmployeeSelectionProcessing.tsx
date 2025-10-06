@@ -30,11 +30,13 @@ interface EmployeeSelectionProcessingProps {
   selectedPeriod: PayrollPeriod | null;
   onEmployeesSelected: (employees: EmployeeSelectionData[]) => void;
   onCalculatePayroll: () => void;
+  onPeriodUpdate?: () => void;
 }
 
 export function EmployeeSelectionProcessing({
   selectedPeriod,
-  onEmployeesSelected
+  onEmployeesSelected,
+  onPeriodUpdate
 }: EmployeeSelectionProcessingProps) {
   // Employee Selection States
   const [selectedEmployees, setSelectedEmployees] = useState<EmployeeSelectionData[]>([]);
@@ -115,7 +117,11 @@ export function EmployeeSelectionProcessing({
           : `${processedCount} employees`;
 
         showToast.success(`Processed ${employeeText}`);
-        loadPayrollItems(selectedPeriod.id);
+        await loadPayrollItems(selectedPeriod.id);
+        // Refresh the period data to update status
+        if (onPeriodUpdate) {
+          onPeriodUpdate();
+        }
       }
     } catch (error) {
       console.error('Failed to calculate payroll:', error);
@@ -132,7 +138,11 @@ export function EmployeeSelectionProcessing({
       const response = await payrollService.finalizePeriod(selectedPeriod.id);
       if (response.success) {
         showToast.success('Payroll period finalized');
-        loadPayrollItems(selectedPeriod.id);
+        await loadPayrollItems(selectedPeriod.id);
+        // Refresh the period data to update status and hide the button
+        if (onPeriodUpdate) {
+          onPeriodUpdate();
+        }
       }
     } catch (error) {
       console.error('Failed to finalize payroll period:', error);
@@ -145,7 +155,11 @@ export function EmployeeSelectionProcessing({
       const response = await payrollService.approvePayrollItem(payrollItemId);
       if (response.success) {
         showToast.success('Payroll item finalized');
-        loadPayrollItems(selectedPeriod!.id);
+        await loadPayrollItems(selectedPeriod!.id);
+        // Refresh the period data
+        if (onPeriodUpdate) {
+          onPeriodUpdate();
+        }
       }
     } catch (error) {
       console.error('Failed to finalize payroll item:', error);
@@ -158,7 +172,11 @@ export function EmployeeSelectionProcessing({
       const response = await payrollService.markAsPaid(payrollItemId);
       if (response.success) {
         showToast.success('Payroll item marked as paid');
-        loadPayrollItems(selectedPeriod!.id);
+        await loadPayrollItems(selectedPeriod!.id);
+        // Refresh the period data
+        if (onPeriodUpdate) {
+          onPeriodUpdate();
+        }
       }
     } catch (error) {
       console.error('Failed to mark payroll item as paid:', error);
@@ -179,7 +197,11 @@ export function EmployeeSelectionProcessing({
       const promises = processedItems.map(item => payrollService.approvePayrollItem(item.id));
       await Promise.all(promises);
       showToast.success(`Finalized ${processedItems.length} payroll items`);
-      loadPayrollItems(selectedPeriod.id);
+      await loadPayrollItems(selectedPeriod.id);
+      // Refresh the period data
+      if (onPeriodUpdate) {
+        onPeriodUpdate();
+      }
     } catch (error) {
       console.error('Failed to bulk finalize payroll items:', error);
       showToast.error('Failed to bulk finalize payroll items');
@@ -199,7 +221,11 @@ export function EmployeeSelectionProcessing({
       const promises = finalizedItems.map(item => payrollService.markAsPaid(item.id));
       await Promise.all(promises);
       showToast.success(`Marked ${finalizedItems.length} payroll items as paid`);
-      loadPayrollItems(selectedPeriod.id);
+      await loadPayrollItems(selectedPeriod.id);
+      // Refresh the period data
+      if (onPeriodUpdate) {
+        onPeriodUpdate();
+      }
     } catch (error) {
       console.error('Failed to bulk mark as paid:', error);
       showToast.error('Failed to bulk mark as paid');
@@ -360,7 +386,11 @@ export function EmployeeSelectionProcessing({
                   </Button>
                 )}
 
-                {(selectedPeriod.status?.toLowerCase() === 'processing' || selectedPeriod.status?.toLowerCase() === 'completed') && (
+                {(selectedPeriod.status?.toLowerCase() === 'processing' || 
+                  selectedPeriod.status?.toLowerCase() === 'completed' ||
+                  selectedPeriod.status?.toLowerCase() === 'processed') && 
+                  selectedPeriod.status?.toLowerCase() !== 'finalized' && 
+                  selectedPeriod.status?.toLowerCase() !== 'paid' && (
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button disabled={processingLoading} variant="outline">

@@ -16,6 +16,7 @@ import { AlertCircle, Clock } from 'lucide-react';
 import { toastSuccess, toastError } from "@/lib/toast";
 import leaveService from '@/services/leaveService';
 import type { LeaveType, LeaveValidationResult } from '@/types/leave';
+import { dateObjectToDateString } from '@/utils/helpers';
 
 const leaveApplicationSchema = z.object({
   leave_type_id: z.number().min(1, 'Please select a leave type'),
@@ -81,8 +82,8 @@ const LeaveApplicationForm: React.FC<LeaveApplicationFormProps> = ({
         const validationResult = await leaveService.validateLeaveApplication({
           employee_id: employeeId,
           leave_type_id: selectedLeaveTypeId,
-          start_date: startDate.toISOString().split('T')[0],
-          end_date: endDate.toISOString().split('T')[0],
+          start_date: dateObjectToDateString(startDate),
+          end_date: dateObjectToDateString(endDate),
           reason: form.getValues('reason') || 'Validation check'
         });
         setValidation(validationResult);
@@ -109,8 +110,8 @@ const LeaveApplicationForm: React.FC<LeaveApplicationFormProps> = ({
       await leaveService.createLeaveApplication({
         employee_id: employeeId,
         leave_type_id: data.leave_type_id,
-        start_date: data.start_date.toISOString().split('T')[0],
-        end_date: data.end_date.toISOString().split('T')[0],
+        start_date: dateObjectToDateString(data.start_date),
+        end_date: dateObjectToDateString(data.end_date),
         reason: data.reason,
         days_requested: validation?.calculatedDays
       });

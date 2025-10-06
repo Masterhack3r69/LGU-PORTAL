@@ -163,13 +163,26 @@ class EmployeeService {
       return this.transformEmployee(response.data);                                                                             
     }                                                                                                                           
                                                                                                                                 
-    async createEmployee(employeeData: CreateEmployeeDTO): Promise<Employee> {                                                  
+    async createEmployee(employeeData: CreateEmployeeDTO): Promise<{ employee: Employee; userAccount?: { username: string; password: string } }> {                                                  
       const backendData = this.transformToBackendFormat(employeeData);
       console.log('Frontend data:', employeeData);
       console.log('Backend transformed data:', backendData);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const response = await apiService.post<{ success: boolean; data: any }>('/employees', backendData);                       
-      return this.transformEmployee(response.data);                                                                             
+      const response = await apiService.post<{ success: boolean; data: any; user_account?: any }>('/employees', backendData);
+      
+      // Extract user account credentials if they were created
+      let userAccount = undefined;
+      if (response.user_account?.created && response.user_account?.username && response.user_account?.temporary_password) {
+        userAccount = {
+          username: response.user_account.username,
+          password: response.user_account.temporary_password
+        };
+      }
+      
+      return {
+        employee: this.transformEmployee(response.data),
+        userAccount
+      };                                                                             
     }                                                                                                                           
                                                                                                                                 
     async updateEmployee(id: string | number, employeeData: UpdateEmployeeDTO): Promise<Employee> {

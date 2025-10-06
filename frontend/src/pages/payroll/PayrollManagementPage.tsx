@@ -75,6 +75,29 @@ export function PayrollManagementPage() {
     console.log("Calculate payroll called from main page");
   };
 
+  const handlePeriodUpdate = async () => {
+    // Reload periods to get updated status
+    const response = await payrollService.getPeriods();
+    if (response.success) {
+      const responseData = response.data as
+        | { periods?: PayrollPeriod[] }
+        | PayrollPeriod[];
+      const periodsData = Array.isArray(responseData)
+        ? responseData
+        : responseData.periods || [];
+      setPeriods(Array.isArray(periodsData) ? periodsData : []);
+      
+      // Update the selected period with fresh data
+      if (selectedPeriod) {
+        const updatedPeriod = periodsData.find((p: PayrollPeriod) => p.id === selectedPeriod.id);
+        if (updatedPeriod) {
+          setSelectedPeriod(updatedPeriod);
+        }
+        await loadSummary(selectedPeriod.id);
+      }
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     const statusLower = status.toLowerCase();
     const variants = {
@@ -261,6 +284,7 @@ export function PayrollManagementPage() {
                   selectedPeriod={selectedPeriod}
                   onEmployeesSelected={() => {}}
                   onCalculatePayroll={handleCalculatePayroll}
+                  onPeriodUpdate={handlePeriodUpdate}
                 />
               </CardContent>
             </Card>

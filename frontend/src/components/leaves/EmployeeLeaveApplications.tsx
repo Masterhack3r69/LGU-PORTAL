@@ -17,6 +17,7 @@ import leaveService from '@/services/leaveService';
 import LeaveCard from './LeaveCard';
 import { showToast } from "@/lib/toast"
 import type { LeaveApplication } from '@/types/leave';
+import { dateStringToDateObject, dateObjectToDateString } from '@/utils/helpers';
 
 const editLeaveSchema = z.object({
   start_date: z.date(),
@@ -80,8 +81,8 @@ const EmployeeLeaveApplications: React.FC<EmployeeLeaveApplicationsProps> = ({
     
     // Set form values
     form.reset({
-      start_date: new Date(application.start_date),
-      end_date: new Date(application.end_date),
+      start_date: dateStringToDateObject(application.start_date),
+      end_date: dateStringToDateObject(application.end_date),
       reason: application.reason,
     });
     
@@ -94,8 +95,8 @@ const EmployeeLeaveApplications: React.FC<EmployeeLeaveApplicationsProps> = ({
     setIsSubmitting(true);
     try {
       await leaveService.updateLeaveApplication(selectedApplication.id, {
-        start_date: data.start_date.toISOString().split('T')[0],
-        end_date: data.end_date.toISOString().split('T')[0],
+        start_date: dateObjectToDateString(data.start_date),
+        end_date: dateObjectToDateString(data.end_date),
         reason: data.reason,
       });
       

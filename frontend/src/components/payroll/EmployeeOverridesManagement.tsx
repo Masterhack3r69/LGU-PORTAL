@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { dateStringToDateObject, dateObjectToDateString } from '@/utils/helpers';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -171,8 +172,8 @@ export function EmployeeOverridesManagement() {
       type: override.type,
       type_id: override.type_id.toString(),
       amount: override.amount.toString(),
-      effective_from: override.effective_from ? new Date(override.effective_from).toISOString().split('T')[0] : '',
-      effective_to: override.effective_to ? new Date(override.effective_to).toISOString().split('T')[0] : '',
+      effective_from: override.effective_from || '',
+      effective_to: override.effective_to || '',
       notes: ''
     });
     setEditingOverride(override);
@@ -580,16 +581,16 @@ export function EmployeeOverridesManagement() {
                 <DatePicker
                   id="effective_from"
                   label="Effective From"
-                  value={formData.effective_from ? new Date(formData.effective_from) : undefined}
-                  onChange={(date) => setFormData({ ...formData, effective_from: date ? date.toISOString().split('T')[0] : '' })}
+                  value={dateStringToDateObject(formData.effective_from)}
+                  onChange={(date) => setFormData({ ...formData, effective_from: dateObjectToDateString(date) })}
                   required
                   placeholder="Select start date"
                 />
                 <DatePicker
                   id="effective_to"
                   label="Effective To"
-                  value={formData.effective_to ? new Date(formData.effective_to) : undefined}
-                  onChange={(date) => setFormData({ ...formData, effective_to: date ? date.toISOString().split('T')[0] : '' })}
+                  value={dateStringToDateObject(formData.effective_to)}
+                  onChange={(date) => setFormData({ ...formData, effective_to: dateObjectToDateString(date) })}
                   placeholder="Select end date (optional)"
                 />
               </div>

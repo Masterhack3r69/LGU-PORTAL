@@ -1,4 +1,3 @@
-// server.js - Main application entry point
 const express = require('express');
 const session = require('express-session');
 const cors = require('cors');
@@ -11,15 +10,12 @@ const compression = require('compression');
 const { v4: uuidv4 } = require('uuid');
 require('dotenv').config();
 
-// Import database connection
-const { testConnection, closePool } = require('./config/database');
-
-// Import middleware
+const { testConnection, closePool, getPoolStats } = require('./config/database');
 const authMiddleware = require('./middleware/auth');
 const { errorHandler } = require('./middleware/errorHandler');
 const { auditLogger } = require('./middleware/auditLogger');
 
-// Import routes
+// Routes
 const authRoutes = require('./routes/authRoutes');
 const employeeRoutes = require('./routes/employeeRoutes');
 const leaveRoutes = require('./routes/leaveRoutes');
@@ -30,25 +26,17 @@ const compensationBenefitRoutes = require('./routes/compensationBenefitRoutes');
 const importRoutes = require('./routes/importRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const backupRoutes = require('./routes/backupRoutes');
-
 const trainingRoutes = require('./routes/trainingRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 
-
-// Import job system
-const monthlyAccrualJob = require('./jobs/monthlyAccrualJob'); // Add this line
+const monthlyAccrualJob = require('./jobs/monthlyAccrualJob');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Disable x-powered-by header
 app.disable('x-powered-by');
 
-// ================================
-// SECURITY MIDDLEWARE
-// ================================
-
-// Helmet for security headers
+// Security
 app.use(helmet({
     contentSecurityPolicy: {
         directives: {
@@ -63,10 +51,8 @@ app.use(helmet({
 
 // Rate limiting
 const limiter = rateLimit({
-    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW) || 15 * 60 * 1000, // 15 minutes
-    max: process.env.NODE_ENV === 'development' 
-        ? 1000 // Much higher limit for development
-        : (parseInt(process.env.RATE_LIMIT_MAX) || 100), // 100 for production
+    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW) || 15 * 60 * 1000,
+    max: process.env.NODE_ENV === 'development' ? 1000 : (parseInt(process.env.RATE_LIMIT_MAX) || 100),
     message: {
         error: 'Too many requests from this IP, please try again later.',
         retryAfter: Math.ceil((parseInt(process.env.RATE_LIMIT_WINDOW) || 900000) / 1000)
@@ -77,63 +63,35 @@ const limiter = rateLimit({
 
 app.use('/api/', limiter);
 
-// ================================
-// GENERAL MIDDLEWARE
-// ================================
-
-// Request ID middleware for tracking
+// Request ID
 app.use((req, res, next) => {
     req.id = uuidv4();
     res.set('X-Request-ID', req.id);
     next();
 });
 
-// Compression middleware
+// Compression
 app.use(compression({
     filter: (req, res) => {
-        if (req.headers['x-no-compression']) {
-            return false;
-        }
+        if (req.headers['x-no-compression']) return false;
         return compression.filter(req, res);
     },
     threshold: 1024
 }));
 
-// Enhanced CORS configuration
+// CORS
 app.use(cors({
     origin: function (origin, callback) {
-        // Allow requests with no origin (mobile apps, Postman, etc.)
         if (!origin) return callback(null, true);
         
         const allowedOrigins = process.env.CORS_ORIGINS 
             ? process.env.CORS_ORIGINS.split(',')
-            : [
-                'http://localhost:5173',
-                'http://127.0.0.1:5173', 
-                'http://10.0.0.73:5173',
-                'http://10.0.0.1:5173',
-                'http://10.0.0.73:3000',
-                'http://10.0.0.1:3000',
-                'http://localhost:3000',
-                'https://localhost:5173',
-                'https://127.0.0.1:5173', 
-                'https://10.0.0.73:5173',
-                'https://10.0.0.1:5173',
-                'https://10.0.0.73:3000',
-                'https://10.0.0.1:3000',
-                'https://localhost:3000'
-            ];
+            : ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://10.0.0.73:5173'];
         
-        // Allow any localhost/127.0.0.1 origin in development
         if (process.env.NODE_ENV !== 'production') {
             if (origin.startsWith('http://localhost:') || 
                 origin.startsWith('http://127.0.0.1:') ||
-                origin.startsWith('http://10.0.0.73:') ||
-                origin.startsWith('http://10.0.0.1:') ||
-                origin.startsWith('https://localhost:') || 
-                origin.startsWith('https://127.0.0.1:') ||
-                origin.startsWith('https://10.0.0.73:') ||
-                origin.startsWith('https://10.0.0.1:')) {
+                origin.startsWith('http://10.0.0.')) {
                 return callback(null, true);
             }
         }
@@ -147,29 +105,18 @@ app.use(cors({
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: [
-        'Content-Type', 
-        'Authorization', 
-        'X-Requested-With', 
-        'Accept', 
-        'Origin',
-        'X-Request-ID',
-        'Cache-Control'
-    ],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'X-Request-ID'],
     exposedHeaders: ['X-Request-ID'],
-    preflightContinue: false,
     optionsSuccessStatus: 200
 }));
 
-// Body parsing middleware
+// Body parsing
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// File upload middleware
+// File upload
 app.use(fileUpload({
-    limits: { 
-        fileSize: parseInt(process.env.MAX_FILE_SIZE) || 5 * 1024 * 1024 // 5MB
-    },
+    limits: { fileSize: parseInt(process.env.MAX_FILE_SIZE) || 5 * 1024 * 1024 },
     abortOnLimit: true,
     createParentPath: true,
     useTempFiles: true,
@@ -178,82 +125,53 @@ app.use(fileUpload({
     preserveExtension: true
 }));
 
-// Session configuration
+// Session
 app.use(session({
     name: process.env.SESSION_NAME || 'ems_session',
     secret: process.env.SESSION_SECRET || 'your-secret-key-change-this',
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: false, // Set to false for HTTP intranet applications
+        secure: false,
         httpOnly: true,
-        maxAge: 8 * 60 * 60 * 1000, // 8 hours
-        sameSite: 'lax' // Changed from 'strict' to 'lax' for better compatibility
+        maxAge: 8 * 60 * 60 * 1000,
+        sameSite: 'lax'
     },
-    rolling: true // Reset expiration on activity
+    rolling: true
 }));
 
-// Logging middleware
+// Logging
 if (process.env.NODE_ENV !== 'test') {
     app.use(morgan('combined'));
-}
-
-// Explicit preflight handler for troubleshooting
-app.options('*', (req, res) => {
-    console.log(`🚀 CORS preflight: ${req.method} ${req.path} from ${req.get('Origin')}`);
-    res.status(200).end();
-});
-
-// Request debugging middleware (only in development)
-if (process.env.NODE_ENV !== 'production') {
-    app.use((req, res, next) => {
-        console.log(`🔍 ${req.method} ${req.path} - Origin: ${req.get('Origin') || 'none'} - User-Agent: ${req.get('User-Agent')?.substring(0, 50)}...`);
-        next();
-    });
 }
 
 // Static files
 app.use('/public', express.static(path.join(__dirname, 'public')));
 app.use('/uploads', authMiddleware.requireAuth, express.static(path.join(__dirname, 'uploads')));
 
-// ================================
-// ROUTES
-// ================================
-
-// Enhanced health check endpoint
+// Health check
 app.get('/health', async (req, res) => {
-    const { getPoolStats } = require('./config/database');
-    
     try {
         const poolStats = getPoolStats();
         const memoryUsage = process.memoryUsage();
         
-        const health = {
+        res.json({
             status: 'OK',
             timestamp: new Date().toISOString(),
             uptime: process.uptime(),
             environment: process.env.NODE_ENV || 'development',
             version: process.env.APP_VERSION || '1.0.0',
-            database: {
-                status: 'connected',
-                pool: poolStats
-            },
+            database: { status: 'connected', pool: poolStats },
             memory: {
                 rss: Math.round(memoryUsage.rss / 1024 / 1024) + ' MB',
-                heapUsed: Math.round(memoryUsage.heapUsed / 1024 / 1024) + ' MB',
-                heapTotal: Math.round(memoryUsage.heapTotal / 1024 / 1024) + ' MB'
-            },
-            requestId: req.id
-        };
-        
-        res.set('Cache-Control', 'no-cache');
-        res.json(health);
+                heapUsed: Math.round(memoryUsage.heapUsed / 1024 / 1024) + ' MB'
+            }
+        });
     } catch (error) {
         res.status(503).json({
             status: 'ERROR',
             timestamp: new Date().toISOString(),
-            error: error.message,
-            requestId: req.id
+            error: error.message
         });
     }
 });
@@ -270,81 +188,52 @@ app.use('/api/jobs', authMiddleware.requireAuth, auditLogger, jobRoutes);
 app.use('/api/compensation-benefits', authMiddleware.requireAuth, auditLogger, compensationBenefitRoutes);
 app.use('/api/import', authMiddleware.requireAuth, auditLogger, importRoutes);
 app.use('/api/backup', authMiddleware.requireAuth, auditLogger, backupRoutes);
-
 app.use('/api', authMiddleware.requireAuth, auditLogger, trainingRoutes);
 app.use('/api/notifications', notificationRoutes);
-
-// Serve frontend application (if using server-side rendering or static files)
-if (process.env.NODE_ENV === 'production') {
-    app.get('*', (req, res) => {
-        res.sendFile(path.join(__dirname, 'public', 'index.html'));
-    });
-}
-
-// ================================
-// ERROR HANDLING
-// ================================
 
 // 404 handler
 app.use('*', (req, res) => {
     res.status(404).json({
         error: 'Route not found',
         path: req.originalUrl,
-        method: req.method,
-        timestamp: new Date().toISOString()
+        method: req.method
     });
 });
 
-// Global error handler
+// Error handler
 app.use(errorHandler);
 
-// ================================
-// SERVER STARTUP
-// ================================
-
+// Server startup
 const startServer = async () => {
     try {
-        // Test database connection
         const dbConnected = await testConnection();
         if (!dbConnected) {
-            console.error('❌ Failed to connect to database. Exiting...');
+            console.error('❌ Failed to connect to database');
             process.exit(1);
         }
 
-        // Start scheduled jobs
-        monthlyAccrualJob.startScheduledJob(); // Add this line
+        monthlyAccrualJob.startScheduledJob();
 
-        // Start server
         const server = app.listen(PORT, 'localhost', () => {
             console.log(`
-🚀 Employee Management System Server Started
+🚀 Server Started
 🌐 Environment: ${process.env.NODE_ENV || 'development'}
-🔌 Host: localhost:${PORT}
+🔌 Port: ${PORT}
 📊 Database: Connected
-🔒 Security: Enabled
-📁 Upload Path: ${process.env.UPLOAD_PATH || './uploads'}
-⏰ Started at: ${new Date().toISOString()}
-🌍 Local Access: http://localhost:${PORT}
+⏰ ${new Date().toISOString()}
             `);
         });
 
-        // Enhanced graceful shutdown
         const gracefulShutdown = async (signal) => {
-            console.log(`\n📡 Received ${signal}. Starting graceful shutdown...`);
-            
+            console.log(`\n📡 ${signal} - Shutting down...`);
             server.close(async () => {
-                console.log('✅ HTTP server closed');
-                
-                // Close database connection pool
                 await closePool();
-                
-                console.log('✅ Graceful shutdown completed');
+                console.log('✅ Shutdown complete');
                 process.exit(0);
             });
 
-            // Force exit after 30 seconds
             setTimeout(() => {
-                console.error('❌ Forced shutdown after timeout');
+                console.error('❌ Forced shutdown');
                 process.exit(1);
             }, 30000);
         };
@@ -358,7 +247,6 @@ const startServer = async () => {
     }
 };
 
-// Start the server
 if (require.main === module) {
     startServer();
 }

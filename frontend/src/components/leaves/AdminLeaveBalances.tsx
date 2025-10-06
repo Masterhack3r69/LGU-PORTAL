@@ -36,7 +36,7 @@ import { cn } from "@/lib/utils";
 import leaveService from "@/services/leaveService";
 import employeeService from "@/services/employeeService";
 import LeaveBalanceCard from "./LeaveBalanceCard";
-import { showToast } from "@/lib/toast"
+import { showToast } from "@/lib/toast";
 import type {
   LeaveBalance,
   LeaveType,
@@ -121,8 +121,17 @@ const AdminLeaveBalances: React.FC = () => {
   useEffect(() => {
     loadEmployees();
     loadLeaveTypes();
-    loadBalances();
-  }, [loadEmployees, loadLeaveTypes, loadBalances]);
+  }, [loadEmployees, loadLeaveTypes]);
+
+  // Load balances when employee or year changes
+  useEffect(() => {
+    if (selectedEmployee && selectedEmployee !== "all") {
+      loadBalances();
+    } else {
+      setBalances([]);
+      setIsLoading(false);
+    }
+  }, [selectedEmployee, selectedYear, loadBalances]);
 
   const selectedEmployeeData = employees.find(
     (emp) =>
@@ -402,7 +411,10 @@ const AdminLeaveBalances: React.FC = () => {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {[2023, 2024, 2025, 2026].map((year) => (
+                          {Array.from(
+                            { length: 10 },
+                            (_, i) => new Date().getFullYear() - 5 + i
+                          ).map((year) => (
                             <SelectItem key={year} value={year.toString()}>
                               {year}
                             </SelectItem>
@@ -606,7 +618,10 @@ const AdminLeaveBalances: React.FC = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {[2023, 2024, 2025, 2026].map((year) => (
+                  {Array.from(
+                    { length: 10 },
+                    (_, i) => new Date().getFullYear() - 5 + i
+                  ).map((year) => (
                     <SelectItem key={year} value={year.toString()}>
                       {year}
                     </SelectItem>

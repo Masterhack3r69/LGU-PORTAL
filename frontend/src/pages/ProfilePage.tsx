@@ -46,7 +46,7 @@ const formatDate = (
     return dateString;
   }
 
-  // Handle ISO string or date input value
+  // Handle ISO string or date input value using UTC to avoid timezone issues
   try {
     // Parse the date - this handles ISO strings and other formats
     const date = new Date(dateString);
@@ -55,10 +55,10 @@ const formatDate = (
       return undefined;
     }
 
-    // Format to yyyy-MM-dd for database
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
+    // Format to yyyy-MM-dd for database using UTC
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(date.getUTCDate()).padStart(2, "0");
 
     return `${year}-${month}-${day}`;
   } catch (error) {
@@ -76,14 +76,14 @@ const formatDateForInput = (dateString: string | undefined | null): string => {
     return dateString;
   }
 
-  // If it's an ISO string or other format, convert to yyyy-MM-dd
+  // If it's an ISO string or other format, convert to yyyy-MM-dd using UTC to avoid timezone issues
   try {
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return "";
 
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(date.getUTCDate()).padStart(2, "0");
 
     return `${year}-${month}-${day}`;
   } catch {

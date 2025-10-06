@@ -32,6 +32,7 @@ import { employeeService } from "@/services/employeeService";
 import type { Employee, UpdateEmployeeDTO } from "@/types/employee";
 import { ArrowLeft, Save } from "lucide-react";
 import { showToast } from "@/lib/toast";
+import { dateStringToDateObject, dateObjectToDateString } from "@/utils/helpers";
 
 const employeeSchema = z.object({
   employee_number: z.string().min(1, "Employee number is required"),
@@ -142,14 +143,14 @@ export function EmployeeEditPage() {
             return dateString;
           }
 
-          // If it's an ISO string or other format, convert to yyyy-MM-dd
+          // If it's an ISO string or other format, convert to yyyy-MM-dd using UTC to avoid timezone issues
           try {
             const date = new Date(dateString);
             if (isNaN(date.getTime())) return "";
 
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, "0");
-            const day = String(date.getDate()).padStart(2, "0");
+            const year = date.getUTCFullYear();
+            const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+            const day = String(date.getUTCDate()).padStart(2, "0");
 
             return `${year}-${month}-${day}`;
           } catch {
@@ -223,7 +224,7 @@ export function EmployeeEditPage() {
           return dateString;
         }
 
-        // Handle ISO string or date input value
+        // Handle ISO string or date input value using UTC to avoid timezone issues
         try {
           const date = new Date(dateString);
           if (isNaN(date.getTime())) {
@@ -231,10 +232,10 @@ export function EmployeeEditPage() {
             return undefined;
           }
 
-          // Format to yyyy-MM-dd for database
-          const year = date.getFullYear();
-          const month = String(date.getMonth() + 1).padStart(2, "0");
-          const day = String(date.getDate()).padStart(2, "0");
+          // Format to yyyy-MM-dd for database using UTC
+          const year = date.getUTCFullYear();
+          const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+          const day = String(date.getUTCDate()).padStart(2, "0");
 
           return `${year}-${month}-${day}`;
         } catch (error) {
@@ -432,12 +433,8 @@ export function EmployeeEditPage() {
                         id="birth_date"
                         label="Birth Date"
                         placeholder="Select birth date"
-                        value={field.value ? new Date(field.value) : undefined}
-                        onChange={(date) =>
-                          field.onChange(
-                            date ? date.toISOString().split("T")[0] : ""
-                          )
-                        }
+                        value={dateStringToDateObject(field.value)}
+                        onChange={(date) => field.onChange(dateObjectToDateString(date))}
                       />
                       <FormMessage />
                     </FormItem>
@@ -636,14 +633,8 @@ export function EmployeeEditPage() {
                             id="appointment_date"
                             label="Appointment Date"
                             placeholder="Select appointment date"
-                            value={
-                              field.value ? new Date(field.value) : undefined
-                            }
-                            onChange={(date) =>
-                              field.onChange(
-                                date ? date.toISOString().split("T")[0] : ""
-                              )
-                            }
+                            value={dateStringToDateObject(field.value)}
+                            onChange={(date) => field.onChange(dateObjectToDateString(date))}
                             required
                           />
                           <FormMessage />
@@ -798,8 +789,8 @@ export function EmployeeEditPage() {
                               id="separation_date"
                               label="Separation Date"
                               placeholder="Select separation date"
-                              value={field.value ? new Date(field.value) : undefined}
-                              onChange={(date) => field.onChange(date ? date.toISOString().split('T')[0] : '')}
+                              value={dateStringToDateObject(field.value)}
+                              onChange={(date) => field.onChange(dateObjectToDateString(date))}
                             />
                             <FormMessage />
                           </FormItem>

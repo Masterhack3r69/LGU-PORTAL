@@ -224,14 +224,60 @@ router.post('/overrides/deductions/bulk', auditLogger, payrollConfigController.b
 // GET /api/payroll/config/statistics - Get configuration statistics
 router.get('/config/statistics', payrollConfigController.getConfigurationStatistics);
 
-// ===== REPORTS ROUTES (Placeholder for future implementation) =====
+// ===== REPORTS ROUTES =====
 
-// GET /api/payroll/reports/period/:id - Generate period report
-router.get('/reports/period/:id', (req, res) => {
-    res.status(501).json({
-        success: false,
-        message: 'Report generation not yet implemented'
-    });
+// GET /api/payroll/periods/:id/report - Generate period summary report
+router.get('/periods/:id/report', requireAdmin, validatePeriodAccess, async (req, res) => {
+    try {
+        const periodId = parseInt(req.params.id);
+        const format = req.query.format || 'pdf';
+
+        if (format !== 'pdf') {
+            return res.status(400).json({
+                success: false,
+                message: 'Only PDF format is currently supported'
+            });
+        }
+
+        const payrollReportService = require('../services/payrollReportService');
+        const pdfBuffer = await payrollReportService.generatePeriodReport(periodId);
+
+        // Set response headers for PDF download
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="payroll-report-period-${periodId}.pdf"`);
+        res.setHeader('Content-Length', pdfBuffer.length);
+
+        // Send PDF buffer
+        res.send(pdfBuffer);
+    } catch (error) {
+        console.error('Period report generation error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to generate period report',
+            error: error.message
+        });
+    }
+});
+
+// GET /api/payroll/reports/period/:id - Generate period report (legacy route)
+router.get('/reports/period/:id', requireAdmin, async (req, res) => {
+    try {
+        const periodId = parseInt(req.params.id);
+        const payrollReportService = require('../services/payrollReportService');
+        const pdfBuffer = await payrollReportService.generatePeriodReport(periodId);
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="payroll-report-period-${periodId}.pdf"`);
+        res.setHeader('Content-Length', pdfBuffer.length);
+        res.send(pdfBuffer);
+    } catch (error) {
+        console.error('Period report generation error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to generate period report',
+            error: error.message
+        });
+    }
 });
 
 // GET /api/payroll/reports/employee/:employeeId - Generate employee payroll report

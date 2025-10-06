@@ -19,6 +19,7 @@ export function PayrollReportsPage() {
   const [payrollItems, setPayrollItems] = useState<PayrollItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [downloadingItems, setDownloadingItems] = useState<Set<number>>(new Set());
+  const [downloadingSummary, setDownloadingSummary] = useState(false);
 
   useEffect(() => {
     loadPeriods();
@@ -170,6 +171,45 @@ export function PayrollReportsPage() {
     }
   };
 
+  const handleGenerateSummaryReport = async () => {
+    if (!selectedPeriod) {
+      showToast.error('Please select a payroll period');
+      return;
+    }
+
+    try {
+      setDownloadingSummary(true);
+      
+      const blob = await payrollService.generatePayrollReport(selectedPeriod.id, 'pdf');
+
+      if (blob instanceof Blob && blob.size > 0) {
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const periodName = `${new Date(selectedPeriod.year, selectedPeriod.month - 1).toLocaleString('default', { month: 'long' })}_${selectedPeriod.year}_Period_${selectedPeriod.period_number}`;
+        a.download = `Payroll_Summary_${periodName}_${new Date().toISOString().split('T')[0]}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        
+        // Clean up
+        setTimeout(() => {
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+        }, 100);
+
+        showToast.success('Summary report downloaded successfully');
+      } else {
+        throw new Error('Invalid PDF response');
+      }
+    } catch (error) {
+      console.error('Failed to generate summary report:', error);
+      showToast.error(`Failed to generate summary report: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setDownloadingSummary(false);
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     const statusLower = status.toLowerCase();
     const variants = {
@@ -218,14 +258,9 @@ export function PayrollReportsPage() {
 
   const stats = {
     totalPayslips: payrollItems.length,
-    totalAmount: payrollItems.reduce((sum, item) => sum + (item.net_pay || 0), 0),
+    totalAmount: selectedPeriod?.total_net_pay || payrollItems.reduce((sum, item) => sum + (Number(item.net_pay) || 0), 0),
     reportsGenerated: 0, // Placeholder, as summary report is coming soon
-    pendingApprovals: payrollItems.filter(item =>
-      item.status && (
-        item.status.toLowerCase() === 'processing' ||
-        item.status.toLowerCase() === 'calculating'
-      )
-    ).length
+    totalPayrollPeriods: periods.length
   };
 
   if (loading) {
@@ -264,7 +299,9 @@ export function PayrollReportsPage() {
             <DollarSign className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(stats.totalAmount)}</div>
+            <div className="text-2xl font-bold">
+              {stats.totalAmount > 0 ? formatCurrency(stats.totalAmount) : '₱0.00'}
+            </div>
             <p className="text-xs text-muted-foreground">payroll amount</p>
           </CardContent>
         </Card>
@@ -282,12 +319,12 @@ export function PayrollReportsPage() {
 
         <Card className="border-l-4 border-l-purple-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Approvals</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Payroll Periods</CardTitle>
             <Clock className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.pendingApprovals}</div>
-            <p className="text-xs text-muted-foreground">awaiting approval</p>
+            <div className="text-2xl font-bold">{stats.totalPayrollPeriods}</div>
+            <p className="text-xs text-muted-foreground">all periods</p>
           </CardContent>
         </Card>
       </div>
@@ -356,14 +393,28 @@ export function PayrollReportsPage() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-center py-4">
-                      <Button>
-                        <FileText className="h-4 w-4 mr-2" />
-                        Generate Summary Report
-                      </Button>
-                      <p className="text-sm text-muted-foreground mt-2">
-                        Summary report functionality coming soon...
-                      </p>
+                    <div className="space-y-4">
+                      <div className="text-sm text-muted-foreground">
+                        Download a comprehensive PDF report including all payroll details, employee summaries, and financial breakdowns for this period.
+                      </div>
+                      <div className="text-center py-4">
+                        <Button 
+                          onClick={handleGenerateSummaryReport}
+                          disabled={downloadingSummary || !selectedPeriod}
+                        >
+                          {downloadingSummary ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
+                              Generating...
+                            </>
+                          ) : (
+                            <>
+                              <FileText className="h-4 w-4 mr-2" />
+                              Generate Summary Report
+                            </>
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

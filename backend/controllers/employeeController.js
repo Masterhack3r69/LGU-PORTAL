@@ -382,6 +382,7 @@ const createEmployee = asyncHandler(async (req, res) => {
     
     let userId = null;
     let tempPassword = null;
+    let generatedUsername = null;
     
     // Create user account if email is provided
     if (req.body.email_address) {
@@ -404,7 +405,6 @@ const createEmployee = asyncHandler(async (req, res) => {
         }
         
         // Generate a secure temporary password
-        const helpers = require('../utils/helpers');
         tempPassword = helpers.generateRandomPassword(12);
         
         // Create user account
@@ -420,6 +420,7 @@ const createEmployee = asyncHandler(async (req, res) => {
         }
         
         userId = userResult.user_id;
+        generatedUsername = username;
     }
     
     // Create employee with user_id
@@ -459,6 +460,7 @@ const createEmployee = asyncHandler(async (req, res) => {
         response.user_account = {
             created: true,
             user_id: userId,
+            username: generatedUsername,
             temporary_password: tempPassword,
             message: 'User account created. Please advise employee to change password on first login.'
         };
@@ -522,6 +524,7 @@ const updateEmployee = asyncHandler(async (req, res) => {
     // Create user account if employee doesn't have one and email is provided
     let userAccountCreated = false;
     let tempPassword = null;
+    let generatedUsername = null;
     
     if (!existingEmployee.user_id && req.body.email_address) {
         try {
@@ -538,7 +541,6 @@ const updateEmployee = asyncHandler(async (req, res) => {
             }
             
             // Generate a secure temporary password
-            const helpers = require('../utils/helpers');
             tempPassword = helpers.generateRandomPassword(12);
             
             // Create user account
@@ -551,6 +553,7 @@ const updateEmployee = asyncHandler(async (req, res) => {
             
             if (userResult.success) {
                 req.body.user_id = userResult.user_id;
+                generatedUsername = username;
                 userAccountCreated = true;
             }
         } catch (error) {
@@ -600,6 +603,7 @@ const updateEmployee = asyncHandler(async (req, res) => {
         response.user_account = {
             created: true,
             user_id: req.body.user_id,
+            username: generatedUsername,
             temporary_password: tempPassword,
             message: 'User account created during update. Please advise employee to change password on first login.'
         };
