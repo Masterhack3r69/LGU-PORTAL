@@ -42,7 +42,7 @@ import {
   X,
   Clock,
   AlertCircle,
-  Eye,
+  FileInput,
   Search,
   RefreshCw,
   Filter,
@@ -714,7 +714,7 @@ function DocumentTable({
                           size="sm"
                           onClick={() => onReview(document)}
                         >
-                          <Eye className="h-4 w-4" />
+                          <FileInput className="h-4 w-4" />
                         </Button>
                       )}
                   </div>
