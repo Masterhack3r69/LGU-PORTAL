@@ -58,8 +58,8 @@ const EmployeeImportPage: React.FC = () => {
               <CardTitle className="text-sm font-medium">
                 Supported Formats
               </CardTitle>
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <FileSpreadsheet className="h-4 w-4 text-blue-600" />
+              <div className="p-2 bg-blue-100 dark:bg-blue-950/30 rounded-lg">
+                <FileSpreadsheet className="h-4 w-4 text-blue-600 dark:text-blue-400" />
               </div>
             </div>
           </CardHeader>
@@ -73,7 +73,7 @@ const EmployeeImportPage: React.FC = () => {
                 <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                 CSV files
               </div>
-              <div className="text-xs text-muted-foreground mt-2 p-2 bg-gray-50 rounded">
+              <div className="text-xs text-muted-foreground mt-2 p-2 bg-muted rounded">
                 Max size: 10MB
               </div>
             </div>
@@ -84,8 +84,8 @@ const EmployeeImportPage: React.FC = () => {
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-medium">Features</CardTitle>
-              <div className="p-2 bg-green-100 rounded-lg">
-                <Users className="h-4 w-4 text-green-600" />
+              <div className="p-2 bg-green-100 dark:bg-green-950/30 rounded-lg">
+                <Users className="h-4 w-4 text-green-600 dark:text-green-400" />
               </div>
             </div>
           </CardHeader>
@@ -111,27 +111,27 @@ const EmployeeImportPage: React.FC = () => {
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-medium">Process</CardTitle>
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Upload className="h-4 w-4 text-purple-600" />
+              <div className="p-2 bg-purple-100 dark:bg-purple-950/30 rounded-lg">
+                <Upload className="h-4 w-4 text-purple-600 dark:text-purple-400" />
               </div>
             </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm">
-                <div className="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-xs font-medium">
+                <div className="w-6 h-6 bg-purple-100 dark:bg-purple-950/30 text-purple-600 dark:text-purple-400 rounded-full flex items-center justify-center text-xs font-medium">
                   1
                 </div>
                 Download template
               </div>
               <div className="flex items-center gap-2 text-sm">
-                <div className="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-xs font-medium">
+                <div className="w-6 h-6 bg-purple-100 dark:bg-purple-950/30 text-purple-600 dark:text-purple-400 rounded-full flex items-center justify-center text-xs font-medium">
                   2
                 </div>
                 Fill employee data
               </div>
               <div className="flex items-center gap-2 text-sm">
-                <div className="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-xs font-medium">
+                <div className="w-6 h-6 bg-purple-100 dark:bg-purple-950/30 text-purple-600 dark:text-purple-400 rounded-full flex items-center justify-center text-xs font-medium">
                   3
                 </div>
                 Upload & import
@@ -142,8 +142,8 @@ const EmployeeImportPage: React.FC = () => {
       </div>
 
       {/* Important Information */}
-      <Alert className="border-l-4 border-l-amber-500 bg-amber-50">
-        <AlertDescription className="text-amber-800">
+      <Alert className="border-l-4 border-l-amber-500 bg-amber-50 dark:bg-amber-950/20">
+        <AlertDescription className="text-amber-800 dark:text-amber-200">
           <strong>Before importing:</strong> Ensure all employee numbers are
           unique and email addresses are valid. The system will automatically
           create user accounts for employees with email addresses and initialize
@@ -156,10 +156,10 @@ const EmployeeImportPage: React.FC = () => {
 
       {/* Additional Information */}
       <Card className="shadow-sm">
-        <CardHeader className="bg-gradient-to-r from-slate-50 to-gray-50 rounded-t-lg">
+        <CardHeader className="bg-gradient-to-r from-slate-50 to-gray-50 dark:from-slate-900/50 dark:to-gray-900/50 py-3">
           <CardTitle className="text-lg flex items-center gap-2">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Info className="h-5 w-5 text-blue-600" />
+            <div className="p-2 bg-blue-100 dark:bg-blue-950/30 rounded-lg">
+              <Info className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             </div>
             Import Guidelines
           </CardTitle>
@@ -170,34 +170,34 @@ const EmployeeImportPage: React.FC = () => {
         <CardContent className="space-y-6 pt-6">
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-3">
-              <h4 className="font-medium flex items-center gap-2 text-green-700">
+              <h4 className="font-medium flex items-center gap-2 text-green-700 dark:text-green-400">
                 <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                 Required Fields
               </h4>
-              <div className="bg-green-50 p-4 rounded-lg space-y-2">
+              <div className="bg-green-50 dark:bg-green-950/20 p-4 rounded-lg space-y-2">
                 <div className="grid grid-cols-1 gap-1 text-sm">
                   <div className="flex items-center gap-2">
-                    <div className="w-1 h-1 bg-green-600 rounded-full"></div>
+                    <div className="w-1 h-1 bg-green-600 dark:bg-green-400 rounded-full"></div>
                     Employee Number
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-1 h-1 bg-green-600 rounded-full"></div>
+                    <div className="w-1 h-1 bg-green-600 dark:bg-green-400 rounded-full"></div>
                     First Name
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-1 h-1 bg-green-600 rounded-full"></div>
+                    <div className="w-1 h-1 bg-green-600 dark:bg-green-400 rounded-full"></div>
                     Last Name
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-1 h-1 bg-green-600 rounded-full"></div>
+                    <div className="w-1 h-1 bg-green-600 dark:bg-green-400 rounded-full"></div>
                     Sex/Gender
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-1 h-1 bg-green-600 rounded-full"></div>
+                    <div className="w-1 h-1 bg-green-600 dark:bg-green-400 rounded-full"></div>
                     Birth Date
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-1 h-1 bg-green-600 rounded-full"></div>
+                    <div className="w-1 h-1 bg-green-600 dark:bg-green-400 rounded-full"></div>
                     Appointment Date
                   </div>
                 </div>
@@ -205,34 +205,34 @@ const EmployeeImportPage: React.FC = () => {
             </div>
 
             <div className="space-y-3">
-              <h4 className="font-medium flex items-center gap-2 text-blue-700">
+              <h4 className="font-medium flex items-center gap-2 text-blue-700 dark:text-blue-400">
                 <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                 Optional Fields
               </h4>
-              <div className="bg-blue-50 p-4 rounded-lg space-y-2">
-                <div className="grid grid-cols-1 gap-1 text-sm text-blue-800">
+              <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg space-y-2">
+                <div className="grid grid-cols-1 gap-1 text-sm text-blue-800 dark:text-blue-200">
                   <div className="flex items-center gap-2">
-                    <div className="w-1 h-1 bg-blue-600 rounded-full"></div>
+                    <div className="w-1 h-1 bg-blue-600 dark:bg-blue-400 rounded-full"></div>
                     Middle Name
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-1 h-1 bg-blue-600 rounded-full"></div>
+                    <div className="w-1 h-1 bg-blue-600 dark:bg-blue-400 rounded-full"></div>
                     Email Address
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-1 h-1 bg-blue-600 rounded-full"></div>
+                    <div className="w-1 h-1 bg-blue-600 dark:bg-blue-400 rounded-full"></div>
                     Contact Number
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-1 h-1 bg-blue-600 rounded-full"></div>
+                    <div className="w-1 h-1 bg-blue-600 dark:bg-blue-400 rounded-full"></div>
                     Position
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-1 h-1 bg-blue-600 rounded-full"></div>
+                    <div className="w-1 h-1 bg-blue-600 dark:bg-blue-400 rounded-full"></div>
                     Salary Information
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-1 h-1 bg-blue-600 rounded-full"></div>
+                    <div className="w-1 h-1 bg-blue-600 dark:bg-blue-400 rounded-full"></div>
                     Government IDs
                   </div>
                 </div>
@@ -241,56 +241,56 @@ const EmployeeImportPage: React.FC = () => {
           </div>
 
           <div className="space-y-3">
-            <h4 className="font-medium flex items-center gap-2 text-purple-700">
+            <h4 className="font-medium flex items-center gap-2 text-purple-700 dark:text-purple-400">
               <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
               Password Generation Options
             </h4>
-            <div className="bg-purple-50 p-4 rounded-lg space-y-3">
+            <div className="bg-purple-50 dark:bg-purple-950/20 p-4 rounded-lg space-y-3">
               <div className="grid md:grid-cols-2 gap-4 text-sm">
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-xs font-medium mt-0.5">
+                  <div className="w-6 h-6 bg-purple-100 dark:bg-purple-950/30 text-purple-600 dark:text-purple-400 rounded-full flex items-center justify-center text-xs font-medium mt-0.5">
                     1
                   </div>
                   <div>
-                    <strong className="text-purple-800">
+                    <strong className="text-purple-800 dark:text-purple-300">
                       Custom Pattern (Default):
                     </strong>
-                    <p className="text-purple-700">
+                    <p className="text-purple-700 dark:text-purple-400">
                       Employee number + birth day/month
                     </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-xs font-medium mt-0.5">
+                  <div className="w-6 h-6 bg-purple-100 dark:bg-purple-950/30 text-purple-600 dark:text-purple-400 rounded-full flex items-center justify-center text-xs font-medium mt-0.5">
                     2
                   </div>
                   <div>
-                    <strong className="text-purple-800">
+                    <strong className="text-purple-800 dark:text-purple-300">
                       Employee Number:
                     </strong>
-                    <p className="text-purple-700">
+                    <p className="text-purple-700 dark:text-purple-400">
                       Uses employee number as password
                     </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-xs font-medium mt-0.5">
+                  <div className="w-6 h-6 bg-purple-100 dark:bg-purple-950/30 text-purple-600 dark:text-purple-400 rounded-full flex items-center justify-center text-xs font-medium mt-0.5">
                     3
                   </div>
                   <div>
-                    <strong className="text-purple-800">Birth Date:</strong>
-                    <p className="text-purple-700">
+                    <strong className="text-purple-800 dark:text-purple-300">Birth Date:</strong>
+                    <p className="text-purple-700 dark:text-purple-400">
                       Uses birth date (DDMMYYYY) format
                     </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-xs font-medium mt-0.5">
+                  <div className="w-6 h-6 bg-purple-100 dark:bg-purple-950/30 text-purple-600 dark:text-purple-400 rounded-full flex items-center justify-center text-xs font-medium mt-0.5">
                     4
                   </div>
                   <div>
-                    <strong className="text-purple-800">Random:</strong>
-                    <p className="text-purple-700">
+                    <strong className="text-purple-800 dark:text-purple-300">Random:</strong>
+                    <p className="text-purple-700 dark:text-purple-400">
                       Generates secure random passwords
                     </p>
                   </div>
@@ -299,8 +299,8 @@ const EmployeeImportPage: React.FC = () => {
             </div>
           </div>
 
-          <Alert className="border-l-4 border-l-red-500 bg-red-50">
-            <AlertDescription className="text-red-800">
+          <Alert className="border-l-4 border-l-red-500 bg-red-50 dark:bg-red-950/20">
+            <AlertDescription className="text-red-800 dark:text-red-200">
               <strong>Security Note:</strong> All employees should change their
               passwords on first login. Temporary passwords will be provided in
               the import results for secure distribution.

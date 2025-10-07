@@ -5,6 +5,7 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/s
 import { Separator } from '@/components/ui/separator';
 import { DynamicBreadcrumb } from '@/components/DynamicBreadcrumb';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export function DashboardLayout() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -31,7 +32,8 @@ export function DashboardLayout() {
             <Separator orientation="vertical" className="mr-2 h-4" />
             <DynamicBreadcrumb />
           </div>
-          <div className="ml-auto px-4">
+          <div className="ml-auto px-4 flex items-center gap-2">
+            <ThemeToggle />
             <NotificationBell />
           </div>
         </header>

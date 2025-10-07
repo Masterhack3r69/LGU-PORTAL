@@ -465,8 +465,8 @@ export function DocumentManagementPage() {
             Pending
             {getPendingDocuments().length > 0 && (
               <Badge
-                variant="destructive"
-                className="ml-2 h-5 w-5 rounded-full p-0 text-xs"
+                variant="secondary"
+                className="ml-2 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center bg-orange-500 text-white hover:bg-orange-600"
               >
                 {getPendingDocuments().length}
               </Badge>

@@ -273,12 +273,12 @@ const AdminLeaveTypes: React.FC = () => {
           {leaveTypes.map((leaveType, index) => {
             // Color-coded visual hierarchy based on index
             const colors = [
-              'border-l-blue-500 bg-gradient-to-r from-blue-50 to-white',
-              'border-l-green-500 bg-gradient-to-r from-green-50 to-white', 
-              'border-l-purple-500 bg-gradient-to-r from-purple-50 to-white',
-              'border-l-orange-500 bg-gradient-to-r from-orange-50 to-white',
-              'border-l-teal-500 bg-gradient-to-r from-teal-50 to-white',
-              'border-l-pink-500 bg-gradient-to-r from-pink-50 to-white'
+              'border-l-blue-500 bg-gradient-to-r from-blue-50 to-card dark:from-blue-950/20 dark:to-card',
+              'border-l-green-500 bg-gradient-to-r from-green-50 to-card dark:from-green-950/20 dark:to-card', 
+              'border-l-purple-500 bg-gradient-to-r from-purple-50 to-card dark:from-purple-950/20 dark:to-card',
+              'border-l-orange-500 bg-gradient-to-r from-orange-50 to-card dark:from-orange-950/20 dark:to-card',
+              'border-l-teal-500 bg-gradient-to-r from-teal-50 to-card dark:from-teal-950/20 dark:to-card',
+              'border-l-pink-500 bg-gradient-to-r from-pink-50 to-card dark:from-pink-950/20 dark:to-card'
             ];
             const colorClass = colors[index % colors.length];
             
