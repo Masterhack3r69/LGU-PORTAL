@@ -68,12 +68,12 @@ export function LoginPage() {
       <LoginBackground />
       <div className="w-full max-w-md space-y-8 relative z-10">
         <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">
             LGU Portal
           </h1>
         </div>
 
-        <Card className="backdrop-blur-sm bg-white/95 shadow-xl border-0">
+        <Card className="backdrop-blur-sm bg-background/95 shadow-xl">
           <CardHeader className="text-center">
             <CardTitle className="text-xl">Welcome back</CardTitle>
             <CardDescription>
@@ -113,7 +113,7 @@ export function LoginPage() {
           </CardContent>
         </Card>
 
-        <div className="text-center text-sm text-gray-600">
+        <div className="text-center text-sm text-muted-foreground">
           <p>For support, please contact your system administrator</p>
         </div>
       </div>
