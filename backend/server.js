@@ -86,7 +86,7 @@ app.use(cors({
         
         const allowedOrigins = process.env.CORS_ORIGINS 
             ? process.env.CORS_ORIGINS.split(',')
-            : ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://10.0.0.73:5173'];
+            : ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://10.0.0.1:5173'];
         
         if (process.env.NODE_ENV !== 'production') {
             if (origin.startsWith('http://localhost:') || 
