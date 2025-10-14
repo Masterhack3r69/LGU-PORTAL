@@ -1,332 +1,32 @@
--- MySQL dump 10.13  Distrib 8.0.40, for Win64 (x86_64)
---
--- Host: localhost    Database: employee_management_system
--- ------------------------------------------------------
--- Server version	8.0.40
-
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!50503 SET NAMES utf8mb4 */;
-/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
-/*!40103 SET TIME_ZONE='+00:00' */;
-/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
-/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
-/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
-/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
--- Table structure for table `allowance_types`
+-- Table structure for table `users`
 --
-
-DROP TABLE IF EXISTS `allowance_types`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `allowance_types` (
+DROP TABLE IF EXISTS `users`;
+CREATE TABLE `users` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `code` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `default_amount` decimal(12,2) DEFAULT NULL,
-  `calculation_type` enum('Fixed','Percentage','Formula') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Fixed',
-  `percentage_base` enum('BasicPay','MonthlySalary','GrossPay') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `is_taxable` tinyint(1) NOT NULL DEFAULT '0',
-  `frequency` enum('Monthly','Annual','Conditional') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Monthly',
-  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `username` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `email` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `password_hash` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `role` enum('admin','employee') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'employee',
+  `is_active` tinyint(1) DEFAULT '1',
+  `failed_login_attempts` int DEFAULT '0',
+  `locked_until` timestamp NULL DEFAULT NULL,
+  `last_login` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `name` (`name`),
-  UNIQUE KEY `code` (`code`)
-) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `audit_logs`
---
-
-DROP TABLE IF EXISTS `audit_logs`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `audit_logs` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `user_id` int NOT NULL,
-  `action` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `table_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `record_id` int DEFAULT NULL,
-  `old_values` json DEFAULT NULL,
-  `new_values` json DEFAULT NULL,
-  `ip_address` varchar(45) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `user_agent` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  KEY `idx_audit_user` (`user_id`),
-  KEY `idx_audit_action` (`action`),
-  KEY `idx_audit_table` (`table_name`),
-  KEY `idx_audit_created` (`created_at`),
-  CONSTRAINT `audit_logs_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1028 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `comp_benefit_records`
---
-
-DROP TABLE IF EXISTS `comp_benefit_records`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `comp_benefit_records` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `employee_id` int NOT NULL,
-  `benefit_type` enum('TERMINAL_LEAVE','MONETIZATION','PBB','MID_YEAR_BONUS','YEAR_END_BONUS','EC','GSIS','LOYALTY') COLLATE utf8mb4_unicode_ci NOT NULL,
-  `days_used` decimal(6,2) DEFAULT NULL COMMENT 'For TLB/Monetization benefits',
-  `amount` decimal(12,2) NOT NULL,
-  `notes` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `processed_by` int NOT NULL COMMENT 'User ID who processed the benefit',
-  `processed_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  KEY `processed_by` (`processed_by`),
-  KEY `idx_comp_benefits_employee` (`employee_id`),
-  KEY `idx_comp_benefits_type` (`benefit_type`),
-  KEY `idx_comp_benefits_processed_at` (`processed_at`),
-  KEY `idx_comp_benefits_employee_type` (`employee_id`,`benefit_type`),
-  KEY `idx_comp_benefits_year` (`processed_at`,`benefit_type`),
-  CONSTRAINT `comp_benefit_records_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `comp_benefit_records_ibfk_2` FOREIGN KEY (`processed_by`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Compensation and benefits processing history log';
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `deduction_types`
---
-
-DROP TABLE IF EXISTS `deduction_types`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `deduction_types` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `code` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `default_amount` decimal(12,2) DEFAULT NULL,
-  `calculation_type` enum('Fixed','Percentage','Formula') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Fixed',
-  `percentage_base` enum('BasicPay','MonthlySalary','GrossPay') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `is_mandatory` tinyint(1) NOT NULL DEFAULT '0',
-  `frequency` enum('Monthly','Annual','Conditional') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Monthly',
-  `is_active` tinyint(1) NOT NULL DEFAULT '1',
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `name` (`name`),
-  UNIQUE KEY `code` (`code`)
-) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `document_types`
---
-
-DROP TABLE IF EXISTS `document_types`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `document_types` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `is_required` tinyint(1) DEFAULT '0',
-  `max_file_size` int DEFAULT '5242880',
-  `allowed_extensions` json DEFAULT NULL,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `name` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `employee_allowance_overrides`
---
-
-DROP TABLE IF EXISTS `employee_allowance_overrides`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `employee_allowance_overrides` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `employee_id` int NOT NULL,
-  `allowance_type_id` int NOT NULL,
-  `override_amount` decimal(12,2) NOT NULL,
-  `effective_date` date NOT NULL,
-  `end_date` date DEFAULT NULL,
-  `is_active` tinyint(1) NOT NULL DEFAULT '1',
-  `created_by` int NOT NULL,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `unique_employee_allowance_effective` (`employee_id`,`allowance_type_id`,`effective_date`),
-  KEY `allowance_type_id` (`allowance_type_id`),
-  KEY `created_by` (`created_by`),
-  KEY `idx_allowance_overrides_employee_active` (`employee_id`,`is_active`),
-  CONSTRAINT `employee_allowance_overrides_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `employee_allowance_overrides_ibfk_2` FOREIGN KEY (`allowance_type_id`) REFERENCES `allowance_types` (`id`),
-  CONSTRAINT `employee_allowance_overrides_ibfk_3` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `employee_deduction_overrides`
---
-
-DROP TABLE IF EXISTS `employee_deduction_overrides`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `employee_deduction_overrides` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `employee_id` int NOT NULL,
-  `deduction_type_id` int NOT NULL,
-  `override_amount` decimal(12,2) NOT NULL,
-  `effective_date` date NOT NULL,
-  `end_date` date DEFAULT NULL,
-  `is_active` tinyint(1) NOT NULL DEFAULT '1',
-  `created_by` int NOT NULL,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `unique_employee_deduction_effective` (`employee_id`,`deduction_type_id`,`effective_date`),
-  KEY `deduction_type_id` (`deduction_type_id`),
-  KEY `created_by` (`created_by`),
-  KEY `idx_deduction_overrides_employee_active` (`employee_id`,`is_active`),
-  CONSTRAINT `employee_deduction_overrides_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `employee_deduction_overrides_ibfk_2` FOREIGN KEY (`deduction_type_id`) REFERENCES `deduction_types` (`id`),
-  CONSTRAINT `employee_deduction_overrides_ibfk_3` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `employee_documents`
---
-
-DROP TABLE IF EXISTS `employee_documents`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `employee_documents` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `employee_id` int NOT NULL,
-  `document_type_id` int NOT NULL,
-  `file_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `file_path` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `file_size` int NOT NULL,
-  `mime_type` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `upload_date` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `uploaded_by` int NOT NULL,
-  `status` enum('Pending','Approved','Rejected') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'Pending',
-  `reviewed_by` int DEFAULT NULL,
-  `reviewed_at` timestamp NULL DEFAULT NULL,
-  `review_notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  PRIMARY KEY (`id`),
-  KEY `document_type_id` (`document_type_id`),
-  KEY `uploaded_by` (`uploaded_by`),
-  KEY `reviewed_by` (`reviewed_by`),
-  KEY `idx_employee_documents` (`employee_id`),
-  KEY `idx_document_status` (`status`),
-  CONSTRAINT `employee_documents_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `employee_documents_ibfk_2` FOREIGN KEY (`document_type_id`) REFERENCES `document_types` (`id`),
-  CONSTRAINT `employee_documents_ibfk_3` FOREIGN KEY (`uploaded_by`) REFERENCES `users` (`id`),
-  CONSTRAINT `employee_documents_ibfk_4` FOREIGN KEY (`reviewed_by`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `employee_education`
---
-
-DROP TABLE IF EXISTS `employee_education`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `employee_education` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `employee_id` int NOT NULL,
-  `education_level` enum('Elementary','High School','Vocational','College','Graduate Studies','Post Graduate') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `school_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `course_degree` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `year_graduated` year DEFAULT NULL,
-  `highest_level_units_earned` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `scholarship_honors` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  KEY `idx_employee_education` (`employee_id`),
-  CONSTRAINT `employee_education_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `employee_leave_balances`
---
-
-DROP TABLE IF EXISTS `employee_leave_balances`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `employee_leave_balances` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `employee_id` int NOT NULL,
-  `leave_type_id` int NOT NULL,
-  `year` year NOT NULL,
-  `earned_days` decimal(6,2) DEFAULT '0.00',
-  `used_days` decimal(6,2) DEFAULT '0.00',
-  `monetized_days` decimal(6,2) DEFAULT '0.00',
-  `carried_forward` decimal(6,2) DEFAULT '0.00',
-  `current_balance` decimal(6,2) DEFAULT '0.00',
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_by` int DEFAULT NULL COMMENT 'User ID who last updated the balance',
-  `prorated_start_month` tinyint DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `unique_employee_leave_year` (`employee_id`,`leave_type_id`,`year`),
-  KEY `leave_type_id` (`leave_type_id`),
-  KEY `idx_leave_balances` (`employee_id`,`year`),
-  KEY `idx_leave_balances_employee_year_type` (`employee_id`,`year`,`leave_type_id`),
-  CONSTRAINT `employee_leave_balances_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `employee_leave_balances_ibfk_2` FOREIGN KEY (`leave_type_id`) REFERENCES `leave_types` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=149 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `employee_trainings`
---
-
-DROP TABLE IF EXISTS `employee_trainings`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `employee_trainings` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `employee_id` int NOT NULL,
-  `training_program_id` int DEFAULT NULL,
-  `training_title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `start_date` date NOT NULL,
-  `end_date` date NOT NULL,
-  `duration_hours` decimal(5,2) DEFAULT NULL,
-  `venue` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `organizer` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `certificate_issued` tinyint(1) DEFAULT '0',
-  `certificate_number` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  KEY `training_program_id` (`training_program_id`),
-  KEY `idx_employee_trainings` (`employee_id`),
-  KEY `idx_training_dates` (`start_date`,`end_date`),
-  CONSTRAINT `employee_trainings_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `employee_trainings_ibfk_2` FOREIGN KEY (`training_program_id`) REFERENCES `training_programs` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+  UNIQUE KEY `username` (`username`),
+  UNIQUE KEY `email` (`email`),
+  KEY `idx_username` (`username`),
+  KEY `idx_email` (`email`),
+  KEY `idx_role` (`role`)
+) ENGINE=InnoDB AUTO_INCREMENT=63 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Table structure for table `employees`
 --
-
 DROP TABLE IF EXISTS `employees`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `employees` (
   `id` int NOT NULL AUTO_INCREMENT,
   `user_id` int DEFAULT NULL,
@@ -373,16 +73,332 @@ CREATE TABLE `employees` (
   KEY `idx_employees_active` (`employment_status`,`deleted_at`),
   KEY `idx_employees_search_active` (`first_name`,`last_name`,`deleted_at`),
   CONSTRAINT `employees_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=48 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+) ENGINE=InnoDB AUTO_INCREMENT=49 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Table structure for table `allowance_types`
+--
+DROP TABLE IF EXISTS `allowance_types`;
+CREATE TABLE `allowance_types` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `code` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `default_amount` decimal(12,2) DEFAULT NULL,
+  `calculation_type` enum('Fixed','Percentage','Formula') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Fixed',
+  `percentage_base` enum('BasicPay','MonthlySalary','GrossPay') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `is_taxable` tinyint(1) NOT NULL DEFAULT '0',
+  `frequency` enum('Monthly','Annual','Conditional') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Monthly',
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `name` (`name`),
+  UNIQUE KEY `code` (`code`)
+) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Table structure for table `deduction_types`
+--
+DROP TABLE IF EXISTS `deduction_types`;
+CREATE TABLE `deduction_types` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `code` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `default_amount` decimal(12,2) DEFAULT NULL,
+  `calculation_type` enum('Fixed','Percentage','Formula') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Fixed',
+  `percentage_base` enum('BasicPay','MonthlySalary','GrossPay') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `is_mandatory` tinyint(1) NOT NULL DEFAULT '0',
+  `frequency` enum('Monthly','Annual','Conditional') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Monthly',
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `name` (`name`),
+  UNIQUE KEY `code` (`code`)
+) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Table structure for table `leave_types`
+--
+DROP TABLE IF EXISTS `leave_types`;
+CREATE TABLE `leave_types` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `code` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `max_days_per_year` int DEFAULT NULL,
+  `is_monetizable` tinyint(1) DEFAULT '0',
+  `requires_medical_certificate` tinyint(1) DEFAULT '0',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `name` (`name`),
+  UNIQUE KEY `code` (`code`)
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Table structure for table `document_types`
+--
+DROP TABLE IF EXISTS `document_types`;
+CREATE TABLE `document_types` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `is_required` tinyint(1) DEFAULT '0',
+  `max_file_size` int DEFAULT '5242880',
+  `allowed_extensions` json DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `name` (`name`)
+) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Table structure for table `training_programs`
+--
+DROP TABLE IF EXISTS `training_programs`;
+CREATE TABLE `training_programs` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `duration_hours` int DEFAULT NULL,
+  `training_type` enum('Internal','External','Online','Seminar','Workshop') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=41 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Table structure for table `payroll_periods`
+--
+DROP TABLE IF EXISTS `payroll_periods`;
+CREATE TABLE `payroll_periods` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `year` year NOT NULL,
+  `month` tinyint NOT NULL,
+  `period_number` tinyint NOT NULL,
+  `start_date` date NOT NULL,
+  `end_date` date NOT NULL,
+  `pay_date` date NOT NULL,
+  `status` enum('Draft','Processing','Completed','Paid') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Draft',
+  `created_by` int NOT NULL,
+  `finalized_by` int DEFAULT NULL,
+  `finalized_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_period` (`year`,`month`,`period_number`),
+  KEY `created_by` (`created_by`),
+  KEY `finalized_by` (`finalized_by`),
+  KEY `idx_payroll_periods_year_month_status` (`year`,`month`,`status`),
+  CONSTRAINT `payroll_periods_ibfk_1` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`),
+  CONSTRAINT `payroll_periods_ibfk_2` FOREIGN KEY (`finalized_by`) REFERENCES `users` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Table structure for table `audit_logs`
+--
+DROP TABLE IF EXISTS `audit_logs`;
+CREATE TABLE `audit_logs` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `action` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `table_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `record_id` int DEFAULT NULL,
+  `old_values` json DEFAULT NULL,
+  `new_values` json DEFAULT NULL,
+  `ip_address` varchar(45) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `user_agent` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_audit_user` (`user_id`),
+  KEY `idx_audit_action` (`action`),
+  KEY `idx_audit_table` (`table_name`),
+  KEY `idx_audit_created` (`created_at`),
+  CONSTRAINT `audit_logs_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1131 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Table structure for table `comp_benefit_records`
+--
+DROP TABLE IF EXISTS `comp_benefit_records`;
+CREATE TABLE `comp_benefit_records` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `employee_id` int NOT NULL,
+  `benefit_type` enum('TERMINAL_LEAVE','MONETIZATION','PBB','MID_YEAR_BONUS','YEAR_END_BONUS','EC','GSIS','LOYALTY') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `days_used` decimal(6,2) DEFAULT NULL COMMENT 'For TLB/Monetization benefits',
+  `amount` decimal(12,2) NOT NULL,
+  `notes` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `processed_by` int NOT NULL COMMENT 'User ID who processed the benefit',
+  `processed_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `processed_by` (`processed_by`),
+  KEY `idx_comp_benefits_employee` (`employee_id`),
+  KEY `idx_comp_benefits_type` (`benefit_type`),
+  KEY `idx_comp_benefits_processed_at` (`processed_at`),
+  KEY `idx_comp_benefits_employee_type` (`employee_id`,`benefit_type`),
+  KEY `idx_comp_benefits_year` (`processed_at`,`benefit_type`),
+  CONSTRAINT `comp_benefit_records_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `comp_benefit_records_ibfk_2` FOREIGN KEY (`processed_by`) REFERENCES `users` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Compensation and benefits processing history log';
+
+--
+-- Table structure for table `employee_allowance_overrides`
+--
+DROP TABLE IF EXISTS `employee_allowance_overrides`;
+CREATE TABLE `employee_allowance_overrides` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `employee_id` int NOT NULL,
+  `allowance_type_id` int NOT NULL,
+  `override_amount` decimal(12,2) NOT NULL,
+  `effective_date` date NOT NULL,
+  `end_date` date DEFAULT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `created_by` int NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_employee_allowance_effective` (`employee_id`,`allowance_type_id`,`effective_date`),
+  KEY `allowance_type_id` (`allowance_type_id`),
+  KEY `created_by` (`created_by`),
+  KEY `idx_allowance_overrides_employee_active` (`employee_id`,`is_active`),
+  CONSTRAINT `employee_allowance_overrides_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `employee_allowance_overrides_ibfk_2` FOREIGN KEY (`allowance_type_id`) REFERENCES `allowance_types` (`id`),
+  CONSTRAINT `employee_allowance_overrides_ibfk_3` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Table structure for table `employee_deduction_overrides`
+--
+DROP TABLE IF EXISTS `employee_deduction_overrides`;
+CREATE TABLE `employee_deduction_overrides` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `employee_id` int NOT NULL,
+  `deduction_type_id` int NOT NULL,
+  `override_amount` decimal(12,2) NOT NULL,
+  `effective_date` date NOT NULL,
+  `end_date` date DEFAULT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `created_by` int NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_employee_deduction_effective` (`employee_id`,`deduction_type_id`,`effective_date`),
+  KEY `deduction_type_id` (`deduction_type_id`),
+  KEY `created_by` (`created_by`),
+  KEY `idx_deduction_overrides_employee_active` (`employee_id`,`is_active`),
+  CONSTRAINT `employee_deduction_overrides_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `employee_deduction_overrides_ibfk_2` FOREIGN KEY (`deduction_type_id`) REFERENCES `deduction_types` (`id`),
+  CONSTRAINT `employee_deduction_overrides_ibfk_3` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Table structure for table `employee_documents`
+--
+DROP TABLE IF EXISTS `employee_documents`;
+CREATE TABLE `employee_documents` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `employee_id` int NOT NULL,
+  `document_type_id` int NOT NULL,
+  `file_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `file_path` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `file_size` int NOT NULL,
+  `mime_type` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `upload_date` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `uploaded_by` int NOT NULL,
+  `status` enum('Pending','Approved','Rejected') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'Pending',
+  `reviewed_by` int DEFAULT NULL,
+  `reviewed_at` timestamp NULL DEFAULT NULL,
+  `review_notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  PRIMARY KEY (`id`),
+  KEY `document_type_id` (`document_type_id`),
+  KEY `uploaded_by` (`uploaded_by`),
+  KEY `reviewed_by` (`reviewed_by`),
+  KEY `idx_employee_documents` (`employee_id`),
+  KEY `idx_document_status` (`status`),
+  CONSTRAINT `employee_documents_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `employee_documents_ibfk_2` FOREIGN KEY (`document_type_id`) REFERENCES `document_types` (`id`),
+  CONSTRAINT `employee_documents_ibfk_3` FOREIGN KEY (`uploaded_by`) REFERENCES `users` (`id`),
+  CONSTRAINT `employee_documents_ibfk_4` FOREIGN KEY (`reviewed_by`) REFERENCES `users` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Table structure for table `employee_education`
+--
+DROP TABLE IF EXISTS `employee_education`;
+CREATE TABLE `employee_education` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `employee_id` int NOT NULL,
+  `education_level` enum('Elementary','High School','Vocational','College','Graduate Studies','Post Graduate') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `school_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `course_degree` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `year_graduated` year DEFAULT NULL,
+  `highest_level_units_earned` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `scholarship_honors` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_employee_education` (`employee_id`),
+  CONSTRAINT `employee_education_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Table structure for table `employee_leave_balances`
+--
+DROP TABLE IF EXISTS `employee_leave_balances`;
+CREATE TABLE `employee_leave_balances` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `employee_id` int NOT NULL,
+  `leave_type_id` int NOT NULL,
+  `year` year NOT NULL,
+  `earned_days` decimal(6,2) DEFAULT '0.00',
+  `used_days` decimal(6,2) DEFAULT '0.00',
+  `monetized_days` decimal(6,2) DEFAULT '0.00',
+  `carried_forward` decimal(6,2) DEFAULT '0.00',
+  `current_balance` decimal(6,2) DEFAULT '0.00',
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_by` int DEFAULT NULL COMMENT 'User ID who last updated the balance',
+  `prorated_start_month` tinyint DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_employee_leave_year` (`employee_id`,`leave_type_id`,`year`),
+  KEY `leave_type_id` (`leave_type_id`),
+  KEY `idx_leave_balances` (`employee_id`,`year`),
+  KEY `idx_leave_balances_employee_year_type` (`employee_id`,`year`,`leave_type_id`),
+  CONSTRAINT `employee_leave_balances_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `employee_leave_balances_ibfk_2` FOREIGN KEY (`leave_type_id`) REFERENCES `leave_types` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=152 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Table structure for table `employee_trainings`
+--
+DROP TABLE IF EXISTS `employee_trainings`;
+CREATE TABLE `employee_trainings` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `employee_id` int NOT NULL,
+  `training_program_id` int DEFAULT NULL,
+  `training_title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `start_date` date NOT NULL,
+  `end_date` date NOT NULL,
+  `duration_hours` decimal(5,2) DEFAULT NULL,
+  `venue` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `organizer` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `certificate_issued` tinyint(1) DEFAULT '0',
+  `certificate_number` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `training_program_id` (`training_program_id`),
+  KEY `idx_employee_trainings` (`employee_id`),
+  KEY `idx_training_dates` (`start_date`,`end_date`),
+  CONSTRAINT `employee_trainings_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `employee_trainings_ibfk_2` FOREIGN KEY (`training_program_id`) REFERENCES `training_programs` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Table structure for table `leave_applications`
 --
-
 DROP TABLE IF EXISTS `leave_applications`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `leave_applications` (
   `id` int NOT NULL AUTO_INCREMENT,
   `employee_id` int NOT NULL,
@@ -412,16 +428,12 @@ CREATE TABLE `leave_applications` (
   CONSTRAINT `leave_applications_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE,
   CONSTRAINT `leave_applications_ibfk_2` FOREIGN KEY (`leave_type_id`) REFERENCES `leave_types` (`id`),
   CONSTRAINT `leave_applications_ibfk_3` FOREIGN KEY (`reviewed_by`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=38 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+) ENGINE=InnoDB AUTO_INCREMENT=47 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Table structure for table `leave_balance_adjustments`
 --
-
 DROP TABLE IF EXISTS `leave_balance_adjustments`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `leave_balance_adjustments` (
   `id` int NOT NULL AUTO_INCREMENT,
   `employee_id` int NOT NULL,
@@ -448,15 +460,11 @@ CREATE TABLE `leave_balance_adjustments` (
   CONSTRAINT `leave_balance_adjustments_ibfk_2` FOREIGN KEY (`leave_type_id`) REFERENCES `leave_types` (`id`),
   CONSTRAINT `leave_balance_adjustments_ibfk_3` FOREIGN KEY (`processed_by`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Table structure for table `leave_monetization_log`
 --
-
 DROP TABLE IF EXISTS `leave_monetization_log`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `leave_monetization_log` (
   `id` int NOT NULL AUTO_INCREMENT,
   `employee_id` int NOT NULL,
@@ -485,37 +493,11 @@ CREATE TABLE `leave_monetization_log` (
   CONSTRAINT `leave_monetization_log_ibfk_2` FOREIGN KEY (`leave_type_id`) REFERENCES `leave_types` (`id`),
   CONSTRAINT `leave_monetization_log_ibfk_3` FOREIGN KEY (`processed_by`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `leave_types`
---
-
-DROP TABLE IF EXISTS `leave_types`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `leave_types` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `code` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `max_days_per_year` int DEFAULT NULL,
-  `is_monetizable` tinyint(1) DEFAULT '0',
-  `requires_medical_certificate` tinyint(1) DEFAULT '0',
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `name` (`name`),
-  UNIQUE KEY `code` (`code`)
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Table structure for table `monthly_accrual_log`
 --
-
 DROP TABLE IF EXISTS `monthly_accrual_log`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `monthly_accrual_log` (
   `id` int NOT NULL AUTO_INCREMENT,
   `employee_id` int NOT NULL,
@@ -538,15 +520,11 @@ CREATE TABLE `monthly_accrual_log` (
   CONSTRAINT `monthly_accrual_log_ibfk_2` FOREIGN KEY (`leave_type_id`) REFERENCES `leave_types` (`id`),
   CONSTRAINT `monthly_accrual_log_ibfk_3` FOREIGN KEY (`processed_by`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Tracks monthly leave accrual processing for employees';
-/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Table structure for table `notifications`
 --
-
 DROP TABLE IF EXISTS `notifications`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `notifications` (
   `id` int NOT NULL AUTO_INCREMENT,
   `user_id` int NOT NULL,
@@ -569,39 +547,12 @@ CREATE TABLE `notifications` (
   KEY `idx_notifications_user_unread` (`user_id`,`is_read`),
   KEY `idx_notifications_priority_created` (`priority`,`created_at`),
   CONSTRAINT `notifications_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `payroll_item_lines`
---
-
-DROP TABLE IF EXISTS `payroll_item_lines`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `payroll_item_lines` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `payroll_item_id` int NOT NULL,
-  `line_type` enum('Allowance','Deduction','Adjustment') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `type_id` int DEFAULT NULL,
-  `description` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `amount` decimal(12,2) NOT NULL,
-  `is_override` tinyint(1) NOT NULL DEFAULT '0',
-  `calculation_basis` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  KEY `payroll_item_id` (`payroll_item_id`),
-  CONSTRAINT `payroll_item_lines_ibfk_1` FOREIGN KEY (`payroll_item_id`) REFERENCES `payroll_items` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+) ENGINE=InnoDB AUTO_INCREMENT=40 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Table structure for table `payroll_items`
 --
-
 DROP TABLE IF EXISTS `payroll_items`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `payroll_items` (
   `id` int NOT NULL AUTO_INCREMENT,
   `payroll_period_id` int NOT NULL,
@@ -631,47 +582,31 @@ CREATE TABLE `payroll_items` (
   CONSTRAINT `payroll_items_ibfk_2` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE,
   CONSTRAINT `payroll_items_ibfk_3` FOREIGN KEY (`processed_by`) REFERENCES `users` (`id`),
   CONSTRAINT `payroll_items_ibfk_4` FOREIGN KEY (`paid_by`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=47 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+) ENGINE=InnoDB AUTO_INCREMENT=67 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Table structure for table `payroll_periods`
+-- Table structure for table `payroll_item_lines`
 --
-
-DROP TABLE IF EXISTS `payroll_periods`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `payroll_periods` (
+DROP TABLE IF EXISTS `payroll_item_lines`;
+CREATE TABLE `payroll_item_lines` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `year` year NOT NULL,
-  `month` tinyint NOT NULL,
-  `period_number` tinyint NOT NULL,
-  `start_date` date NOT NULL,
-  `end_date` date NOT NULL,
-  `pay_date` date NOT NULL,
-  `status` enum('Draft','Processing','Completed','Paid') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Draft',
-  `created_by` int NOT NULL,
-  `finalized_by` int DEFAULT NULL,
-  `finalized_at` timestamp NULL DEFAULT NULL,
+  `payroll_item_id` int NOT NULL,
+  `line_type` enum('Allowance','Deduction','Adjustment') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `type_id` int DEFAULT NULL,
+  `description` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `amount` decimal(12,2) NOT NULL,
+  `is_override` tinyint(1) NOT NULL DEFAULT '0',
+  `calculation_basis` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `unique_period` (`year`,`month`,`period_number`),
-  KEY `created_by` (`created_by`),
-  KEY `finalized_by` (`finalized_by`),
-  KEY `idx_payroll_periods_year_month_status` (`year`,`month`,`status`),
-  CONSTRAINT `payroll_periods_ibfk_1` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`),
-  CONSTRAINT `payroll_periods_ibfk_2` FOREIGN KEY (`finalized_by`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+  KEY `payroll_item_id` (`payroll_item_id`),
+  CONSTRAINT `payroll_item_lines_ibfk_1` FOREIGN KEY (`payroll_item_id`) REFERENCES `payroll_items` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Table structure for table `salary_grades`
 --
-
 DROP TABLE IF EXISTS `salary_grades`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `salary_grades` (
   `id` int NOT NULL AUTO_INCREMENT,
   `grade` int NOT NULL,
@@ -688,15 +623,11 @@ CREATE TABLE `salary_grades` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `grade` (`grade`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Table structure for table `system_settings`
 --
-
 DROP TABLE IF EXISTS `system_settings`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `system_settings` (
   `id` int NOT NULL AUTO_INCREMENT,
   `setting_key` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -710,80 +641,97 @@ CREATE TABLE `system_settings` (
   KEY `idx_setting_key` (`setting_key`),
   CONSTRAINT `system_settings_ibfk_1` FOREIGN KEY (`updated_by`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+
 
 --
--- Table structure for table `training_programs`
+-- Final view structure for view `v_compensation_benefits`
 --
-
-DROP TABLE IF EXISTS `training_programs`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `training_programs` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `duration_hours` int DEFAULT NULL,
-  `training_type` enum('Internal','External','Online','Seminar','Workshop') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=41 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `users`
---
-
-DROP TABLE IF EXISTS `users`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `users` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `username` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `email` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `password_hash` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `role` enum('admin','employee') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'employee',
-  `is_active` tinyint(1) DEFAULT '1',
-  `failed_login_attempts` int DEFAULT '0',
-  `locked_until` timestamp NULL DEFAULT NULL,
-  `last_login` timestamp NULL DEFAULT NULL,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `username` (`username`),
-  UNIQUE KEY `email` (`email`),
-  KEY `idx_username` (`username`),
-  KEY `idx_email` (`email`),
-  KEY `idx_role` (`role`)
-) ENGINE=InnoDB AUTO_INCREMENT=59 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+DROP VIEW IF EXISTS `v_compensation_benefits`;
+CREATE ALGORITHM=UNDEFINED
+DEFINER=`root`@`localhost` SQL SECURITY DEFINER
+VIEW `v_compensation_benefits` AS
+select `cbr`.`id` AS `id`,
+  `cbr`.`employee_id` AS `employee_id`,
+  `e`.`employee_number` AS `employee_number`,
+  concat(`e`.`first_name`,' ',ifnull(concat(left(`e`.`middle_name`,1),'. '),''),`e`.`last_name`) AS `employee_name`,
+  `e`.`plantilla_position` AS `plantilla_position`,
+  `e`.`current_monthly_salary` AS `current_monthly_salary`,
+  `cbr`.`benefit_type` AS `benefit_type`,
+  `cbr`.`days_used` AS `days_used`,
+  `cbr`.`amount` AS `amount`,
+  `cbr`.`notes` AS `notes`,
+  `cbr`.`processed_at` AS `processed_at`,
+  year(`cbr`.`processed_at`) AS `benefit_year`,
+  month(`cbr`.`processed_at`) AS `benefit_month`
+from ((`comp_benefit_records` `cbr`
+  join `employees` `e` on((`cbr`.`employee_id` = `e`.`id`)))
+  left join `users` `u` on((`cbr`.`processed_by` = `u`.`id`)))
+order by `cbr`.`processed_at` desc;
 
 --
--- Temporary view structure for view `v_compensation_benefits`
+-- Final view structure for view `v_employee_payroll_details`
 --
-
-DROP TABLE IF EXISTS `v_compensation_benefits`;
-/*!50001 DROP VIEW IF EXISTS `v_compensation_benefits`*/;
-SET @saved_cs_client     = @@character_set_client;
-/*!50503 SET character_set_client = utf8mb4 */;
-/*!50001 CREATE VIEW `v_compensation_benefits` AS SELECT 
- 1 AS `id`,
- 1 AS `employee_id`,
- 1 AS `employee_number`,
- 1 AS `employee_name`,
- 1 AS `plantilla_position`,
- 1 AS `current_monthly_salary`,
- 1 AS `benefit_type`,
- 1 AS `days_used`,
- 1 AS `amount`,
- 1 AS `notes`,
- 1 AS `processed_at`,
- 1 AS `benefit_year`,
- 1 AS `benefit_month`*/;
-SET character_set_client = @saved_cs_client;
+DROP VIEW IF EXISTS `v_employee_payroll_details`;
+CREATE ALGORITHM=UNDEFINED
+DEFINER=`root`@`localhost` SQL SECURITY DEFINER
+VIEW `v_employee_payroll_details` AS
+select `pi`.`id` AS `id`,
+  `pi`.`payroll_period_id` AS `payroll_period_id`,
+  `pp`.`year` AS `year`,
+  `pp`.`month` AS `month`,
+  `pp`.`period_number` AS `period_number`,
+  `pp`.`start_date` AS `start_date`,
+  `pp`.`end_date` AS `end_date`,
+  `pp`.`pay_date` AS `pay_date`,
+  `pi`.`employee_id` AS `employee_id`,
+  `e`.`employee_number` AS `employee_number`,
+  concat(`e`.`first_name`,' ',ifnull(`e`.`middle_name`,''),' ',`e`.`last_name`) AS `employee_name`,
+  `e`.`plantilla_position` AS `plantilla_position`,
+  `pi`.`working_days` AS `working_days`,
+  `pi`.`daily_rate` AS `daily_rate`,
+  `pi`.`basic_pay` AS `basic_pay`,
+  `pi`.`total_allowances` AS `total_allowances`,
+  `pi`.`total_deductions` AS `total_deductions`,
+  `pi`.`gross_pay` AS `gross_pay`,
+  `pi`.`net_pay` AS `net_pay`,
+  `pi`.`status` AS `status`,
+  `pi`.`processed_at` AS `processed_at`,
+  `pi`.`paid_at` AS `paid_at`,
+  concat(`u1`.`username`) AS `processed_by_username`,
+  concat(`u2`.`username`) AS `paid_by_username`
+from ((((`payroll_items` `pi`
+  join `payroll_periods` `pp` on((`pi`.`payroll_period_id` = `pp`.`id`)))
+  join `employees` `e` on((`pi`.`employee_id` = `e`.`id`)))
+  left join `users` `u1` on((`pi`.`processed_by` = `u1`.`id`)))
+  left join `users` `u2` on((`pi`.`paid_by` = `u2`.`id`)))
+where (`e`.`deleted_at` is null);
 
 --
--- Temporary view structure for view `v_employee_benefit_details`
+-- Final view structure for view `v_payroll_period_summary`
 --
-
-DROP TABLE IF EXISTS `v_employee_benefit_details`;
+DROP VIEW IF EXISTS `v_payroll_period_summary`;
+CREATE ALGORITHM=UNDEFINED
+DEFINER=`root`@`localhost` SQL SECURITY DEFINER
+VIEW `v_payroll_period_summary` AS
+select `pp`.`id` AS `id`,
+  `pp`.`year` AS `year`,
+  `pp`.`month` AS `month`,
+  `pp`.`period_number` AS `period_number`,
+  `pp`.`start_date` AS `start_date`,
+  `pp`.`end_date` AS `end_date`,
+  `pp`.`pay_date` AS `pay_date`,
+  `pp`.`status` AS `status`,
+  count(`pi`.`id`) AS `employee_count`,
+  coalesce(sum(`pi`.`basic_pay`),0) AS `total_basic_pay`,
+  coalesce(sum(`pi`.`total_allowances`),0) AS `total_allowances`,
+  coalesce(sum(`pi`.`total_deductions`),0) AS `total_deductions`,
+  coalesce(sum(`pi`.`gross_pay`),0) AS `total_gross_pay`,
+  coalesce(sum(`pi`.`net_pay`),0) AS `total_net_pay`,
+  `pp`.`created_at` AS `created_at`,
+  concat(`u1`.`username`) AS `created_by_username`,
+  concat(`u2`.`username`) AS `finalized_by_username`
+from (((`payroll_periods` `pp`
+  left join `payroll_items` `pi` on((`pp`.`id` = `pi`.`payroll_period_id`)))
+  left join `users` `u1` on((`pp`.`created_by` = `u1`.`id`)))
+  left join `users` `u2` on((`pp`.`finalized_by` = `u2`.`id`)))
+group by `pp`.`id`,`pp`.`year`,`pp`.`month`,`pp`.`period_number`,`pp`.`start_date`,`pp`.`end_date`,`pp`.`pay_date`,`pp`.`status`,`pp`.`created_at`,`u1`.`username`,`u2`.`username`;
