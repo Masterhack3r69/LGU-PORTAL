@@ -26,6 +26,7 @@ import {
 } from "@/components/payroll/DTRFileUpload";
 import { DTRImportPreview } from "@/components/payroll/DTRImportPreview";
 import { DTRReimportWarningDialog } from "@/components/payroll/DTRReimportWarningDialog";
+import { DTRImportHistory } from "@/components/payroll/DTRImportHistory";
 import dtrService from "@/services/dtrService";
 import payrollService from "@/services/payrollService";
 
@@ -299,11 +300,37 @@ export function DTRImportPage() {
         </div>
 
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="pt-6 space-y-4">
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>{error}</AlertDescription>
             </Alert>
+            
+            {!periodId && (
+              <div className="flex flex-col items-center justify-center py-8 text-center space-y-4">
+                <Calendar className="h-16 w-16 text-muted-foreground" />
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold">Select a Payroll Period</h3>
+                  <p className="text-sm text-muted-foreground max-w-md">
+                    To import DTR data, you need to select a payroll period first. 
+                    Go to Payroll Management and choose the period you want to import data for.
+                  </p>
+                </div>
+                <Button onClick={handleBackToPayroll} size="lg">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Go to Payroll Management
+                </Button>
+              </div>
+            )}
+            
+            {periodId && period && (
+              <div className="flex justify-center pt-4">
+                <Button onClick={handleBackToPayroll} variant="outline">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Payroll Management
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -504,6 +531,9 @@ export function DTRImportPage() {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
+
+            {/* Import History */}
+            <DTRImportHistory periodId={period.id} />
           </>
         )}
 
@@ -530,7 +560,8 @@ export function DTRImportPage() {
 
         {/* Complete Step */}
         {currentStep === "complete" && importSummary && (
-          <Card>
+          <>
+            <Card>
             <CardHeader>
               <div className="flex items-center gap-3">
                 <div className="flex items-center justify-center w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/20">
@@ -629,7 +660,11 @@ export function DTRImportPage() {
                 </Button>
               </div>
             </CardContent>
-          </Card>
+            </Card>
+
+            {/* Import History */}
+            {period && <DTRImportHistory periodId={period.id} />}
+          </>
         )}
       </div>
 
