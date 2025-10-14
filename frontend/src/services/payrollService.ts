@@ -209,28 +209,11 @@ class PayrollService {
   async calculatePayroll(data: PayrollCalculationRequest): Promise<PayrollResponse<PayrollCalculationResult>> {
     const { period_id, employee_ids, employees_data } = data;
 
-    // If employees_data is provided (with working days), use that
-    if (employees_data && employees_data.length > 0) {
-      return api.post<PayrollResponse<PayrollCalculationResult>>(`/payroll/periods/${period_id}/employees`, {
-        employees: employees_data
-      });
-    }
-
-    // If employee_ids are provided, use the process employees endpoint with default working days
-    if (employee_ids && employee_ids.length > 0) {
-      const employees = employee_ids.map(employee_id => ({
-        employee_id,
-        working_days: 22 // Default working days
-      }));
-
-      return api.post<PayrollResponse<PayrollCalculationResult>>(`/payroll/periods/${period_id}/employees`, {
-        employees
-      });
-    }
-
-    // Otherwise, process all employees for the period
-    return api.post<PayrollResponse<PayrollCalculationResult>>(`/payroll/periods/${period_id}/employees`, {
-      employees: [] // Empty array means process all employees
+    // Use the new DTR-integrated endpoint that automatically uses imported DTR data
+    // This endpoint will process payroll using the DTR records that were imported
+    return api.post<PayrollResponse<PayrollCalculationResult>>(`/payroll/periods/${period_id}/process-with-dtr`, {
+      employee_ids: employee_ids || [],
+      employees_data: employees_data || []
     });
   }
 

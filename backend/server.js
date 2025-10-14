@@ -30,6 +30,7 @@ const trainingRoutes = require('./routes/trainingRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 
 const monthlyAccrualJob = require('./jobs/monthlyAccrualJob');
+const dtrFileCleanupJob = require('./jobs/dtrFileCleanupJob');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -110,20 +111,49 @@ app.use(cors({
     optionsSuccessStatus: 200
 }));
 
-// Body parsing
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+// Body parsing - skip for multipart/form-data (handled by multer)
+app.use((req, res, next) => {
+    // Skip body parsers for DTR import routes (multer handles them)
+    if (req.path.startsWith('/api/dtr/import')) {
+        return next();
+    }
+    // Skip for multipart/form-data
+    const contentType = req.get('content-type') || '';
+    if (contentType.includes('multipart/form-data')) {
+        return next();
+    }
+    express.json({ limit: '10mb' })(req, res, next);
+});
 
-// File upload
-app.use(fileUpload({
-    limits: { fileSize: parseInt(process.env.MAX_FILE_SIZE) || 5 * 1024 * 1024 },
-    abortOnLimit: true,
-    createParentPath: true,
-    useTempFiles: true,
-    tempFileDir: './uploads/temp/',
-    safeFileNames: true,
-    preserveExtension: true
-}));
+app.use((req, res, next) => {
+    // Skip body parsers for DTR import routes (multer handles them)
+    if (req.path.startsWith('/api/dtr/import')) {
+        return next();
+    }
+    // Skip for multipart/form-data
+    const contentType = req.get('content-type') || '';
+    if (contentType.includes('multipart/form-data')) {
+        return next();
+    }
+    express.urlencoded({ extended: true, limit: '10mb' })(req, res, next);
+});
+
+// File upload - skip for DTR routes (they use multer instead)
+app.use((req, res, next) => {
+    // Skip express-fileupload for DTR routes (they use multer)
+    if (req.path.startsWith('/api/dtr/import')) {
+        return next();
+    }
+    fileUpload({
+        limits: { fileSize: parseInt(process.env.MAX_FILE_SIZE) || 5 * 1024 * 1024 },
+        abortOnLimit: true,
+        createParentPath: true,
+        useTempFiles: true,
+        tempFileDir: './uploads/temp/',
+        safeFileNames: true,
+        preserveExtension: true
+    })(req, res, next);
+});
 
 // Session
 app.use(session({
@@ -182,6 +212,7 @@ app.use('/api/dashboard', authMiddleware.requireAuth, auditLogger, dashboardRout
 app.use('/api/employees', authMiddleware.requireAuth, auditLogger, employeeRoutes);
 app.use('/api/leaves', authMiddleware.requireAuth, auditLogger, leaveRoutes);
 app.use('/api/payroll', authMiddleware.requireAuth, require('./routes/payrollRoutes'));
+app.use('/api/dtr', authMiddleware.requireAuth, require('./routes/dtrRoutes'));
 app.use('/api/documents', authMiddleware.requireAuth, auditLogger, documentRoutes);
 app.use('/api/reports', authMiddleware.requireAuth, auditLogger, reportsRoutes);
 app.use('/api/jobs', authMiddleware.requireAuth, auditLogger, jobRoutes);
@@ -213,6 +244,7 @@ const startServer = async () => {
         }
 
         monthlyAccrualJob.startScheduledJob();
+        dtrFileCleanupJob.startScheduledJob();
 
         const server = app.listen(PORT, 'localhost', () => {
             console.log(`

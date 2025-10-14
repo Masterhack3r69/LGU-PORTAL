@@ -67,12 +67,25 @@ router.post('/periods/:id/reopen', requireAdmin, validatePeriodAccess, checkPeri
 // POST /api/payroll/periods/:id/mark-paid - Mark period as paid
 router.post('/periods/:id/mark-paid', requireAdmin, validatePeriodAccess, logSensitiveOperation, auditLogger, payrollController.markPeriodAsPaid);
 
-// ===== PAYROLL PERIOD EMPLOYEE MANAGEMENT =====
+// ===== DTR-INTEGRATED PAYROLL PROCESSING =====
 
-// GET /api/payroll/periods/:id/employees - Get employees for period processing
+// POST /api/payroll/periods/:id/process-with-dtr - Process payroll using DTR data
+router.post('/periods/:id/process-with-dtr', requireAdmin, validatePeriodAccess, checkPeriodModifiable, logSensitiveOperation, auditLogger, payrollController.processPayrollWithDTR);
+
+// GET /api/payroll/periods/:id/validate-dtr - Validate DTR data before processing
+router.get('/periods/:id/validate-dtr', requireAdmin, validatePeriodAccess, payrollController.validateDTRBeforeProcessing);
+
+// GET /api/payroll/periods/:id/summary-with-dtr - Get period summary with DTR information
+router.get('/periods/:id/summary-with-dtr', requireAdmin, validatePeriodAccess, payrollController.getPeriodSummaryWithDTR);
+
+// ===== PAYROLL PERIOD EMPLOYEE MANAGEMENT (DEPRECATED) =====
+
+// GET /api/payroll/periods/:id/employees - Get employees for period processing (DEPRECATED)
+// This endpoint is deprecated. Use DTR import and process-with-dtr instead.
 router.get('/periods/:id/employees', requireAdmin, validatePeriodAccess, payrollController.getPeriodEmployees);
 
-// POST /api/payroll/periods/:id/employees - Process employees for payroll period
+// POST /api/payroll/periods/:id/employees - Process employees for payroll period (DEPRECATED)
+// This endpoint is deprecated. Use DTR import and process-with-dtr instead.
 router.post('/periods/:id/employees', requireAdmin, validatePeriodAccess, validateBulkOperation, auditLogger, payrollController.processEmployees);
 
 // GET /api/payroll/periods/:id/items - Get payroll items for period

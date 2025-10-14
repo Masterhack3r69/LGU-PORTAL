@@ -2,6 +2,7 @@
 const express = require('express');
 const authMiddleware = require('../middleware/auth');
 const monthlyAccrualJob = require('../jobs/monthlyAccrualJob');
+const dtrFileCleanupJob = require('../jobs/dtrFileCleanupJob');
 
 const router = express.Router();
 
@@ -94,6 +95,95 @@ router.post('/monthly-accrual/dry-run', authMiddleware.requireAdmin, async (req,
             success: false,
             error: error.message,
             message: 'Failed to run monthly accrual dry run'
+        });
+    }
+});
+
+// ===== DTR FILE CLEANUP JOB ROUTES =====
+
+// GET /api/jobs/dtr-cleanup/status - Get DTR file cleanup job status
+router.get('/dtr-cleanup/status', authMiddleware.requireAdmin, (req, res) => {
+    const status = dtrFileCleanupJob.getStatus();
+    res.json(status);
+});
+
+// POST /api/jobs/dtr-cleanup/run - Run DTR file cleanup job
+router.post('/dtr-cleanup/run', authMiddleware.requireAdmin, async (req, res) => {
+    try {
+        const result = await dtrFileCleanupJob.runCleanup();
+        
+        if (result.success) {
+            res.json({
+                success: true,
+                data: result.data,
+                message: 'DTR file cleanup job completed successfully'
+            });
+        } else {
+            res.status(500).json({
+                success: false,
+                error: result.error,
+                message: 'Failed to run DTR file cleanup job'
+            });
+        }
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            message: 'Failed to run DTR file cleanup job'
+        });
+    }
+});
+
+// POST /api/jobs/dtr-cleanup/dry-run - Dry run DTR file cleanup job
+router.post('/dtr-cleanup/dry-run', authMiddleware.requireAdmin, async (req, res) => {
+    try {
+        const result = await dtrFileCleanupJob.dryRun();
+        
+        if (result.success) {
+            res.json({
+                success: true,
+                data: result.data,
+                message: 'DTR file cleanup dry run completed successfully'
+            });
+        } else {
+            res.status(500).json({
+                success: false,
+                error: result.error,
+                message: 'Failed to run DTR file cleanup dry run'
+            });
+        }
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            message: 'Failed to run DTR file cleanup dry run'
+        });
+    }
+});
+
+// GET /api/jobs/dtr-cleanup/storage-stats - Get DTR storage statistics
+router.get('/dtr-cleanup/storage-stats', authMiddleware.requireAdmin, async (req, res) => {
+    try {
+        const result = await dtrFileCleanupJob.getStorageStatistics();
+        
+        if (result.success) {
+            res.json({
+                success: true,
+                data: result.statistics,
+                message: 'Storage statistics retrieved successfully'
+            });
+        } else {
+            res.status(500).json({
+                success: false,
+                error: result.error,
+                message: 'Failed to get storage statistics'
+            });
+        }
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            message: 'Failed to get storage statistics'
         });
     }
 });

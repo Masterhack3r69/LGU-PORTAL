@@ -7,6 +7,7 @@ const PayrollValidationEngine = require('../utils/payrollValidation');
 const { logPayrollAudit } = require('../middleware/payrollAudit');
 const ApiResponse = require('../utils/apiResponse');
 const notificationService = require('../services/notificationService');
+const payrollService = require('../services/payrollService');
 
 class PayrollController {
     constructor() {
@@ -33,6 +34,9 @@ class PayrollController {
             this.getPayrollStatistics = this.getPayrollStatistics.bind(this);
             this.getCurrentPeriod = this.getCurrentPeriod.bind(this);
             this.bulkMarkAsPaid = this.bulkMarkAsPaid.bind(this);
+            this.processPayrollWithDTR = this.processPayrollWithDTR.bind(this);
+            this.validateDTRBeforeProcessing = this.validateDTRBeforeProcessing.bind(this);
+            this.getPeriodSummaryWithDTR = this.getPeriodSummaryWithDTR.bind(this);
         } catch (error) {
             console.error('Error initializing PayrollController:', error);
             console.error('Stack trace:', error.stack);
@@ -274,7 +278,7 @@ class PayrollController {
                          FROM users u
                          JOIN employees e ON e.user_id = u.id
                          JOIN payroll_items pi ON pi.employee_id = e.id
-                         WHERE pi.period_id = ? AND u.is_active = 1`,
+                         WHERE pi.payroll_period_id = ? AND u.is_active = 1`,
                         [id]
                     );
                     
@@ -371,8 +375,24 @@ class PayrollController {
     }
 
     // Get employees for period processing
+    // DEPRECATED: This endpoint is deprecated in favor of DTR-based processing
+    // Use processPayrollWithDTR instead
     async getPeriodEmployees(req, res) {
         try {
+            // Return deprecation warning
+            const response = ApiResponse.error(
+                'This endpoint is deprecated. Payroll processing now uses DTR data. Please import DTR data and use the processPayrollWithDTR endpoint.',
+                'ENDPOINT_DEPRECATED',
+                { 
+                    deprecated: true,
+                    alternative: 'POST /api/payroll/periods/:id/process-with-dtr',
+                    message: 'Employee selection is no longer required. Import DTR data first.'
+                },
+                410
+            );
+            return res.status(410).json(response);
+
+            /* LEGACY CODE - Kept for reference
             const { id } = req.params;
             const { search, status, limit = 50, offset = 0 } = req.query;
 
@@ -422,17 +442,34 @@ class PayrollController {
                 }
             }, 'Period employees retrieved successfully');
             return res.status(200).json(response);
+            */
 
         } catch (error) {
-            console.error('Get period employees error:', error);
+            console.error('Get period employees error (deprecated):', error);
             const response = ApiResponse.serverError('Internal server error');
             return res.status(500).json(response);
         }
     }
 
     // Process employees for payroll period
+    // DEPRECATED: This endpoint is deprecated in favor of DTR-based processing
+    // Use processPayrollWithDTR instead
     async processEmployees(req, res) {
         try {
+            // Return deprecation warning
+            const response = ApiResponse.error(
+                'This endpoint is deprecated. Payroll processing now uses DTR data. Please import DTR data and use the processPayrollWithDTR endpoint.',
+                'ENDPOINT_DEPRECATED',
+                { 
+                    deprecated: true,
+                    alternative: 'POST /api/payroll/periods/:id/process-with-dtr',
+                    message: 'Manual working days adjustment is no longer supported. Import DTR data first.'
+                },
+                410
+            );
+            return res.status(410).json(response);
+
+            /* LEGACY CODE - Kept for reference
             const { id } = req.params;
             const { employees } = req.body; // Array of { employee_id, working_days }
             const userId = req.session.user.id;
@@ -521,9 +558,10 @@ class PayrollController {
 
             const response = ApiResponse.error(result.error, 'PROCESS_ERROR', result.details, 400);
             return res.status(400).json(response);
+            */
 
         } catch (error) {
-            console.error('Process employees error:', error);
+            console.error('Process employees error (deprecated):', error);
             const response = ApiResponse.serverError('Internal server error');
             return res.status(500).json(response);
         }
@@ -845,6 +883,204 @@ class PayrollController {
             
         } catch (error) {
             console.error('Download employee payslip error:', error);
+            const response = ApiResponse.serverError('Internal server error');
+            return res.status(500).json(response);
+        }
+    }
+
+    // ============================================================================
+    // DTR-INTEGRATED PAYROLL PROCESSING ENDPOINTS
+    // ============================================================================
+
+    /**
+     * Process payroll using DTR data
+     * Automatically retrieves DTR records and processes payroll for all employees with DTR data
+     * Replaces the old employee selection and manual working days adjustment workflow
+     */
+    async processPayrollWithDTR(req, res) {
+        try {
+            const { id } = req.params;
+            const userId = req.session.user.id;
+
+            // Validate DTR data exists before processing
+            const validationResult = await payrollService.validateDTRDataExists(id);
+            
+            if (!validationResult.success || !validationResult.isValid) {
+                const response = ApiResponse.error(
+                    validationResult.error || 'No DTR data found for this period',
+                    'NO_DTR_DATA',
+                    {
+                        message: validationResult.message || 'Please import DTR data before processing payroll',
+                        dtrCount: validationResult.dtrCount || 0
+                    },
+                    400
+                );
+                return res.status(400).json(response);
+            }
+
+            // Process payroll using DTR data
+            const processResult = await payrollService.processPayroll(id, userId);
+
+            if (!processResult.success) {
+                const statusCode = processResult.code === 'NO_DTR_DATA' ? 400 : 500;
+                const response = ApiResponse.error(
+                    processResult.error,
+                    processResult.code || 'PROCESS_ERROR',
+                    processResult.details,
+                    statusCode
+                );
+                return res.status(statusCode).json(response);
+            }
+
+            // Log audit
+            await logPayrollAudit({
+                userId: userId,
+                action: 'PROCESS_PAYROLL_WITH_DTR',
+                tableName: 'payroll_items',
+                recordId: id,
+                newValues: {
+                    employees_processed: processResult.data.employees_processed,
+                    dtr_records_used: processResult.data.dtr_source.total_records
+                },
+                ipAddress: req.ip,
+                userAgent: req.get('User-Agent')
+            });
+
+            // Send notifications to all processed employees
+            try {
+                const { pool } = require('../config/database');
+                const [employeeRows] = await pool.execute(
+                    `SELECT DISTINCT u.id, e.first_name, e.last_name
+                     FROM users u
+                     JOIN employees e ON e.user_id = u.id
+                     JOIN payroll_items pi ON pi.employee_id = e.id
+                     WHERE pi.payroll_period_id = ? AND u.is_active = 1`,
+                    [id]
+                );
+                
+                const periodResult = await PayrollPeriod.findById(id);
+                const period = periodResult.data;
+                
+                for (const employee of employeeRows) {
+                    await notificationService.createNotification({
+                        user_id: employee.id,
+                        type: 'payroll_processed',
+                        title: 'Payroll Processed',
+                        message: `Your payroll for "${period.getPeriodName()}" has been processed using DTR data.`,
+                        priority: 'MEDIUM',
+                        reference_type: 'payroll_period',
+                        reference_id: id,
+                        metadata: {
+                            period_name: period.getPeriodName(),
+                            period_id: id
+                        }
+                    });
+                }
+            } catch (notificationError) {
+                console.error('Failed to send payroll processing notifications:', notificationError);
+                // Don't fail the request if notification fails
+            }
+
+            const response = ApiResponse.success(
+                processResult.data,
+                processResult.message || 'Payroll processed successfully using DTR data'
+            );
+            return res.status(200).json(response);
+
+        } catch (error) {
+            console.error('Process payroll with DTR error:', error);
+            const response = ApiResponse.serverError('Internal server error');
+            return res.status(500).json(response);
+        }
+    }
+
+    /**
+     * Validate DTR data before processing
+     * Checks if DTR data exists and returns validation status
+     */
+    async validateDTRBeforeProcessing(req, res) {
+        try {
+            const { id } = req.params;
+
+            // Validate DTR data exists
+            const validationResult = await payrollService.validateDTRDataExists(id);
+
+            if (!validationResult.success) {
+                const response = ApiResponse.error(
+                    validationResult.error,
+                    'VALIDATION_ERROR',
+                    validationResult.details,
+                    500
+                );
+                return res.status(500).json(response);
+            }
+
+            // Get employees without DTR data
+            const missingDTRResult = await payrollService.getEmployeesWithoutDTR(id);
+            const employeesWithoutDTR = missingDTRResult.success ? missingDTRResult.data : { employees: [], count: 0 };
+
+            const responseData = {
+                isValid: validationResult.isValid,
+                hasDTRData: validationResult.isValid,
+                dtrCount: validationResult.dtrCount || 0,
+                message: validationResult.message,
+                employeesWithoutDTR: employeesWithoutDTR.employees,
+                missingDTRCount: employeesWithoutDTR.count,
+                canProcess: validationResult.isValid && employeesWithoutDTR.count === 0
+            };
+
+            if (!validationResult.isValid) {
+                const response = ApiResponse.error(
+                    'DTR validation failed',
+                    'DTR_VALIDATION_FAILED',
+                    responseData,
+                    400
+                );
+                return res.status(400).json(response);
+            }
+
+            const response = ApiResponse.success(
+                responseData,
+                'DTR validation successful'
+            );
+            return res.status(200).json(response);
+
+        } catch (error) {
+            console.error('Validate DTR before processing error:', error);
+            const response = ApiResponse.serverError('Internal server error');
+            return res.status(500).json(response);
+        }
+    }
+
+    /**
+     * Get period summary with DTR information
+     * Enhanced version of getPeriodSummary that includes DTR source data
+     */
+    async getPeriodSummaryWithDTR(req, res) {
+        try {
+            const { id } = req.params;
+
+            // Get summary with DTR information
+            const summaryResult = await payrollService.getPayrollSummaryWithDTR(id);
+
+            if (!summaryResult.success) {
+                const response = ApiResponse.error(
+                    summaryResult.error,
+                    'FETCH_ERROR',
+                    summaryResult.details,
+                    500
+                );
+                return res.status(500).json(response);
+            }
+
+            const response = ApiResponse.success(
+                summaryResult.data,
+                'Payroll summary with DTR information retrieved successfully'
+            );
+            return res.status(200).json(response);
+
+        } catch (error) {
+            console.error('Get period summary with DTR error:', error);
             const response = ApiResponse.serverError('Internal server error');
             return res.status(500).json(response);
         }

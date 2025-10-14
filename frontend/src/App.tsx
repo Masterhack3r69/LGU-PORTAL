@@ -39,6 +39,7 @@ import { PayrollPeriodsPage } from '@/pages/payroll/PayrollPeriodsPage';
 import { PayrollManagementPage } from '@/pages/payroll/PayrollManagementPage';
 import { PayrollReportsPage } from '@/pages/payroll/PayrollReportsPage';
 import { PayrollConfigurationPage } from '@/pages/payroll/PayrollConfigurationPage';
+import { DTRImportPage } from '@/pages/payroll/DTRImportPage';
 
 // Benefits Management Pages
 import { CompensationBenefitsPage } from '@/pages/benefits/CompensationBenefitsPage';
@@ -241,6 +242,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <PayrollManagementPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="dtr-import"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <DTRImportPage />
               </ProtectedRoute>
             }
           />

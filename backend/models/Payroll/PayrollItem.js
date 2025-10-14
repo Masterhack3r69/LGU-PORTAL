@@ -34,7 +34,8 @@ class PayrollItem {
         let query = `
             SELECT pi.*, 
                    e.id as employee_id, e.employee_number as employee_number, 
-                   e.first_name, e.last_name, e.plantilla_position as position
+                   e.first_name, e.last_name, e.plantilla_position as position,
+                   CONCAT(e.first_name, ' ', e.last_name) as employee_name
             FROM payroll_items pi
             LEFT JOIN employees e ON pi.employee_id = e.id
             WHERE pi.payroll_period_id = ?
@@ -60,10 +61,15 @@ class PayrollItem {
                 success: true,
                 data: result.data.map(row => {
                     const item = new PayrollItem(row);
+                    // Add employee data at root level for easier access
+                    item.employee_number = row.employee_number;
+                    item.employee_name = row.employee_name;
+                    item.position = row.position;
+                    // Also keep nested employee object for compatibility
                     item.employee = {
                         id: row.employee_id,
                         employee_number: row.employee_number,
-                        full_name: `${row.first_name} ${row.last_name}`,
+                        full_name: row.employee_name,
                         position: row.position
                     };
                     return item;

@@ -8,9 +8,7 @@ class ApiService {
     this.api = axios.create({
       baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api',
       withCredentials: true,
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      // Don't set default Content-Type - let axios handle it per request
     });
 
     this.setupInterceptors();
@@ -20,6 +18,16 @@ class ApiService {
     // Request interceptor
     this.api.interceptors.request.use(
       (config) => {
+        // Set Content-Type based on data type
+        if (config.data instanceof FormData) {
+          // For FormData, don't set Content-Type - let the browser add it with boundary
+          // This is crucial for file uploads
+        } else if (config.data && !config.headers?.['Content-Type']) {
+          // For other data (JSON), set Content-Type to application/json
+          if (config.headers) {
+            config.headers['Content-Type'] = 'application/json';
+          }
+        }
         return config;
       },
       (error) => {
@@ -84,11 +92,7 @@ class ApiService {
   }
 
   public async upload<T>(url: string, formData: FormData): Promise<T> {
-    const response = await this.api.post(url, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    const response = await this.api.post(url, formData);
     return response.data;
   }
 }

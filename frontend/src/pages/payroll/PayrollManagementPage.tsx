@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -9,14 +10,42 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { showToast } from "@/lib/toast";
-import { Calculator, Settings, Calendar, DollarSign } from "lucide-react";
+import {
+  Calculator,
+  Settings,
+  Calendar,
+  DollarSign,
+  Upload,
+  FileSpreadsheet,
+  Users,
+  Clock,
+  AlertTriangle,
+  CheckCircle2,
+  Play,
+  Lock,
+} from "lucide-react";
 import payrollService from "@/services/payrollService";
+import dtrService, { type DTRStats } from "@/services/dtrService";
 import { PayrollAdjustments } from "@/components/payroll/PayrollAdjustments";
-import { EmployeeSelectionProcessing } from "@/components/payroll/EmployeeSelectionProcessing";
-import type { PayrollPeriod, PayrollSummary } from "@/types/payroll";
+import { DTRRecordsTable } from "@/components/payroll/DTRRecordsTable";
+import { PayrollItemsTable } from "@/components/payroll/PayrollItemsTable";
+import type {
+  PayrollPeriod,
+  PayrollSummary,
+  PayrollItem,
+} from "@/types/payroll";
 
 export function PayrollManagementPage() {
+  const navigate = useNavigate();
   const [periods, setPeriods] = useState<PayrollPeriod[]>([]);
   const [selectedPeriod, setSelectedPeriod] = useState<PayrollPeriod | null>(
     null
@@ -25,6 +54,15 @@ export function PayrollManagementPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("processing");
 
+  // DTR-related state
+  const [dtrStats, setDtrStats] = useState<DTRStats | null>(null);
+  const [loadingDtrStats, setLoadingDtrStats] = useState(false);
+  const [showDtrRecordsDialog, setShowDtrRecordsDialog] = useState(false);
+
+  // Payroll processing state
+  const [payrollItems, setPayrollItems] = useState<PayrollItem[]>([]);
+  const [processingLoading, setProcessingLoading] = useState(false);
+
   useEffect(() => {
     loadPeriods();
   }, []);
@@ -32,6 +70,8 @@ export function PayrollManagementPage() {
   useEffect(() => {
     if (selectedPeriod) {
       loadSummary(selectedPeriod.id);
+      loadDTRStats(selectedPeriod.id);
+      loadPayrollItems(selectedPeriod.id);
     }
   }, [selectedPeriod]);
 
@@ -71,8 +111,68 @@ export function PayrollManagementPage() {
     }
   };
 
+  const loadDTRStats = async (periodId: number) => {
+    try {
+      setLoadingDtrStats(true);
+      const stats = await dtrService.getDTRStats(periodId);
+      setDtrStats(stats);
+    } catch (error) {
+      console.error("Failed to load DTR stats:", error);
+      setDtrStats(null);
+    } finally {
+      setLoadingDtrStats(false);
+    }
+  };
+
+  const loadPayrollItems = async (periodId: number) => {
+    try {
+      const response = await payrollService.getPayrollItems({
+        period_id: periodId,
+      });
+      if (response.success) {
+        setPayrollItems(response.data);
+      }
+    } catch (error) {
+      console.error("Failed to load payroll items:", error);
+    }
+  };
+
   const handleCalculatePayroll = async () => {
-    console.log("Calculate payroll called from main page");
+    if (!selectedPeriod) return;
+
+    // Check if DTR data exists
+    if (!dtrStats?.hasImport) {
+      showToast.error(
+        "No DTR Data",
+        "Please import DTR data before processing payroll"
+      );
+      return;
+    }
+
+    setProcessingLoading(true);
+    try {
+      const response = await payrollService.calculatePayroll({
+        period_id: selectedPeriod.id,
+      });
+
+      if (response.success) {
+        const processedCount = response.data.processed_count;
+        showToast.success(
+          "Payroll Processed",
+          `Successfully processed ${processedCount} employees`
+        );
+        await loadPayrollItems(selectedPeriod.id);
+        await handlePeriodUpdate();
+      }
+    } catch (error: any) {
+      console.error("Failed to calculate payroll:", error);
+      showToast.error(
+        "Processing Failed",
+        error.response?.data?.error?.message || "Failed to calculate payroll"
+      );
+    } finally {
+      setProcessingLoading(false);
+    }
   };
 
   const handlePeriodUpdate = async () => {
@@ -86,15 +186,130 @@ export function PayrollManagementPage() {
         ? responseData
         : responseData.periods || [];
       setPeriods(Array.isArray(periodsData) ? periodsData : []);
-      
+
       // Update the selected period with fresh data
       if (selectedPeriod) {
-        const updatedPeriod = periodsData.find((p: PayrollPeriod) => p.id === selectedPeriod.id);
+        const updatedPeriod = periodsData.find(
+          (p: PayrollPeriod) => p.id === selectedPeriod.id
+        );
         if (updatedPeriod) {
           setSelectedPeriod(updatedPeriod);
         }
         await loadSummary(selectedPeriod.id);
+        await loadDTRStats(selectedPeriod.id);
       }
+    }
+  };
+
+  const handleImportDTR = () => {
+    if (selectedPeriod) {
+      navigate(`/payroll/dtr-import?periodId=${selectedPeriod.id}`);
+    }
+  };
+
+  const handleViewDTRRecords = () => {
+    setShowDtrRecordsDialog(true);
+  };
+
+  const handleBulkFinalize = async () => {
+    if (!selectedPeriod) return;
+
+    const processedItems = payrollItems.filter(
+      (item) => item.status?.toLowerCase() === "processed"
+    );
+
+    if (processedItems.length === 0) {
+      showToast.error("No processed items to finalize");
+      return;
+    }
+
+    setProcessingLoading(true);
+    try {
+      let successCount = 0;
+      let failCount = 0;
+
+      for (const item of processedItems) {
+        try {
+          const response = await payrollService.approvePayrollItem(item.id);
+          if (response.success) {
+            successCount++;
+          } else {
+            failCount++;
+          }
+        } catch (error) {
+          failCount++;
+          console.error(`Failed to finalize item ${item.id}:`, error);
+        }
+      }
+
+      if (successCount > 0) {
+        showToast.success(
+          `Finalized ${successCount} payroll item${successCount > 1 ? "s" : ""}${
+            failCount > 0 ? `, ${failCount} failed` : ""
+          }`
+        );
+        await loadPayrollItems(selectedPeriod.id);
+        await loadSummary(selectedPeriod.id);
+        await handlePeriodUpdate();
+      } else {
+        showToast.error("Failed to finalize payroll items");
+      }
+    } catch (error) {
+      console.error("Failed to bulk finalize:", error);
+      showToast.error("Failed to finalize payroll items");
+    } finally {
+      setProcessingLoading(false);
+    }
+  };
+
+  const handleBulkMarkPaid = async () => {
+    if (!selectedPeriod) return;
+
+    const finalizedItems = payrollItems.filter(
+      (item) => item.status?.toLowerCase() === "finalized"
+    );
+
+    if (finalizedItems.length === 0) {
+      showToast.error("No finalized items to mark as paid");
+      return;
+    }
+
+    setProcessingLoading(true);
+    try {
+      let successCount = 0;
+      let failCount = 0;
+
+      for (const item of finalizedItems) {
+        try {
+          const response = await payrollService.markAsPaid(item.id);
+          if (response.success) {
+            successCount++;
+          } else {
+            failCount++;
+          }
+        } catch (error) {
+          failCount++;
+          console.error(`Failed to mark item ${item.id} as paid:`, error);
+        }
+      }
+
+      if (successCount > 0) {
+        showToast.success(
+          `Marked ${successCount} payroll item${successCount > 1 ? "s" : ""} as paid${
+            failCount > 0 ? `, ${failCount} failed` : ""
+          }`
+        );
+        await loadPayrollItems(selectedPeriod.id);
+        await loadSummary(selectedPeriod.id);
+        await handlePeriodUpdate();
+      } else {
+        showToast.error("Failed to mark payroll items as paid");
+      }
+    } catch (error) {
+      console.error("Failed to bulk mark as paid:", error);
+      showToast.error("Failed to mark payroll items as paid");
+    } finally {
+      setProcessingLoading(false);
     }
   };
 
@@ -217,18 +432,19 @@ export function PayrollManagementPage() {
                   </div>
                   {getStatusBadge(period.status)}
                 </div>
-                
+
                 <div className="space-y-1">
                   <div className="text-sm font-medium">
                     {getMonthName(period.year, period.month)} {period.year}
                   </div>
-                  
+
                   {period.start_date && period.end_date && (
                     <div className="text-xs text-muted-foreground">
-                      {formatDate(period.start_date)} - {formatDate(period.end_date)}
+                      {formatDate(period.start_date)} -{" "}
+                      {formatDate(period.end_date)}
                     </div>
                   )}
-                  
+
                   {period.total_net_pay && (
                     <div className="flex items-center gap-1 text-xs">
                       <DollarSign className="h-3 w-3" />
@@ -241,7 +457,7 @@ export function PayrollManagementPage() {
               </div>
             ))}
           </div>
-          
+
           {periods.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
               <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -256,19 +472,161 @@ export function PayrollManagementPage() {
 
       {/* Main Content Tabs */}
       {selectedPeriod ? (
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="space-y-6"
+        >
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="processing" className="flex items-center gap-2">
               <Calculator className="h-4 w-4" />
               Processing
             </TabsTrigger>
-            <TabsTrigger value="adjustments" className="flex items-center gap-2">
+            <TabsTrigger
+              value="adjustments"
+              className="flex items-center gap-2"
+            >
               <Settings className="h-4 w-4" />
               Adjustments
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="processing" className="space-y-6">
+            {/* DTR Import Status Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileSpreadsheet className="h-5 w-5" />
+                  Daily Time Record (DTR)
+                </CardTitle>
+                <CardDescription>
+                  Import and manage employee attendance data for payroll
+                  processing
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* DTR Status Alert */}
+                {!loadingDtrStats && (
+                  <>
+                    {dtrStats?.hasImport ? (
+                      <Alert className="border-green-200 bg-green-50">
+                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                        <AlertTitle className="text-green-900">
+                          DTR Data Imported
+                        </AlertTitle>
+                        <AlertDescription className="text-green-800">
+                          <div className="space-y-1 mt-2">
+                            <div className="flex items-center gap-2">
+                              <Users className="h-4 w-4" />
+                              <span className="font-medium">
+                                {dtrStats.totalEmployees} employees
+                              </span>
+                              <span className="text-muted-foreground">•</span>
+                              <Clock className="h-4 w-4" />
+                              <span className="font-medium">
+                                {dtrStats.totalWorkingDays.toFixed(2)} total
+                                working days
+                              </span>
+                            </div>
+                            {dtrStats.lastImportDate && (
+                              <div className="text-sm">
+                                Last imported:{" "}
+                                {new Date(
+                                  dtrStats.lastImportDate
+                                ).toLocaleString()}
+                                {dtrStats.lastImportBy &&
+                                  ` by ${dtrStats.lastImportBy}`}
+                              </div>
+                            )}
+                          </div>
+                        </AlertDescription>
+                      </Alert>
+                    ) : (
+                      <Alert variant="destructive">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertTitle>No DTR Data</AlertTitle>
+                        <AlertDescription>
+                          DTR data has not been imported for this period. Please
+                          import DTR before processing payroll.
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                  </>
+                )}
+
+                {/* DTR Action Buttons */}
+                <div className="flex flex-wrap gap-3">
+                  {/* Only show import button if period is Draft or Open */}
+                  {(selectedPeriod.status?.toLowerCase() === "draft" ||
+                    selectedPeriod.status?.toLowerCase() === "open") && (
+                    <Button
+                      onClick={handleImportDTR}
+                      variant={dtrStats?.hasImport ? "outline" : "default"}
+                    >
+                      <Upload className="mr-2 h-4 w-4" />
+                      {dtrStats?.hasImport ? "Re-import DTR" : "Import DTR"}
+                    </Button>
+                  )}
+
+                  {dtrStats?.hasImport && (
+                    <Button onClick={handleViewDTRRecords} variant="outline">
+                      <FileSpreadsheet className="mr-2 h-4 w-4" />
+                      View DTR Records
+                    </Button>
+                  )}
+                </div>
+
+                {/* Warning when DTR import is locked */}
+                {selectedPeriod.status?.toLowerCase() !== "draft" &&
+                  selectedPeriod.status?.toLowerCase() !== "open" && (
+                    <Alert>
+                      <Lock className="h-4 w-4" />
+                      <AlertTitle>DTR Import Locked</AlertTitle>
+                      <AlertDescription>
+                        DTR data cannot be modified because payroll has been{" "}
+                        {selectedPeriod.status?.toLowerCase() === "processed"
+                          ? "processed"
+                          : selectedPeriod.status?.toLowerCase() === "finalized"
+                          ? "finalized"
+                          : "completed"}
+                        . To make changes, you must reopen the payroll period first.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                {/* DTR Statistics */}
+                {dtrStats?.hasImport && (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t">
+                    <div className="space-y-1">
+                      <div className="text-sm text-muted-foreground">
+                        Total Employees
+                      </div>
+                      <div className="text-2xl font-bold">
+                        {dtrStats.totalEmployees}
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-sm text-muted-foreground">
+                        Total Working Days
+                      </div>
+                      <div className="text-2xl font-bold">
+                        {dtrStats.totalWorkingDays.toFixed(2)}
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-sm text-muted-foreground">
+                        Average Working Days
+                      </div>
+                      <div className="text-2xl font-bold">
+                        {dtrStats.averageWorkingDays.toFixed(2)}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Payroll Processing Card */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -276,18 +634,147 @@ export function PayrollManagementPage() {
                   Payroll Processing
                 </CardTitle>
                 <CardDescription>
-                  Calculate payroll for employees in the selected period
+                  Process payroll calculations using imported DTR data
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <EmployeeSelectionProcessing
-                  selectedPeriod={selectedPeriod}
-                  onEmployeesSelected={() => {}}
-                  onCalculatePayroll={handleCalculatePayroll}
-                  onPeriodUpdate={handlePeriodUpdate}
-                />
+              <CardContent className="space-y-4">
+                {/* Warning if no DTR data */}
+                {!dtrStats?.hasImport && (
+                  <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Cannot Process Payroll</AlertTitle>
+                    <AlertDescription>
+                      You must import DTR data before processing payroll. Click
+                      "Import DTR" above to get started.
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {/* Processing Actions */}
+                <div className="flex flex-wrap items-center gap-3">
+                  {(selectedPeriod.status?.toLowerCase() === "draft" ||
+                    selectedPeriod.status?.toLowerCase() === "open") && (
+                    <Button
+                      onClick={handleCalculatePayroll}
+                      disabled={processingLoading || !dtrStats?.hasImport}
+                    >
+                      <Play className="mr-2 h-4 w-4" />
+                      {processingLoading ? "Processing..." : "Process Payroll"}
+                    </Button>
+                  )}
+
+                  {payrollItems.some(item => item.status?.toLowerCase() === "processed") && (
+                    <Button
+                      onClick={handleBulkFinalize}
+                      disabled={processingLoading}
+                      variant="outline"
+                    >
+                      <CheckCircle2 className="mr-2 h-4 w-4" />
+                      Finalize All Processed
+                    </Button>
+                  )}
+
+                  {payrollItems.some(item => item.status?.toLowerCase() === "finalized") && (
+                    <Button
+                      onClick={handleBulkMarkPaid}
+                      disabled={processingLoading}
+                      variant="default"
+                    >
+                      <DollarSign className="mr-2 h-4 w-4" />
+                      Mark All Finalized as Paid
+                    </Button>
+                  )}
+                </div>
+
+                {/* Payroll Items Summary */}
+                {payrollItems.length > 0 && (
+                  <div className="pt-4 border-t">
+                    <div className="text-sm font-medium mb-3">
+                      Payroll Items ({payrollItems.length})
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      <div className="space-y-1">
+                        <div className="text-xs text-muted-foreground">
+                          Processed
+                        </div>
+                        <div className="text-lg font-semibold">
+                          {
+                            payrollItems.filter(
+                              (item) =>
+                                item.status?.toLowerCase() === "processed"
+                            ).length
+                          }
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="text-xs text-muted-foreground">
+                          Finalized
+                        </div>
+                        <div className="text-lg font-semibold">
+                          {
+                            payrollItems.filter(
+                              (item) =>
+                                item.status?.toLowerCase() === "finalized"
+                            ).length
+                          }
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="text-xs text-muted-foreground">
+                          Paid
+                        </div>
+                        <div className="text-lg font-semibold">
+                          {
+                            payrollItems.filter(
+                              (item) => item.status?.toLowerCase() === "paid"
+                            ).length
+                          }
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="text-xs text-muted-foreground">
+                          Total Net Pay
+                        </div>
+                        <div className="text-lg font-semibold">
+                          {formatCurrency(
+                            payrollItems.reduce(
+                              (sum, item) => sum + (Number(item.net_pay) || 0),
+                              0
+                            )
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
+
+            {/* Employee Payroll Details Table */}
+            {payrollItems.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    Employee Payroll Details
+                  </CardTitle>
+                  <CardDescription>
+                    View detailed breakdown of each employee's payroll including
+                    basic pay, allowances, deductions, and net pay
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <PayrollItemsTable 
+                    items={payrollItems} 
+                    onItemUpdate={() => {
+                      loadPayrollItems(selectedPeriod.id);
+                      loadSummary(selectedPeriod.id);
+                      handlePeriodUpdate();
+                    }}
+                  />
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="adjustments" className="space-y-6">
@@ -318,7 +805,8 @@ export function PayrollManagementPage() {
             <Calendar className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
             <h3 className="text-lg font-semibold mb-2">No Period Selected</h3>
             <p className="text-muted-foreground mb-4">
-              Please select a payroll period above to begin processing or making adjustments.
+              Please select a payroll period above to begin processing or making
+              adjustments.
             </p>
             <Button variant="outline" onClick={() => window.location.reload()}>
               Refresh Periods
@@ -326,6 +814,34 @@ export function PayrollManagementPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* DTR Records Dialog */}
+      <Dialog
+        open={showDtrRecordsDialog}
+        onOpenChange={setShowDtrRecordsDialog}
+      >
+        <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>DTR Records</DialogTitle>
+            <DialogDescription>
+              View and manage DTR records for{" "}
+              {selectedPeriod &&
+                `${getMonthName(selectedPeriod.year, selectedPeriod.month)} ${
+                  selectedPeriod.year
+                } - Period ${selectedPeriod.period_number}`}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedPeriod && (
+            <DTRRecordsTable
+              periodId={selectedPeriod.id}
+              onRecordUpdate={() => {
+                loadDTRStats(selectedPeriod.id);
+                loadPayrollItems(selectedPeriod.id);
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
