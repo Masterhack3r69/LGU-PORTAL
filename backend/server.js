@@ -246,10 +246,11 @@ const startServer = async () => {
         monthlyAccrualJob.startScheduledJob();
         dtrFileCleanupJob.startScheduledJob();
 
-        const server = app.listen(PORT, 'localhost', () => {
+        const server = app.listen(PORT, process.env.HOST || '0.0.0.0', () => {
             console.log(`
 🚀 Server Started
 🌐 Environment: ${process.env.NODE_ENV || 'development'}
+🔌 Host: ${process.env.HOST || '0.0.0.0'}
 🔌 Port: ${PORT}
 📊 Database: Connected
 ⏰ ${new Date().toISOString()}

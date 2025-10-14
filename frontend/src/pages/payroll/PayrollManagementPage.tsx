@@ -211,6 +211,48 @@ export function PayrollManagementPage() {
     setShowDtrRecordsDialog(true);
   };
 
+  const handleCompletePeriod = async () => {
+    if (!selectedPeriod) return;
+
+    // Verify all payroll items are paid
+    const allPaid = payrollItems.every(item => item.status?.toLowerCase() === "paid");
+    if (!allPaid) {
+      showToast.error(
+        "Cannot Complete Period",
+        "All payroll items must be marked as paid before completing the period"
+      );
+      return;
+    }
+
+    setProcessingLoading(true);
+    try {
+      const response = await payrollService.finalizePeriod(selectedPeriod.id);
+      
+      if (response.success) {
+        showToast.success(
+          "Period Completed",
+          "Payroll period has been completed and locked successfully"
+        );
+        // Refresh all data to show updated status
+        await loadPayrollItems(selectedPeriod.id);
+        await handlePeriodUpdate();
+      } else {
+        showToast.error(
+          "Failed to Complete Period",
+          response.message || "Could not complete the payroll period"
+        );
+      }
+    } catch (error: any) {
+      console.error("Failed to complete period:", error);
+      showToast.error(
+        "Failed to Complete Period",
+        error.response?.data?.error?.message || "Could not complete the payroll period"
+      );
+    } finally {
+      setProcessingLoading(false);
+    }
+  };
+
   const handleBulkFinalize = async () => {
     if (!selectedPeriod) return;
 
@@ -682,6 +724,22 @@ export function PayrollManagementPage() {
                     >
                       <DollarSign className="mr-2 h-4 w-4" />
                       Mark All Finalized as Paid
+                    </Button>
+                  )}
+
+                  {payrollItems.length > 0 && 
+                   payrollItems.every(item => item.status?.toLowerCase() === "paid") &&
+                   (selectedPeriod.status?.toLowerCase() === "draft" || 
+                    selectedPeriod.status?.toLowerCase() === "open" ||
+                    selectedPeriod.status?.toLowerCase() === "processing") && (
+                    <Button
+                      onClick={handleCompletePeriod}
+                      disabled={processingLoading}
+                      variant="default"
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      <Lock className="mr-2 h-4 w-4" />
+                      Complete Payroll Period
                     </Button>
                   )}
                 </div>

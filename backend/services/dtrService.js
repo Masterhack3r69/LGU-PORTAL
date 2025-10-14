@@ -529,6 +529,31 @@ class DTRService {
                 };
             }
 
+            // Format records for frontend
+            const formattedRecords = result.data.map(record => ({
+                id: record.id,
+                payrollPeriodId: record.payroll_period_id,
+                employeeId: record.employee_id,
+                employeeNumber: record.employee_number,
+                employeeName: `${record.first_name} ${record.middle_name ? record.middle_name + ' ' : ''}${record.last_name}`.trim(),
+                position: record.plantilla_position,
+                startDate: record.start_date,
+                endDate: record.end_date,
+                workingDays: record.working_days,
+                importBatchId: record.import_batch_id,
+                status: record.status,
+                notes: record.notes,
+                importedBy: record.imported_by,
+                importedByUsername: record.imported_by_username,
+                importedAt: record.imported_at,
+                importFileName: record.import_file_name,
+                updatedBy: record.updated_by,
+                updatedByUsername: record.updated_by_username,
+                updatedAt: record.updated_at,
+                calculatedBasicPay: record.calculated_basic_pay,
+                currentDailyRate: record.current_daily_rate
+            }));
+
             // Get total count for pagination
             const countQuery = `
                 SELECT COUNT(*) as total
@@ -544,7 +569,7 @@ class DTRService {
             return {
                 success: true,
                 data: {
-                    records: result.data,
+                    records: formattedRecords,
                     totalCount,
                     page: filters.offset ? Math.floor(filters.offset / (filters.limit || 50)) + 1 : 1,
                     pageSize: filters.limit || 50
@@ -738,7 +763,9 @@ class DTRService {
             // Parse error_log JSON for each batch
             const batches = result.data.map(batch => ({
                 ...batch,
-                error_log: batch.error_log ? JSON.parse(batch.error_log) : null
+                error_log: batch.error_log 
+                    ? (typeof batch.error_log === 'string' ? JSON.parse(batch.error_log) : batch.error_log)
+                    : null
             }));
 
             return {
@@ -785,7 +812,9 @@ class DTRService {
             }
 
             const batch = batchResult.data[0];
-            batch.error_log = batch.error_log ? JSON.parse(batch.error_log) : null;
+            batch.error_log = batch.error_log 
+                ? (typeof batch.error_log === 'string' ? JSON.parse(batch.error_log) : batch.error_log)
+                : null;
 
             // Get records from this batch
             const recordsQuery = `
