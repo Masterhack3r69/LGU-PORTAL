@@ -160,5 +160,34 @@
     approved: number;
     rejected: number;
     byType: Array<{ name: string; count: number }>;
+  }
+
+  export interface ExamCertificate {
+    id?: number;
+    employee_id: number;
+    exam_name: string;
+    exam_type?: string;
+    rating?: number;
+    date_taken?: string;
+    place_of_examination?: string;
+    license_number?: string;
+    validity_date?: string;
+    created_at?: string;
+    updated_at?: string;
+  }
+
+  export interface CreateExamCertificateDTO {
+    employee_id: number;
+    exam_name: string;
+    exam_type?: string;
+    rating?: number;
+    date_taken?: string;
+    place_of_examination?: string;
+    license_number?: string;
+    validity_date?: string;
+  }
+
+  export interface UpdateExamCertificateDTO extends Partial<CreateExamCertificateDTO> {
+    id: number;
   }                                                                        
         

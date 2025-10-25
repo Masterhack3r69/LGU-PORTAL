@@ -28,6 +28,7 @@ const dashboardRoutes = require('./routes/dashboardRoutes');
 const backupRoutes = require('./routes/backupRoutes');
 const trainingRoutes = require('./routes/trainingRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+const examCertificateRoutes = require('./routes/examCertificateRoutes');
 
 const monthlyAccrualJob = require('./jobs/monthlyAccrualJob');
 const dtrFileCleanupJob = require('./jobs/dtrFileCleanupJob');
@@ -221,6 +222,7 @@ app.use('/api/import', authMiddleware.requireAuth, auditLogger, importRoutes);
 app.use('/api/backup', authMiddleware.requireAuth, auditLogger, backupRoutes);
 app.use('/api', authMiddleware.requireAuth, auditLogger, trainingRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/exam-certificates', authMiddleware.requireAuth, auditLogger, examCertificateRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {

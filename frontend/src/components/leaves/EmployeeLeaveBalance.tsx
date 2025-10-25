@@ -194,64 +194,68 @@ const EmployeeLeaveBalance: React.FC<EmployeeLeaveBalanceProps> = ({
   return (
     <div className="space-y-4">
       {/* Year and Month Selector */}
-      <Card>
-        <CardContent>
-          <div className="flex justify-between space-x-4">
-            <div className="text-base flex items-center font-semibold space-x-2 flex-1">
-              <TrendingUp className="h-4 w-4" />
-              <span>
-                Leave Balance for {selectedYear}
-                {selectedMonth !== null &&
-                  ` - ${format(new Date(selectedYear, selectedMonth), "MMMM")}`}
-              </span>
+      <Card className="border-l-4 border-l-primary">
+        <CardContent className="pt-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-primary" />
+              <div>
+                <h2 className="text-lg font-semibold">
+                  Leave Balance {selectedYear}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {selectedMonth !== null
+                    ? format(new Date(selectedYear, selectedMonth), "MMMM yyyy")
+                    : "All months"}
+                </p>
+              </div>
             </div>
-            <div className="flex">
+            <div className="flex gap-3">
               {/* Year Selector */}
-            <div className="flex-1 mr-3">
-              <label className="text-sm font-medium mb-2 block">Year:</label>
-              <Select
-                value={selectedYear.toString()}
-                onValueChange={(value) => setSelectedYear(parseInt(value))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select year" />
-                </SelectTrigger>
-                <SelectContent>
-                  {[2023, 2024, 2025, 2026].map((year) => (
-                    <SelectItem key={year} value={year.toString()}>
-                      {year}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+              <div className="flex-1 sm:w-32">
+                <label className="text-xs font-medium mb-1.5 block text-muted-foreground">Year</label>
+                <Select
+                  value={selectedYear.toString()}
+                  onValueChange={(value) => setSelectedYear(parseInt(value))}
+                >
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="Select year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[2023, 2024, 2025, 2026].map((year) => (
+                      <SelectItem key={year} value={year.toString()}>
+                        {year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            {/* Month Selector */}
-            <div className="flex-1">
-              <label className="text-sm font-medium mb-2 block">Month:</label>
-              <Select
-                value={
-                  selectedMonth === null ? "all" : selectedMonth.toString()
-                }
-                onValueChange={(value) =>
-                  setSelectedMonth(value === "all" ? null : parseInt(value))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select month" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Months</SelectItem>
-                  {Array.from({ length: 12 }, (_, i) => (
-                    <SelectItem key={i} value={i.toString()}>
-                      {format(new Date(2024, i), "MMMM")}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {/* Month Selector */}
+              <div className="flex-1 sm:w-40">
+                <label className="text-xs font-medium mb-1.5 block text-muted-foreground">Month</label>
+                <Select
+                  value={
+                    selectedMonth === null ? "all" : selectedMonth.toString()
+                  }
+                  onValueChange={(value) =>
+                    setSelectedMonth(value === "all" ? null : parseInt(value))
+                  }
+                >
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="Select month" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Months</SelectItem>
+                    {Array.from({ length: 12 }, (_, i) => (
+                      <SelectItem key={i} value={i.toString()}>
+                        {format(new Date(2024, i), "MMMM")}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            </div>
-            
           </div>
         </CardContent>
       </Card>

@@ -1,12 +1,12 @@
-import React from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import AdminLeaveApplications from '@/components/leaves/AdminLeaveApplications';
-import EmployeeLeaveApplications from '@/components/leaves/EmployeeLeaveApplications';
+import React from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import AdminLeaveApplications from "@/components/leaves/AdminLeaveApplications";
+import EmployeeLeaveApplications from "@/components/leaves/EmployeeLeaveApplications";
 
 export const LeaveApplicationsPage: React.FC = () => {
   const { user } = useAuth();
 
-  if (user?.role === 'admin') {
+  if (user?.role === "admin") {
     return <AdminLeaveApplications />;
   }
 

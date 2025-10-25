@@ -21,6 +21,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { DocumentUpload } from "@/components/DocumentUpload";
+import { ExamCertificatesView } from "@/components/profile/ExamCertificatesView";
 import {
   User,
   Mail,
@@ -327,9 +328,10 @@ export function ProfilePage() {
       </Card> */}
 
       <Tabs defaultValue="personal" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="personal">Personal Info</TabsTrigger>
           <TabsTrigger value="employment">Employment</TabsTrigger>
+          <TabsTrigger value="certificates">Certificates</TabsTrigger>
           <TabsTrigger value="documents">Documents</TabsTrigger>
         </TabsList>
 
@@ -804,6 +806,10 @@ export function ProfilePage() {
               
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="certificates" className="space-y-4">
+          <ExamCertificatesView employeeId={employee.id} />
         </TabsContent>
 
         <TabsContent value="documents" className="space-y-4">

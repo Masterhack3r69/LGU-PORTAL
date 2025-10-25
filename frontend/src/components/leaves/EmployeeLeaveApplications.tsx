@@ -1,32 +1,61 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { FileText, Edit, Trash2, Search, Clock, CalendarIcon, CheckCircle, XCircle } from 'lucide-react';
-import { format } from 'date-fns';
-import leaveService from '@/services/leaveService';
-import LeaveCard from './LeaveCard';
-import { showToast } from "@/lib/toast"
-import type { LeaveApplication } from '@/types/leave';
-import { dateStringToDateObject, dateObjectToDateString } from '@/utils/helpers';
+import React, { useState, useEffect, useCallback } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  FileText,
+  Edit,
+  Trash2,
+  Search,
+  Clock,
+  CalendarIcon,
+  CheckCircle,
+  XCircle,
+} from "lucide-react";
+import { format } from "date-fns";
+import leaveService from "@/services/leaveService";
+import LeaveCard from "./LeaveCard";
+import { showToast } from "@/lib/toast";
+import type { LeaveApplication } from "@/types/leave";
+import {
+  dateStringToDateObject,
+  dateObjectToDateString,
+} from "@/utils/helpers";
 
-const editLeaveSchema = z.object({
-  start_date: z.date(),
-  end_date: z.date(),
-  reason: z.string().min(1, 'Reason is required'),
-}).refine((data) => data.end_date >= data.start_date, {
-  message: "End date must be after or equal to start date",
-  path: ["end_date"],
-});
+const editLeaveSchema = z
+  .object({
+    start_date: z.date(),
+    end_date: z.date(),
+    reason: z.string().min(1, "Reason is required"),
+  })
+  .refine((data) => data.end_date >= data.start_date, {
+    message: "End date must be after or equal to start date",
+    path: ["end_date"],
+  });
 
 type EditLeaveFormData = z.infer<typeof editLeaveSchema>;
 
@@ -35,13 +64,14 @@ interface EmployeeLeaveApplicationsProps {
 }
 
 const EmployeeLeaveApplications: React.FC<EmployeeLeaveApplicationsProps> = ({
-  employeeId
+  employeeId,
 }) => {
   const [applications, setApplications] = useState<LeaveApplication[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [selectedApplication, setSelectedApplication] = useState<LeaveApplication | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [selectedApplication, setSelectedApplication] =
+    useState<LeaveApplication | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -56,13 +86,13 @@ const EmployeeLeaveApplications: React.FC<EmployeeLeaveApplicationsProps> = ({
       const response = await leaveService.getLeaveApplications({
         employee_id: employeeId,
         page: 1,
-        limit: 100
+        limit: 100,
       });
-      console.log('Received applications:', response);
+      console.log("Received applications:", response);
       setApplications(response.applications);
     } catch (error) {
-      showToast.error('Failed to load leave applications');
-      console.error('Error loading applications:', error);
+      showToast.error("Failed to load leave applications");
+      console.error("Error loading applications:", error);
     } finally {
       setIsLoading(false);
     }
@@ -73,19 +103,19 @@ const EmployeeLeaveApplications: React.FC<EmployeeLeaveApplicationsProps> = ({
   }, [loadApplications]);
 
   const handleEdit = (application: LeaveApplication) => {
-    if (application.status !== 'Pending') {
-      showToast.error('Only pending applications can be edited');
+    if (application.status !== "Pending") {
+      showToast.error("Only pending applications can be edited");
       return;
     }
     setSelectedApplication(application);
-    
+
     // Set form values
     form.reset({
       start_date: dateStringToDateObject(application.start_date),
       end_date: dateStringToDateObject(application.end_date),
       reason: application.reason,
     });
-    
+
     setShowEditDialog(true);
   };
 
@@ -99,13 +129,13 @@ const EmployeeLeaveApplications: React.FC<EmployeeLeaveApplicationsProps> = ({
         end_date: dateObjectToDateString(data.end_date),
         reason: data.reason,
       });
-      
-      showToast.success('Leave application updated successfully');
+
+      showToast.success("Leave application updated successfully");
       setShowEditDialog(false);
       loadApplications();
     } catch (error) {
-      showToast.error('Failed to update leave application');
-      console.error('Error updating application:', error);
+      showToast.error("Failed to update leave application");
+      console.error("Error updating application:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -119,46 +149,47 @@ const EmployeeLeaveApplications: React.FC<EmployeeLeaveApplicationsProps> = ({
   };
 
   const handleCancel = async (application: LeaveApplication) => {
-    if (application.status !== 'Pending') {
-      showToast.error('Only pending applications can be cancelled');
+    if (application.status !== "Pending") {
+      showToast.error("Only pending applications can be cancelled");
       return;
     }
 
     try {
       await leaveService.cancelLeaveApplication(application.id);
-      showToast.success('Leave application cancelled successfully');
+      showToast.success("Leave application cancelled successfully");
       loadApplications();
     } catch {
-      showToast.error('Failed to cancel leave application');
+      showToast.error("Failed to cancel leave application");
     }
   };
 
   const handleDelete = async (application: LeaveApplication) => {
-    if (application.status !== 'Pending') {
-      showToast.error('Only pending applications can be deleted');
+    if (application.status !== "Pending") {
+      showToast.error("Only pending applications can be deleted");
       return;
     }
 
-    if (!confirm('Are you sure you want to delete this leave application?')) {
+    if (!confirm("Are you sure you want to delete this leave application?")) {
       return;
     }
 
     try {
       await leaveService.deleteLeaveApplication(application.id);
-      showToast.success('Leave application deleted successfully');
+      showToast.success("Leave application deleted successfully");
       loadApplications();
     } catch {
-      showToast.error('Failed to delete leave application');
+      showToast.error("Failed to delete leave application");
     }
   };
 
-  const filteredApplications = applications.filter(app => {
-    const matchesSearch = !searchTerm || 
+  const filteredApplications = applications.filter((app) => {
+    const matchesSearch =
+      !searchTerm ||
       app.leave_type_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       app.reason.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'all' || app.status === statusFilter;
-    
+
+    const matchesStatus = statusFilter === "all" || app.status === statusFilter;
+
     return matchesSearch && matchesStatus;
   });
 
@@ -175,9 +206,9 @@ const EmployeeLeaveApplications: React.FC<EmployeeLeaveApplicationsProps> = ({
   const getStatusStats = () => {
     return {
       total: applications.length,
-      pending: applications.filter(app => app.status === 'Pending').length,
-      approved: applications.filter(app => app.status === 'Approved').length,
-      rejected: applications.filter(app => app.status === 'Rejected').length,
+      pending: applications.filter((app) => app.status === "Pending").length,
+      approved: applications.filter((app) => app.status === "Approved").length,
+      rejected: applications.filter((app) => app.status === "Rejected").length,
     };
   };
 
@@ -189,7 +220,9 @@ const EmployeeLeaveApplications: React.FC<EmployeeLeaveApplicationsProps> = ({
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="border-l-4 border-l-blue-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Applications</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Applications
+            </CardTitle>
             <FileText className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
@@ -216,7 +249,9 @@ const EmployeeLeaveApplications: React.FC<EmployeeLeaveApplicationsProps> = ({
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.approved}</div>
-            <p className="text-xs text-muted-foreground">successfully approved</p>
+            <p className="text-xs text-muted-foreground">
+              successfully approved
+            </p>
           </CardContent>
         </Card>
 
@@ -268,10 +303,9 @@ const EmployeeLeaveApplications: React.FC<EmployeeLeaveApplicationsProps> = ({
         <Card>
           <CardContent className="p-6">
             <div className="text-center text-muted-foreground">
-              {applications.length === 0 
+              {applications.length === 0
                 ? "No leave applications found. Create your first application!"
-                : "No applications match your search criteria."
-              }
+                : "No applications match your search criteria."}
             </div>
           </CardContent>
         </Card>
@@ -283,7 +317,7 @@ const EmployeeLeaveApplications: React.FC<EmployeeLeaveApplicationsProps> = ({
               leave={application}
               actions={
                 <div className="flex space-x-2">
-                  {application.status === 'Pending' && (
+                  {application.status === "Pending" && (
                     <>
                       <Button
                         size="sm"
@@ -322,12 +356,16 @@ const EmployeeLeaveApplications: React.FC<EmployeeLeaveApplicationsProps> = ({
             <DialogHeader>
               <DialogTitle>Edit Leave Application</DialogTitle>
             </DialogHeader>
-            <form onSubmit={form.handleSubmit(handleEditSubmit)} className="space-y-6 p-4">
+            <form
+              onSubmit={form.handleSubmit(handleEditSubmit)}
+              className="space-y-6 p-4"
+            >
               {/* Leave Type Display */}
               <div className="space-y-2">
                 <Label>Leave Type</Label>
                 <div className="p-2 bg-muted rounded text-sm">
-                  {selectedApplication.leave_type_name} ({selectedApplication.leave_type_code})
+                  {selectedApplication.leave_type_name} (
+                  {selectedApplication.leave_type_code})
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Leave type cannot be changed after submission
@@ -344,25 +382,29 @@ const EmployeeLeaveApplications: React.FC<EmployeeLeaveApplicationsProps> = ({
                       <Button
                         variant="outline"
                         className={`w-full justify-start text-left font-normal ${
-                          !form.watch('start_date') && 'text-muted-foreground'
+                          !form.watch("start_date") && "text-muted-foreground"
                         }`}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {form.watch('start_date') ? format(form.watch('start_date'), 'PPP') : 'Pick a start date'}
+                        {form.watch("start_date")
+                          ? format(form.watch("start_date"), "PPP")
+                          : "Pick a start date"}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
                       <Calendar
                         mode="single"
-                        selected={form.watch('start_date')}
-                        onSelect={(date) => form.setValue('start_date', date!)}
+                        selected={form.watch("start_date")}
+                        onSelect={(date) => form.setValue("start_date", date!)}
                         disabled={(date) => date < new Date()}
                         initialFocus
                       />
                     </PopoverContent>
                   </Popover>
                   {form.formState.errors.start_date && (
-                    <p className="text-sm text-red-600">{form.formState.errors.start_date.message}</p>
+                    <p className="text-sm text-red-600">
+                      {form.formState.errors.start_date.message}
+                    </p>
                   )}
                 </div>
 
@@ -374,34 +416,48 @@ const EmployeeLeaveApplications: React.FC<EmployeeLeaveApplicationsProps> = ({
                       <Button
                         variant="outline"
                         className={`w-full justify-start text-left font-normal ${
-                          !form.watch('end_date') && 'text-muted-foreground'
+                          !form.watch("end_date") && "text-muted-foreground"
                         }`}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {form.watch('end_date') ? format(form.watch('end_date'), 'PPP') : 'Pick an end date'}
+                        {form.watch("end_date")
+                          ? format(form.watch("end_date"), "PPP")
+                          : "Pick an end date"}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
                       <Calendar
                         mode="single"
-                        selected={form.watch('end_date')}
-                        onSelect={(date) => form.setValue('end_date', date!)}
-                        disabled={(date) => !form.watch('start_date') || date < form.watch('start_date')}
+                        selected={form.watch("end_date")}
+                        onSelect={(date) => form.setValue("end_date", date!)}
+                        disabled={(date) =>
+                          !form.watch("start_date") ||
+                          date < form.watch("start_date")
+                        }
                         initialFocus
                       />
                     </PopoverContent>
                   </Popover>
                   {form.formState.errors.end_date && (
-                    <p className="text-sm text-red-600">{form.formState.errors.end_date.message}</p>
+                    <p className="text-sm text-red-600">
+                      {form.formState.errors.end_date.message}
+                    </p>
                   )}
                 </div>
               </div>
 
               {/* Days Calculation */}
-              {form.watch('start_date') && form.watch('end_date') && (
+              {form.watch("start_date") && form.watch("end_date") && (
                 <div className="flex items-center space-x-2 text-sm">
                   <Clock className="h-4 w-4" />
-                  <span>Duration: {calculateDays(form.watch('start_date'), form.watch('end_date'))} day(s)</span>
+                  <span>
+                    Duration:{" "}
+                    {calculateDays(
+                      form.watch("start_date"),
+                      form.watch("end_date")
+                    )}{" "}
+                    day(s)
+                  </span>
                 </div>
               )}
 
@@ -409,12 +465,14 @@ const EmployeeLeaveApplications: React.FC<EmployeeLeaveApplicationsProps> = ({
               <div className="space-y-2">
                 <Label htmlFor="reason">Reason *</Label>
                 <Textarea
-                  {...form.register('reason')}
+                  {...form.register("reason")}
                   placeholder="Please provide a reason for your leave request..."
                   className="min-h-[100px]"
                 />
                 {form.formState.errors.reason && (
-                  <p className="text-sm text-red-600">{form.formState.errors.reason.message}</p>
+                  <p className="text-sm text-red-600">
+                    {form.formState.errors.reason.message}
+                  </p>
                 )}
               </div>
 
@@ -425,11 +483,11 @@ const EmployeeLeaveApplications: React.FC<EmployeeLeaveApplicationsProps> = ({
                   disabled={isSubmitting}
                   className="flex-1"
                 >
-                  {isSubmitting ? 'Updating...' : 'Update Application'}
+                  {isSubmitting ? "Updating..." : "Update Application"}
                 </Button>
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={() => setShowEditDialog(false)}
                   disabled={isSubmitting}
                 >

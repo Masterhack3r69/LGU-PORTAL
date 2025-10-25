@@ -29,10 +29,12 @@ import {
 } from "@/components/ui/form";
 import { DatePicker } from "@/components/ui/date-picker";
 import { employeeService } from "@/services/employeeService";
-import type { Employee, UpdateEmployeeDTO } from "@/types/employee";
+import { examCertificateService } from "@/services/examCertificateService";
+import type { Employee, UpdateEmployeeDTO, ExamCertificate } from "@/types/employee";
 import { ArrowLeft, Save } from "lucide-react";
 import { showToast } from "@/lib/toast";
 import { dateStringToDateObject, dateObjectToDateString } from "@/utils/helpers";
+import { ExamCertificateManager } from "@/components/admin/ExamCertificateManager";
 
 const employeeSchema = z.object({
   employee_number: z.string().min(1, "Employee number is required"),
@@ -95,6 +97,8 @@ export function EmployeeEditPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingEmployee, setIsLoadingEmployee] = useState(true);
   const [employee, setEmployee] = useState<Employee | null>(null);
+  const [examCertificates, setExamCertificates] = useState<ExamCertificate[]>([]);
+  const [originalCertificates, setOriginalCertificates] = useState<ExamCertificate[]>([]);
 
   const form = useForm<EmployeeFormData>({
     resolver: zodResolver(employeeSchema) as any,
@@ -131,6 +135,17 @@ export function EmployeeEditPage() {
         setIsLoadingEmployee(true);
         const emp = await employeeService.getEmployee(parseInt(id));
         setEmployee(emp);
+
+        // Fetch exam certificates
+        try {
+          const certs = await examCertificateService.getExamCertificatesByEmployee(parseInt(id));
+          setExamCertificates(certs || []);
+          setOriginalCertificates(certs || []);
+        } catch (certError) {
+          console.error('Failed to fetch exam certificates:', certError);
+          setExamCertificates([]);
+          setOriginalCertificates([]);
+        }
 
         // Helper function to format dates for form inputs - same as ProfilePage
         const formatDateForInput = (
@@ -291,9 +306,53 @@ export function EmployeeEditPage() {
         separation_reason: cleanString(data.separation_reason),
       };
 
-      console.log("Sending update data:", updateData);
-      console.log("Employment status being sent:", data.employment_status);
       await employeeService.updateEmployee(employee.id, updateData);
+
+      // Handle exam certificates
+      try {
+        const currentCerts = examCertificates || [];
+        const origCerts = originalCertificates || [];
+
+        // Find certificates to delete (in original but not in current)
+        const certsToDelete = origCerts.filter(
+          orig => !currentCerts.find(curr => curr.id === orig.id)
+        );
+
+        // Find certificates to add (no id)
+        const certsToAdd = currentCerts.filter(cert => !cert.id);
+
+        // Find certificates to update (has id and exists in both)
+        const certsToUpdate = currentCerts.filter(cert => 
+          cert.id && origCerts.find(orig => orig.id === cert.id)
+        );
+
+        // Execute operations
+        const operations = [
+          ...certsToDelete.filter(cert => cert.id).map(cert => 
+            examCertificateService.deleteExamCertificate(cert.id!)
+          ),
+          ...certsToAdd.map(cert => 
+            examCertificateService.createExamCertificate({
+              ...cert,
+              employee_id: employee.id
+            })
+          ),
+          ...certsToUpdate.filter(cert => cert.id).map(cert => 
+            examCertificateService.updateExamCertificate(cert.id!, {
+              ...cert,
+              id: cert.id!
+            })
+          )
+        ];
+
+        if (operations.length > 0) {
+          await Promise.all(operations);
+        }
+      } catch (certError) {
+        console.error('Failed to update exam certificates:', certError);
+        showToast.error('Employee updated but some exam certificates failed to save');
+      }
+
       showToast.success("Employee updated successfully");
       navigate("/employees");
     } catch (error) {
@@ -902,6 +961,12 @@ export function EmployeeEditPage() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Exam Certificates */}
+          <ExamCertificateManager
+            certificates={examCertificates}
+            onChange={setExamCertificates}
+          />
 
           {/* Form Actions */}
           <div className="flex justify-end gap-4">

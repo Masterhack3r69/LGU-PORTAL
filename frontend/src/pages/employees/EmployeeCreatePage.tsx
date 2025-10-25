@@ -18,10 +18,12 @@ import {
 } from '@/components/ui/dialog';
 import { DatePicker } from '@/components/ui/date-picker';
 import { employeeService } from '@/services/employeeService';
-import type { CreateEmployeeDTO } from '@/types/employee';
+import { examCertificateService } from '@/services/examCertificateService';
+import type { CreateEmployeeDTO, ExamCertificate } from '@/types/employee';
 import { ArrowLeft, Save, Copy, Eye, EyeOff } from 'lucide-react';
 import { showToast } from "@/lib/toast";
 import { dateStringToDateObject, dateObjectToDateString } from '@/utils/helpers';
+import { ExamCertificateManager } from '@/components/admin/ExamCertificateManager';
 
 const employeeSchema = z.object({
   employee_number: z.string().min(1, 'Employee number is required'),
@@ -61,6 +63,7 @@ export function EmployeeCreatePage() {
   const [showCredentialsDialog, setShowCredentialsDialog] = useState(false);
   const [generatedCredentials, setGeneratedCredentials] = useState<{ username: string; password: string } | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [examCertificates, setExamCertificates] = useState<ExamCertificate[]>([]);
 
   const form = useForm<EmployeeFormData>({
     resolver: zodResolver(employeeSchema),
@@ -162,16 +165,24 @@ export function EmployeeCreatePage() {
         separation_reason: data.separation_reason || undefined,
       };
       
-      // Debug logging
-      console.log('Form data:', data);
-      console.log('Processed data for API:', createData);
-      console.log('Separation fields:', {
-        separation_date: createData.separation_date,
-        separation_reason: createData.separation_reason,
-        employment_status: createData.employment_status
-      });
-      
       const result = await employeeService.createEmployee(createData);
+      
+      // Save exam certificates if any
+      if (examCertificates.length > 0 && result.employee?.id) {
+        try {
+          await Promise.all(
+            examCertificates.map(cert =>
+              examCertificateService.createExamCertificate({
+                ...cert,
+                employee_id: result.employee.id
+              })
+            )
+          );
+        } catch (certError) {
+          console.error('Failed to save exam certificates:', certError);
+          showToast.error('Employee created but some exam certificates failed to save');
+        }
+      }
       
       // Use credentials from backend if user account was created
       if (result.userAccount) {
@@ -182,12 +193,6 @@ export function EmployeeCreatePage() {
       showToast.success('Employee created successfully');
     } catch (error) {
       console.error('Failed to create employee:', error);
-      // Log more detailed error information
-      if (error && typeof error === 'object' && 'response' in error) {
-        const axiosError = error as { response?: { data?: unknown; status?: number } };
-        console.error('Error response:', axiosError.response?.data);
-        console.error('Error status:', axiosError.response?.status);
-      }
       showToast.error('Failed to create employee');
     } finally {
       setIsLoading(false);
@@ -710,6 +715,12 @@ export function EmployeeCreatePage() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Exam Certificates */}
+          <ExamCertificateManager
+            certificates={examCertificates}
+            onChange={setExamCertificates}
+          />
 
           {/* Form Actions */}
           <div className="flex justify-end gap-4">

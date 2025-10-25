@@ -118,6 +118,15 @@ class LeaveService {
     return response.data;
   }
 
+  async getAllEmployeeBalances(year?: number): Promise<BalanceUtilization[]> {
+    const params = year ? { year } : {};
+    const response = await apiService.get<{ success: boolean; data: BalanceUtilization[] }>(
+      '/leaves/reports/balance-utilization',
+      params
+    );
+    return response.data;
+  }
+
   async initializeBalances(data: InitializeBalancesDTO): Promise<void> {
     await apiService.post('/leaves/initialize-balances', data);
   }
