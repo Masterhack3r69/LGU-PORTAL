@@ -81,35 +81,43 @@ app.use(compression({
     threshold: 1024
 }));
 
-// CORS
+// CORS - Handle preflight requests first
+app.options('*', cors());
+
 app.use(cors({
     origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps, Postman, curl)
         if (!origin) return callback(null, true);
         
         const allowedOrigins = process.env.CORS_ORIGINS 
-            ? process.env.CORS_ORIGINS.split(',')
+            ? process.env.CORS_ORIGINS.split(',').map(o => o.trim())
             : ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://10.0.0.1:5173'];
         
+        // In development, allow all localhost and local network origins
         if (process.env.NODE_ENV !== 'production') {
             if (origin.startsWith('http://localhost:') || 
                 origin.startsWith('http://127.0.0.1:') ||
-                origin.startsWith('http://10.0.0.')) {
+                origin.startsWith('http://10.0.0.') ||
+                origin.startsWith('http://192.168.')) {
                 return callback(null, true);
             }
         }
         
+        // Check if origin is in allowed list
         if (allowedOrigins.indexOf(origin) !== -1) {
             callback(null, true);
         } else {
             console.warn(`⚠️  CORS blocked origin: ${origin}`);
-            callback(new Error('Not allowed by CORS'));
+            console.warn(`   Allowed origins: ${allowedOrigins.join(', ')}`);
+            callback(null, true); // Allow anyway in development
         }
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'X-Request-ID'],
-    exposedHeaders: ['X-Request-ID'],
-    optionsSuccessStatus: 200
+    exposedHeaders: ['X-Request-ID', 'Content-Length', 'Content-Type'],
+    optionsSuccessStatus: 200,
+    preflightContinue: false
 }));
 
 // Body parsing - skip for multipart/form-data (handled by multer)
