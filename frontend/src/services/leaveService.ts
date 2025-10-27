@@ -141,6 +141,10 @@ class LeaveService {
     return response.data;
   }
 
+  async deleteLeaveBalance(id: number): Promise<void> {
+    await apiService.delete(`/leaves/balances/${id}`);
+  }
+
   async monetizeLeave(data: MonetizeLeaveDTO): Promise<void> {
     await apiService.post('/leaves/monetize', data);
   }

@@ -42,6 +42,8 @@ import {
   ChevronsUpDown,
   TrendingUp,
   AlertCircle,
+  Edit,
+  Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import leaveService from "@/services/leaveService";
@@ -69,6 +71,22 @@ const AdminLeaveBalances: React.FC = () => {
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedEmployee, setSelectedEmployee] =
     useState<BalanceUtilization | null>(null);
+  const [detailEmployeeBalances, setDetailEmployeeBalances] = useState<
+    LeaveBalance[]
+  >([]);
+  const [loadingDetailBalances, setLoadingDetailBalances] = useState(false);
+
+  // Edit dialog state
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editingBalance, setEditingBalance] = useState<LeaveBalance | null>(
+    null
+  );
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [editForm, setEditForm] = useState({
+    earned_days: 0,
+    carried_forward: 0,
+    reason: "",
+  });
 
   // Combobox state
   const [employeeComboboxOpen, setEmployeeComboboxOpen] = useState(false);
@@ -314,6 +332,93 @@ const AdminLeaveBalances: React.FC = () => {
       setCurrentEmployeeBalances([]);
     }
     setShowAddDialog(open);
+  };
+
+  const handleEditBalance = (balance: LeaveBalance) => {
+    setEditingBalance(balance);
+    setEditForm({
+      earned_days: Number(balance.earned_days),
+      carried_forward: Number(balance.carried_forward || 0),
+      reason: "",
+    });
+    setShowEditDialog(true);
+  };
+
+  const handleUpdateBalance = async () => {
+    if (!editingBalance) return;
+
+    if (editForm.earned_days < 0) {
+      showToast.error("Earned days cannot be negative");
+      return;
+    }
+
+    if (editForm.carried_forward < 0) {
+      showToast.error("Carried forward cannot be negative");
+      return;
+    }
+
+    try {
+      setIsUpdating(true);
+      await leaveService.updateLeaveBalance(editingBalance.id, editForm);
+      showToast.success("Leave balance updated successfully");
+      setShowEditDialog(false);
+      setEditingBalance(null);
+
+      // Reload balances
+      loadAllBalances();
+
+      // Reload detail employee balances if in detail view
+      if (selectedEmployee) {
+        const balances = await leaveService.getLeaveBalances(
+          selectedEmployee.employee_id,
+          selectedYear
+        );
+        setDetailEmployeeBalances(balances);
+      }
+    } catch (error: unknown) {
+      const message =
+        error && typeof error === "object" && "response" in error
+          ? (error as { response?: { data?: { message?: string } } }).response
+              ?.data?.message || "Failed to update leave balance"
+          : "Failed to update leave balance";
+      showToast.error(message);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleDeleteBalance = async (balance: LeaveBalance) => {
+    if (
+      !confirm(
+        `Are you sure you want to delete this ${balance.leave_type_name} balance? This action cannot be undone.`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      await leaveService.deleteLeaveBalance(balance.id);
+      showToast.success("Leave balance deleted successfully");
+
+      // Reload balances
+      loadAllBalances();
+
+      // Reload detail employee balances if in detail view
+      if (selectedEmployee) {
+        const balances = await leaveService.getLeaveBalances(
+          selectedEmployee.employee_id,
+          selectedYear
+        );
+        setDetailEmployeeBalances(balances);
+      }
+    } catch (error: unknown) {
+      const message =
+        error && typeof error === "object" && "response" in error
+          ? (error as { response?: { data?: { message?: string } } }).response
+              ?.data?.message || "Failed to delete leave balance"
+          : "Failed to delete leave balance";
+      showToast.error(message);
+    }
   };
 
   const getUtilizationBadge = (percentage: number) => {
@@ -789,9 +894,26 @@ const AdminLeaveBalances: React.FC = () => {
                           index
                         }`}
                         className="cursor-pointer hover:bg-muted/50 transition-colors"
-                        onClick={() => {
+                        onClick={async () => {
                           setSelectedEmployee(employeeBalance);
                           setShowDetailDialog(true);
+                          setLoadingDetailBalances(true);
+                          try {
+                            const balances =
+                              await leaveService.getLeaveBalances(
+                                employeeBalance.employee_id,
+                                selectedYear
+                              );
+                            setDetailEmployeeBalances(balances);
+                          } catch (error) {
+                            console.error(
+                              "Error loading detail balances:",
+                              error
+                            );
+                            setDetailEmployeeBalances([]);
+                          } finally {
+                            setLoadingDetailBalances(false);
+                          }
                         }}
                       >
                         <TableCell className="text-muted-foreground">
@@ -867,15 +989,24 @@ const AdminLeaveBalances: React.FC = () => {
                 Leave Balance Details - {selectedYear}
               </h3>
               <Badge variant="outline" className="text-sm">
-                {selectedEmployee?.balances?.length || 0} Leave Types
+                {detailEmployeeBalances.length} Leave Types
               </Badge>
             </div>
 
-            {selectedEmployee?.balances &&
-            selectedEmployee.balances.length > 0 ? (
+            {loadingDetailBalances ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                <span>Loading balances...</span>
+              </div>
+            ) : detailEmployeeBalances.length > 0 ? (
               <div className="grid gap-4">
-                {selectedEmployee.balances.map((balance, idx) => (
-                  <Card key={idx} className="border-l-4 border-l-primary">
+                {detailEmployeeBalances.map((balance, idx) => (
+                  <Card
+                    key={
+                      balance.id || `balance-${balance.leave_type_id}-${idx}`
+                    }
+                    className="border-l-4 border-l-primary"
+                  >
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
                         <div>
@@ -886,7 +1017,31 @@ const AdminLeaveBalances: React.FC = () => {
                             {balance.leave_type_code}
                           </Badge>
                         </div>
-                        {getUtilizationBadge(balance.utilization_percentage)}
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditBalance(balance);
+                            }}
+                          >
+                            <Edit className="h-4 w-4 mr-1" />
+                            Edit
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteBalance(balance);
+                            }}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4 mr-1" />
+                            Delete
+                          </Button>
+                        </div>
                       </div>
                     </CardHeader>
                     <CardContent>
@@ -917,13 +1072,10 @@ const AdminLeaveBalances: React.FC = () => {
                         </div>
                         <div className="space-y-1">
                           <p className="text-xs text-muted-foreground">
-                            Utilization
+                            Carried Forward
                           </p>
-                          <p className="text-2xl font-bold">
-                            {Number(
-                              balance.utilization_percentage || 0
-                            ).toFixed(0)}
-                            %
+                          <p className="text-2xl font-bold text-purple-600">
+                            {Number(balance.carried_forward || 0).toFixed(1)}
                           </p>
                         </div>
                       </div>
@@ -936,6 +1088,143 @@ const AdminLeaveBalances: React.FC = () => {
                 No leave balances found for this employee.
               </div>
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Balance Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Leave Balance</DialogTitle>
+            <DialogDescription>
+              Update the leave balance for {editingBalance?.leave_type_name}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 p-4">
+            {/* Current Balance Info */}
+            {editingBalance && (
+              <div className="p-3 bg-muted rounded-lg border">
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">
+                      Current Earned:
+                    </span>
+                    <span className="ml-2 font-semibold">
+                      {Number(editingBalance.earned_days).toFixed(1)} days
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Used:</span>
+                    <span className="ml-2 font-semibold">
+                      {Number(editingBalance.used_days).toFixed(1)} days
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Available:</span>
+                    <span className="ml-2 font-semibold text-green-600">
+                      {Number(editingBalance.current_balance).toFixed(1)} days
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">
+                      Carried Forward:
+                    </span>
+                    <span className="ml-2 font-semibold">
+                      {Number(editingBalance.carried_forward || 0).toFixed(1)}{" "}
+                      days
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Edit Form */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-earned-days">Earned Days *</Label>
+                <Input
+                  id="edit-earned-days"
+                  type="number"
+                  step="0.5"
+                  min="0"
+                  value={editForm.earned_days}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({
+                      ...prev,
+                      earned_days: parseFloat(e.target.value) || 0,
+                    }))
+                  }
+                  placeholder="0"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Total days earned for this leave type
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-carried-forward">Carried Forward</Label>
+                <Input
+                  id="edit-carried-forward"
+                  type="number"
+                  step="0.5"
+                  min="0"
+                  value={editForm.carried_forward}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({
+                      ...prev,
+                      carried_forward: parseFloat(e.target.value) || 0,
+                    }))
+                  }
+                  placeholder="0"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Days carried forward from previous year
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-reason">Reason for Update *</Label>
+                <textarea
+                  id="edit-reason"
+                  value={editForm.reason}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({
+                      ...prev,
+                      reason: e.target.value,
+                    }))
+                  }
+                  placeholder="Explain why you're updating this balance..."
+                  className="w-full min-h-[80px] p-2 border rounded-md text-sm"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex justify-end gap-2 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setShowEditDialog(false)}
+                disabled={isUpdating}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleUpdateBalance}
+                disabled={isUpdating || !editForm.reason.trim()}
+              >
+                {isUpdating ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  "Update Balance"
+                )}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

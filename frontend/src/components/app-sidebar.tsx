@@ -214,13 +214,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     });
   }
 
-  // Settings and Profile for all users
-  navMain.push({
-    title: "My Profile",
-    url: "/profile",
-    icon: User,
-    items: [], // No dropdown items
-  });
+  // Settings and Profile for all users (hide My Profile for admin)
+  if (user?.role !== "admin") {
+    navMain.push({
+      title: "My Profile",
+      url: "/profile",
+      icon: User,
+      items: [], // No dropdown items
+    });
+  }
 
   navMain.push({
     title: "Settings",

@@ -1807,6 +1807,7 @@ class LeaveReports {
         
         let query = `
             SELECT 
+                e.id as employee_id,
                 e.employee_number,
                 CONCAT(e.first_name, ' ', e.last_name) as employee_name,
                 e.plantilla_position,
