@@ -878,20 +878,11 @@ export function PayrollManagementPage() {
         open={showDtrRecordsDialog}
         onOpenChange={setShowDtrRecordsDialog}
       >
-        <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>DTR Records</DialogTitle>
-            <DialogDescription>
-              View and manage DTR records for{" "}
-              {selectedPeriod &&
-                `${getMonthName(selectedPeriod.year, selectedPeriod.month)} ${
-                  selectedPeriod.year
-                } - Period ${selectedPeriod.period_number}`}
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto p-0">
           {selectedPeriod && (
             <DTRRecordsTable
               periodId={selectedPeriod.id}
+              periodDescription={`View and manage DTR records for ${getMonthName(selectedPeriod.year, selectedPeriod.month)} ${selectedPeriod.year} - Period ${selectedPeriod.period_number}`}
               onRecordUpdate={() => {
                 loadDTRStats(selectedPeriod.id);
                 loadPayrollItems(selectedPeriod.id);

@@ -470,11 +470,16 @@ class PayrollItemController {
                 return errorResponse(res, 'Failed to add manual adjustment', 500);
             }
 
-            // Update payroll item totals
+            // Update payroll item totals - ensure amount is a number
+            const adjustmentAmount = parseFloat(amount);
+            if (isNaN(adjustmentAmount)) {
+                return errorResponse(res, 'Invalid amount value', 400);
+            }
+
             if (adjustment_type === 'Allowance') {
-                payrollItem.total_allowances += amount;
+                payrollItem.total_allowances = parseFloat(payrollItem.total_allowances) + adjustmentAmount;
             } else if (adjustment_type === 'Deduction') {
-                payrollItem.total_deductions += amount;
+                payrollItem.total_deductions = parseFloat(payrollItem.total_deductions) + adjustmentAmount;
             }
 
             payrollItem.updateCalculatedAmounts();

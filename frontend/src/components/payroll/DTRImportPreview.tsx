@@ -420,23 +420,49 @@ export function DTRImportPreview({
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {previewData.warningRecords.map((warning, index) => (
-                        <TableRow key={index} className="hover:bg-yellow-50/50">
-                          <TableCell className="font-medium">
-                            {warning.row}
-                          </TableCell>
-                          <TableCell>{warning.employeeNumber || "-"}</TableCell>
-                          <TableCell className="text-yellow-700">
-                            {warning.message}
-                          </TableCell>
-                          <TableCell className="text-sm text-gray-600">
-                            {warning.value !== undefined &&
-                            warning.value !== null
-                              ? String(warning.value)
-                              : "-"}
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                      {previewData.warningRecords.flatMap((warningRecord: any, recordIndex: number) => {
+                        // Handle nested warnings array structure from backend
+                        const warnings = warningRecord.warnings || [];
+                        if (warnings.length === 0) {
+                          // Fallback for direct warning format
+                          return [(
+                            <TableRow key={recordIndex} className="hover:bg-yellow-50/50">
+                              <TableCell className="font-medium">
+                                {warningRecord.rowNumber || warningRecord.row || "-"}
+                              </TableCell>
+                              <TableCell>{warningRecord.employeeNumber || "-"}</TableCell>
+                              <TableCell className="text-yellow-700">
+                                {warningRecord.message || "No warning message"}
+                              </TableCell>
+                              <TableCell className="text-sm text-gray-600">
+                                {warningRecord.value !== undefined && warningRecord.value !== null
+                                  ? String(warningRecord.value)
+                                  : "-"}
+                              </TableCell>
+                            </TableRow>
+                          )];
+                        }
+                        
+                        // Map each warning in the warnings array
+                        return warnings.map((warning: any, warningIndex: number) => (
+                          <TableRow key={`${recordIndex}-${warningIndex}`} className="hover:bg-yellow-50/50">
+                            <TableCell className="font-medium">
+                              {warningRecord.rowNumber || warningRecord.row || "-"}
+                            </TableCell>
+                            <TableCell>{warningRecord.employeeNumber || "-"}</TableCell>
+                            <TableCell className="text-yellow-700">
+                              {warning.message || "No warning message"}
+                            </TableCell>
+                            <TableCell className="text-sm text-gray-600">
+                              {warning.value !== undefined && warning.value !== null
+                                ? String(warning.value)
+                                : (warningRecord.record?.workingDays !== undefined 
+                                    ? String(warningRecord.record.workingDays)
+                                    : "-")}
+                            </TableCell>
+                          </TableRow>
+                        ));
+                      })}
                     </TableBody>
                   </Table>
                 </div>

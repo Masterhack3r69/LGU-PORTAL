@@ -171,9 +171,11 @@ class PayrollCalculationEngine {
                 );
 
                 if (override) {
+                    // Override amounts are NOT prorated - they bypass working days calculation
+                    // This allows employees on leave (maternity, sick leave, etc.) to still receive their allowances
                     amount = parseFloat(override.override_amount) || 0;
                     isOverride = true;
-                    calculationBasis = `Override: ₱${amount}`;
+                    calculationBasis = `Override: ₱${amount.toFixed(2)} (fixed amount, not prorated)`;
                 } else if (allowanceOverrides[allowanceType.id]) {
                     // Manual override for this calculation
                     amount = parseFloat(allowanceOverrides[allowanceType.id]) || 0;
@@ -265,21 +267,57 @@ class PayrollCalculationEngine {
                 }
             }
 
-            // Process optional deductions
-            for (const deductionType of optionalTypes) {
-                const result = await this.processDeductionType(
-                    deductionType, 
-                    employee, 
-                    calculation, 
-                    deductionOverrides
-                );
-                console.log(`Optional deduction ${deductionType.name}: ₱${result.amount}`);
-                
-                // Include all deductions for transparency
-                deductionItems.push(result);
-                if (result.amount > 0) {
-                    totalDeductions += result.amount;
+            // Process optional deductions only if employee has positive gross pay
+            // This prevents negative salaries when employee is absent
+            if (calculation.gross_pay > 0) {
+                for (const deductionType of optionalTypes) {
+                    const result = await this.processDeductionType(
+                        deductionType, 
+                        employee, 
+                        calculation, 
+                        deductionOverrides
+                    );
+                    console.log(`Optional deduction ${deductionType.name}: ₱${result.amount}`);
+                    
+                    // Include all deductions for transparency
+                    deductionItems.push(result);
+                    if (result.amount > 0) {
+                        totalDeductions += result.amount;
+                    }
                 }
+            } else {
+                console.log('Skipping optional deductions - employee has zero gross pay');
+                // Add optional deductions with zero amount for transparency
+                for (const deductionType of optionalTypes) {
+                    deductionItems.push({
+                        type_id: deductionType.id,
+                        name: deductionType.name,
+                        code: deductionType.code,
+                        amount: 0,
+                        is_override: false,
+                        is_mandatory: false,
+                        calculation_basis: 'Skipped - zero gross pay'
+                    });
+                }
+            }
+
+            // Ensure total deductions don't exceed gross pay to prevent negative salary
+            if (totalDeductions > calculation.gross_pay && calculation.gross_pay > 0) {
+                console.warn(`Total deductions (₱${totalDeductions}) exceed gross pay (₱${calculation.gross_pay}). Capping deductions.`);
+                const cappingRatio = calculation.gross_pay / totalDeductions;
+                
+                // Prorate all deductions proportionally
+                deductionItems.forEach(item => {
+                    if (item.amount > 0) {
+                        const originalAmount = item.amount;
+                        item.amount = parseFloat((item.amount * cappingRatio).toFixed(2));
+                        item.calculation_basis += ` (prorated from ₱${originalAmount.toFixed(2)} due to insufficient gross pay)`;
+                    }
+                });
+                
+                totalDeductions = calculation.gross_pay;
+                calculation.warnings = calculation.warnings || [];
+                calculation.warnings.push('Deductions were capped to prevent negative salary');
             }
 
         } catch (error) {
@@ -312,9 +350,11 @@ class PayrollCalculationEngine {
         );
 
         if (override) {
+            // Override amounts are NOT prorated - they bypass working days calculation
+            // This ensures consistent deductions regardless of attendance (e.g., loans, fixed contributions)
             amount = parseFloat(override.override_amount) || 0;
             isOverride = true;
-            calculationBasis = `Override: ₱${amount}`;
+            calculationBasis = `Override: ₱${amount.toFixed(2)} (fixed amount, not prorated)`;
         } else if (deductionOverrides[deductionType.id]) {
             // Manual override for this calculation
             amount = parseFloat(deductionOverrides[deductionType.id]) || 0;
@@ -352,10 +392,22 @@ class PayrollCalculationEngine {
         // Normalize calculation type to handle both cases
         const calcType = (allowanceType.calculation_type || '').toLowerCase();
 
+        // Calculate the proration factor based on working days
+        const prorationFactor = calculation.working_days / this.defaultWorkingDays;
+        const shouldProrate = calculation.working_days < this.defaultWorkingDays;
+
         switch (calcType) {
             case 'fixed':
                 amount = parseFloat(allowanceType.default_amount) || 0;
-                basis = `Fixed amount: ₱${amount}`;
+                
+                // Prorate fixed allowances based on working days
+                if (shouldProrate && amount > 0) {
+                    const originalAmount = amount;
+                    amount = amount * prorationFactor;
+                    basis = `Fixed amount: ₱${originalAmount.toFixed(2)} × ${calculation.working_days}/${this.defaultWorkingDays} days = ₱${amount.toFixed(2)}`;
+                } else {
+                    basis = `Fixed amount: ₱${amount}`;
+                }
                 break;
 
             case 'percentage':
@@ -383,10 +435,18 @@ class PayrollCalculationEngine {
             default:
                 console.warn(`Unknown allowance calculation type: ${allowanceType.calculation_type}`);
                 amount = parseFloat(allowanceType.default_amount) || 0;
-                basis = `Default amount: ₱${amount} (unknown type: ${allowanceType.calculation_type})`;
+                
+                // Prorate unknown type allowances based on working days
+                if (shouldProrate && amount > 0) {
+                    const originalAmount = amount;
+                    amount = amount * prorationFactor;
+                    basis = `Default amount: ₱${originalAmount.toFixed(2)} × ${calculation.working_days}/${this.defaultWorkingDays} days (unknown type: ${allowanceType.calculation_type})`;
+                } else {
+                    basis = `Default amount: ₱${amount} (unknown type: ${allowanceType.calculation_type})`;
+                }
         }
 
-        return { amount: parseFloat(amount), basis };
+        return { amount: parseFloat(amount.toFixed(2)), basis };
     }
 
     // Calculate deduction amount based on type
@@ -397,10 +457,22 @@ class PayrollCalculationEngine {
         // Normalize calculation type to handle both cases
         const calcType = (deductionType.calculation_type || '').toLowerCase();
 
+        // Calculate the proration factor based on working days
+        const prorationFactor = calculation.working_days / this.defaultWorkingDays;
+        const shouldProrate = calculation.working_days < this.defaultWorkingDays;
+
         switch (calcType) {
             case 'fixed':
                 amount = parseFloat(deductionType.default_amount) || 0;
-                basis = `Fixed amount: ₱${amount}`;
+                
+                // Prorate fixed deductions based on working days
+                if (shouldProrate && amount > 0) {
+                    const originalAmount = amount;
+                    amount = amount * prorationFactor;
+                    basis = `Fixed amount: ₱${originalAmount.toFixed(2)} × ${calculation.working_days}/${this.defaultWorkingDays} days = ₱${amount.toFixed(2)}`;
+                } else {
+                    basis = `Fixed amount: ₱${amount}`;
+                }
                 break;
 
             case 'percentage':
@@ -423,6 +495,13 @@ class PayrollCalculationEngine {
                 );
                 amount = formulaResult.amount;
                 basis = formulaResult.basis;
+                
+                // Prorate formula-based deductions if working days is less than standard
+                if (shouldProrate && amount > 0 && !deductionType.code.includes('LOAN')) {
+                    const originalAmount = amount;
+                    amount = amount * prorationFactor;
+                    basis += ` × ${calculation.working_days}/${this.defaultWorkingDays} days = ₱${amount.toFixed(2)}`;
+                }
                 break;
 
             default:
@@ -431,7 +510,7 @@ class PayrollCalculationEngine {
                 basis = `Default amount: ₱${amount} (unknown type: ${deductionType.calculation_type})`;
         }
 
-        return { amount: parseFloat(amount), basis };
+        return { amount: parseFloat(amount.toFixed(2)), basis };
     }
 
     // Get percentage calculation base
@@ -677,16 +756,32 @@ class PayrollCalculationEngine {
 
     // Validate calculation results
     validateCalculationResults(calculation) {
-        if (calculation.net_pay < 0) {
-            calculation.warnings.push('Net pay is negative');
+        // Initialize warnings array if not exists
+        if (!calculation.warnings) {
+            calculation.warnings = [];
         }
 
-        if (calculation.total_deductions > calculation.gross_pay * 0.5) {
-            calculation.warnings.push('Deductions exceed 50% of gross pay');
+        if (calculation.net_pay < 0) {
+            calculation.warnings.push('Net pay is negative - deductions exceed gross pay');
+            // Force net pay to zero to prevent negative salaries
+            calculation.net_pay = 0;
+            console.warn(`Net pay was negative, forced to zero for employee ${calculation.employee_id}`);
+        }
+
+        if (calculation.total_deductions > calculation.gross_pay && calculation.gross_pay > 0) {
+            calculation.warnings.push('Deductions exceed gross pay');
         }
 
         if (calculation.gross_pay === 0 && calculation.working_days > 0) {
-            calculation.warnings.push('Zero gross pay with positive working days');
+            calculation.warnings.push('Zero gross pay with positive working days - check daily rate');
+        }
+
+        if (calculation.working_days === 0) {
+            calculation.warnings.push('Employee has zero working days for this period');
+        }
+
+        if (calculation.basic_pay === 0 && calculation.working_days > 0) {
+            calculation.warnings.push('Zero basic pay despite having working days - check employee daily rate');
         }
     }
 

@@ -1,33 +1,37 @@
 // models/EmployeeOverride.js - Employee Allowance and Deduction Override models
-const { executeQuery, findOne, findOneByTable } = require('../../config/database');
+const {
+  executeQuery,
+  findOne,
+  findOneByTable,
+} = require("../../config/database");
 
 class EmployeeOverride {
-    constructor(data = {}) {
-        this.id = data.id || null;
-        this.employee_id = data.employee_id || null;
-        this.type = data.type || null; // 'allowance' or 'deduction'
-        this.type_id = data.type_id || null;
-        this.override_amount = data.override_amount || data.amount || 0;
-        this.effective_date = data.effective_date || data.effective_from || null;
-        this.end_date = data.end_date || data.effective_to || null;
-        this.is_active = data.is_active !== undefined ? data.is_active : true;
-        this.created_at = data.created_at || null;
-        this.updated_at = data.updated_at || null;
-        this.created_by = data.created_by || null;
+  constructor(data = {}) {
+    this.id = data.id || null;
+    this.employee_id = data.employee_id || null;
+    this.type = data.type || null; // 'allowance' or 'deduction'
+    this.type_id = data.type_id || null;
+    this.override_amount = data.override_amount || data.amount || 0;
+    this.effective_date = data.effective_date || data.effective_from || null;
+    this.end_date = data.end_date || data.effective_to || null;
+    this.is_active = data.is_active !== undefined ? data.is_active : true;
+    this.created_at = data.created_at || null;
+    this.updated_at = data.updated_at || null;
+    this.created_by = data.created_by || null;
 
-        // Handle joined data
-        this.employee = data.employee || null;
-        this.allowance_type = data.allowance_type || null;
-        this.deduction_type = data.deduction_type || null;
-    }
+    // Handle joined data
+    this.employee = data.employee || null;
+    this.allowance_type = data.allowance_type || null;
+    this.deduction_type = data.deduction_type || null;
+  }
 
-    // Static method to get all active overrides for an employee
-    static async getActiveOverridesForEmployee(employeeId, date = new Date()) {
-        try {
-            const dateStr = date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+  // Static method to get all active overrides for an employee
+  static async getActiveOverridesForEmployee(employeeId, date = new Date()) {
+    try {
+      const dateStr = date.toISOString().split("T")[0]; // Format as YYYY-MM-DD
 
-            // Get active allowance overrides
-            const allowanceQuery = `
+      // Get active allowance overrides
+      const allowanceQuery = `
                 SELECT
                     'allowance' as override_type,
                     eao.allowance_type_id,
@@ -44,8 +48,8 @@ class EmployeeOverride {
                 AND (eao.end_date IS NULL OR eao.end_date >= ?)
             `;
 
-            // Get active deduction overrides
-            const deductionQuery = `
+      // Get active deduction overrides
+      const deductionQuery = `
                 SELECT
                     'deduction' as override_type,
                     edo.deduction_type_id,
@@ -62,76 +66,75 @@ class EmployeeOverride {
                 AND (edo.end_date IS NULL OR edo.end_date >= ?)
             `;
 
-            const [allowanceResult, deductionResult] = await Promise.all([
-                executeQuery(allowanceQuery, [employeeId, dateStr, dateStr]),
-                executeQuery(deductionQuery, [employeeId, dateStr, dateStr])
-            ]);
+      const [allowanceResult, deductionResult] = await Promise.all([
+        executeQuery(allowanceQuery, [employeeId, dateStr, dateStr]),
+        executeQuery(deductionQuery, [employeeId, dateStr, dateStr]),
+      ]);
 
-            if (!allowanceResult.success || !deductionResult.success) {
-                return {
-                    success: false,
-                    error: 'Failed to fetch employee overrides'
-                };
-            }
+      if (!allowanceResult.success || !deductionResult.success) {
+        return {
+          success: false,
+          error: "Failed to fetch employee overrides",
+        };
+      }
 
-            // Combine and format the results
-            const overrides = [];
+      // Combine and format the results
+      const overrides = [];
 
-            // Add allowance overrides
-            if (allowanceResult.data) {
-                allowanceResult.data.forEach(row => {
-                    overrides.push({
-                        override_type: 'allowance',
-                        allowance_type_id: row.allowance_type_id,
-                        override_amount: parseFloat(row.override_amount),
-                        effective_date: row.effective_date,
-                        end_date: row.end_date,
-                        type_name: row.type_name,
-                        type_code: row.type_code
-                    });
-                });
-            }
+      // Add allowance overrides
+      if (allowanceResult.data) {
+        allowanceResult.data.forEach((row) => {
+          overrides.push({
+            override_type: "allowance",
+            allowance_type_id: row.allowance_type_id,
+            override_amount: parseFloat(row.override_amount),
+            effective_date: row.effective_date,
+            end_date: row.end_date,
+            type_name: row.type_name,
+            type_code: row.type_code,
+          });
+        });
+      }
 
-            // Add deduction overrides
-            if (deductionResult.data) {
-                deductionResult.data.forEach(row => {
-                    overrides.push({
-                        override_type: 'deduction',
-                        deduction_type_id: row.deduction_type_id,
-                        override_amount: parseFloat(row.override_amount),
-                        effective_date: row.effective_date,
-                        end_date: row.end_date,
-                        type_name: row.type_name,
-                        type_code: row.type_code
-                    });
-                });
-            }
+      // Add deduction overrides
+      if (deductionResult.data) {
+        deductionResult.data.forEach((row) => {
+          overrides.push({
+            override_type: "deduction",
+            deduction_type_id: row.deduction_type_id,
+            override_amount: parseFloat(row.override_amount),
+            effective_date: row.effective_date,
+            end_date: row.end_date,
+            type_name: row.type_name,
+            type_code: row.type_code,
+          });
+        });
+      }
 
-            return {
-                success: true,
-                data: overrides
-            };
-
-        } catch (error) {
-            console.error('Error fetching active overrides for employee:', error);
-            return {
-                success: false,
-                error: error.message
-            };
-        }
+      return {
+        success: true,
+        data: overrides,
+      };
+    } catch (error) {
+      console.error("Error fetching active overrides for employee:", error);
+      return {
+        success: false,
+        error: error.message,
+      };
     }
+  }
 }
 
 class EmployeeAllowanceOverride extends EmployeeOverride {
-    constructor(data = {}) {
-        super(data);
-        this.type = 'allowance';
-        this.allowance_type_id = data.allowance_type_id || data.type_id || null;
-    }
+  constructor(data = {}) {
+    super(data);
+    this.type = "allowance";
+    this.allowance_type_id = data.allowance_type_id || data.type_id || null;
+  }
 
-    // Static methods
-    static async findAll(filters = {}) {
-        let query = `
+  // Static methods
+  static async findAll(filters = {}) {
+    let query = `
             SELECT eao.*, at.name as allowance_type_name, at.code as allowance_type_code,
                    CONCAT(e.first_name, ' ', e.last_name) as employee_name, e.employee_number
             FROM employee_allowance_overrides eao
@@ -139,176 +142,185 @@ class EmployeeAllowanceOverride extends EmployeeOverride {
             LEFT JOIN employees e ON eao.employee_id = e.id
             WHERE 1=1
         `;
-        const params = [];
+    const params = [];
 
-        if (filters.employee_id) {
-            query += ' AND eao.employee_id = ?';
-            params.push(filters.employee_id);
-        }
-
-        if (filters.is_active !== undefined) {
-            query += ' AND eao.is_active = ?';
-            params.push(filters.is_active);
-        }
-
-        if (filters.search) {
-            query += ' AND (at.name LIKE ? OR e.first_name LIKE ? OR e.last_name LIKE ?)';
-            const searchPattern = `%${filters.search}%`;
-            params.push(searchPattern, searchPattern, searchPattern);
-        }
-
-        query += ' ORDER BY eao.created_at DESC';
-
-        // Handle pagination
-        if (filters.limit) {
-            const limit = Math.max(1, Math.min(1000, parseInt(filters.limit) || 20));
-            const offset = Math.max(0, parseInt(filters.offset) || 0);
-            
-            if (offset > 0) {
-                query += ` LIMIT ${offset}, ${limit}`;
-            } else {
-                query += ` LIMIT ${limit}`;
-            }
-        }
-
-        const result = await executeQuery(query, params);
-        if (result.success) {
-            return {
-                success: true,
-                data: result.data.map(row => new EmployeeAllowanceOverride({
-                    ...row,
-                    allowance_type: {
-                        name: row.allowance_type_name,
-                        code: row.allowance_type_code
-                    },
-                    employee: {
-                        full_name: row.employee_name,
-                        employee_number: row.employee_number
-                    }
-                }))
-            };
-        }
-        return result;
+    if (filters.employee_id) {
+      query += " AND eao.employee_id = ?";
+      params.push(filters.employee_id);
     }
 
-    static async findById(id) {
-        const result = await findOneByTable('employee_allowance_overrides', { id });
-        if (result.success && result.data) {
-            return {
-                success: true,
-                data: new EmployeeAllowanceOverride(result.data)
-            };
-        }
-        return result;
+    if (filters.is_active !== undefined) {
+      query += " AND eao.is_active = ?";
+      params.push(filters.is_active);
     }
 
-    static async findByEmployee(employeeId, filters = {}) {
-        let query = 'SELECT * FROM employee_allowance_overrides WHERE employee_id = ?';
-        const params = [employeeId];
-
-        if (filters.is_active !== undefined) {
-            query += ' AND is_active = ?';
-            params.push(filters.is_active);
-        }
-
-        query += ' ORDER BY created_at DESC';
-
-        const result = await executeQuery(query, params);
-        if (result.success) {
-            return {
-                success: true,
-                data: result.data.map(row => new EmployeeAllowanceOverride(row))
-            };
-        }
-        return result;
+    if (filters.search) {
+      query +=
+        " AND (at.name LIKE ? OR e.first_name LIKE ? OR e.last_name LIKE ?)";
+      const searchPattern = `%${filters.search}%`;
+      params.push(searchPattern, searchPattern, searchPattern);
     }
 
-    async save() {
-        try {
-            const query = `INSERT INTO employee_allowance_overrides 
+    query += " ORDER BY eao.created_at DESC";
+
+    // Handle pagination
+    if (filters.limit) {
+      const limit = Math.max(1, Math.min(1000, parseInt(filters.limit) || 20));
+      const offset = Math.max(0, parseInt(filters.offset) || 0);
+
+      if (offset > 0) {
+        query += ` LIMIT ${offset}, ${limit}`;
+      } else {
+        query += ` LIMIT ${limit}`;
+      }
+    }
+
+    const result = await executeQuery(query, params);
+    if (result.success) {
+      return {
+        success: true,
+        data: result.data.map(
+          (row) =>
+            new EmployeeAllowanceOverride({
+              ...row,
+              allowance_type: {
+                name: row.allowance_type_name,
+                code: row.allowance_type_code,
+              },
+              employee: {
+                full_name: row.employee_name,
+                employee_number: row.employee_number,
+              },
+            })
+        ),
+      };
+    }
+    return result;
+  }
+
+  static async findById(id) {
+    const result = await findOneByTable("employee_allowance_overrides", { id });
+    if (result.success && result.data) {
+      return {
+        success: true,
+        data: new EmployeeAllowanceOverride(result.data),
+      };
+    }
+    return result;
+  }
+
+  static async findByEmployee(employeeId, filters = {}) {
+    let query =
+      "SELECT * FROM employee_allowance_overrides WHERE employee_id = ?";
+    const params = [employeeId];
+
+    if (filters.is_active !== undefined) {
+      query += " AND is_active = ?";
+      params.push(filters.is_active);
+    }
+
+    query += " ORDER BY created_at DESC";
+
+    const result = await executeQuery(query, params);
+    if (result.success) {
+      return {
+        success: true,
+        data: result.data.map((row) => new EmployeeAllowanceOverride(row)),
+      };
+    }
+    return result;
+  }
+
+  async save() {
+    try {
+      const query = `INSERT INTO employee_allowance_overrides 
                 (employee_id, allowance_type_id, override_amount, effective_date, end_date, is_active, created_by) 
                 VALUES (?, ?, ?, ?, ?, ?, ?)`;
-            
-            const params = [
-                this.employee_id,
-                this.allowance_type_id,
-                this.override_amount,
-                this.effective_date,
-                this.end_date,
-                this.is_active,
-                this.created_by
-            ];
 
-            const result = await executeQuery(query, params);
-            if (result.success) {
-                this.id = result.data.insertId;
-                return {
-                    success: true,
-                    data: this
-                };
-            }
-            return result;
-        } catch (error) {
-            return {
-                success: false,
-                error: error.message
-            };
-        }
+      const params = [
+        this.employee_id,
+        this.allowance_type_id,
+        this.override_amount,
+        this.effective_date,
+        this.end_date,
+        this.is_active,
+        this.created_by,
+      ];
+
+      const result = await executeQuery(query, params);
+      if (result.success) {
+        this.id = result.data.insertId;
+        return {
+          success: true,
+          data: this,
+        };
+      }
+      return result;
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message,
+      };
     }
+  }
 
-    async update() {
-        try {
-            const query = `UPDATE employee_allowance_overrides SET 
+  async update() {
+    try {
+      const query = `UPDATE employee_allowance_overrides SET 
                 override_amount = ?, effective_date = ?, end_date = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP 
                 WHERE id = ?`;
-            
-            const params = [
-                this.override_amount,
-                this.effective_date,
-                this.end_date,
-                this.is_active,
-                this.id
-            ];
 
-            const result = await executeQuery(query, params);
-            if (result.success) {
-                return {
-                    success: true,
-                    data: this
-                };
-            }
-            return result;
-        } catch (error) {
-            return {
-                success: false,
-                error: error.message
-            };
-        }
+      const params = [
+        this.override_amount,
+        this.effective_date,
+        this.end_date,
+        this.is_active,
+        this.id,
+      ];
+
+      const result = await executeQuery(query, params);
+      if (result.success) {
+        return {
+          success: true,
+          data: this,
+        };
+      }
+      return result;
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message,
+      };
     }
+  }
 
-    static async delete(id) {
-        try {
-            const query = 'DELETE FROM employee_allowance_overrides WHERE id = ?';
-            const result = await executeQuery(query, [id]);
-            
-            if (result.success) {
-                return {
-                    success: true,
-                    message: 'Allowance override deleted successfully'
-                };
-            }
-            return result;
-        } catch (error) {
-            return {
-                success: false,
-                error: error.message
-            };
-        }
+  static async delete(id) {
+    try {
+      const query = "DELETE FROM employee_allowance_overrides WHERE id = ?";
+      const result = await executeQuery(query, [id]);
+
+      if (result.success) {
+        return {
+          success: true,
+          message: "Allowance override deleted successfully",
+        };
+      }
+      return result;
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message,
+      };
     }
+  }
 
-    static async getActiveOverride(employeeId, allowanceTypeId, date = new Date()) {
-        const dateStr = date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
-        const query = `
+  static async getActiveOverride(
+    employeeId,
+    allowanceTypeId,
+    date = new Date()
+  ) {
+    const dateStr = date.toISOString().split("T")[0]; // Format as YYYY-MM-DD
+    const query = `
             SELECT * FROM employee_allowance_overrides
             WHERE employee_id = ? AND allowance_type_id = ?
             AND is_active = 1
@@ -318,27 +330,32 @@ class EmployeeAllowanceOverride extends EmployeeOverride {
             LIMIT 1
         `;
 
-        const result = await executeQuery(query, [employeeId, allowanceTypeId, dateStr, dateStr]);
-        if (result.success && result.data.length > 0) {
-            return {
-                success: true,
-                data: new EmployeeAllowanceOverride(result.data[0])
-            };
-        }
-        return { success: false };
+    const result = await executeQuery(query, [
+      employeeId,
+      allowanceTypeId,
+      dateStr,
+      dateStr,
+    ]);
+    if (result.success && result.data.length > 0) {
+      return {
+        success: true,
+        data: new EmployeeAllowanceOverride(result.data[0]),
+      };
     }
+    return { success: false };
+  }
 }
 
 class EmployeeDeductionOverride extends EmployeeOverride {
-    constructor(data = {}) {
-        super(data);
-        this.type = 'deduction';
-        this.deduction_type_id = data.deduction_type_id || data.type_id || null;
-    }
+  constructor(data = {}) {
+    super(data);
+    this.type = "deduction";
+    this.deduction_type_id = data.deduction_type_id || data.type_id || null;
+  }
 
-    // Static methods  
-    static async findAll(filters = {}) {
-        let query = `
+  // Static methods
+  static async findAll(filters = {}) {
+    let query = `
             SELECT edo.*, dt.name as deduction_type_name, dt.code as deduction_type_code,
                    CONCAT(e.first_name, ' ', e.last_name) as employee_name, e.employee_number
             FROM employee_deduction_overrides edo
@@ -346,176 +363,185 @@ class EmployeeDeductionOverride extends EmployeeOverride {
             LEFT JOIN employees e ON edo.employee_id = e.id
             WHERE 1=1
         `;
-        const params = [];
+    const params = [];
 
-        if (filters.employee_id) {
-            query += ' AND edo.employee_id = ?';
-            params.push(filters.employee_id);
-        }
-
-        if (filters.is_active !== undefined) {
-            query += ' AND edo.is_active = ?';
-            params.push(filters.is_active);
-        }
-
-        if (filters.search) {
-            query += ' AND (dt.name LIKE ? OR e.first_name LIKE ? OR e.last_name LIKE ?)';
-            const searchPattern = `%${filters.search}%`;
-            params.push(searchPattern, searchPattern, searchPattern);
-        }
-
-        query += ' ORDER BY edo.created_at DESC';
-
-        // Handle pagination
-        if (filters.limit) {
-            const limit = Math.max(1, Math.min(1000, parseInt(filters.limit) || 20));
-            const offset = Math.max(0, parseInt(filters.offset) || 0);
-            
-            if (offset > 0) {
-                query += ` LIMIT ${offset}, ${limit}`;
-            } else {
-                query += ` LIMIT ${limit}`;
-            }
-        }
-
-        const result = await executeQuery(query, params);
-        if (result.success) {
-            return {
-                success: true,
-                data: result.data.map(row => new EmployeeDeductionOverride({
-                    ...row,
-                    deduction_type: {
-                        name: row.deduction_type_name,
-                        code: row.deduction_type_code
-                    },
-                    employee: {
-                        full_name: row.employee_name,
-                        employee_number: row.employee_number
-                    }
-                }))
-            };
-        }
-        return result;
+    if (filters.employee_id) {
+      query += " AND edo.employee_id = ?";
+      params.push(filters.employee_id);
     }
 
-    static async findById(id) {
-        const result = await findOneByTable('employee_deduction_overrides', { id });
-        if (result.success && result.data) {
-            return {
-                success: true,
-                data: new EmployeeDeductionOverride(result.data)
-            };
-        }
-        return result;
+    if (filters.is_active !== undefined) {
+      query += " AND edo.is_active = ?";
+      params.push(filters.is_active);
     }
 
-    static async findByEmployee(employeeId, filters = {}) {
-        let query = 'SELECT * FROM employee_deduction_overrides WHERE employee_id = ?';
-        const params = [employeeId];
-
-        if (filters.is_active !== undefined) {
-            query += ' AND is_active = ?';
-            params.push(filters.is_active);
-        }
-
-        query += ' ORDER BY created_at DESC';
-
-        const result = await executeQuery(query, params);
-        if (result.success) {
-            return {
-                success: true,
-                data: result.data.map(row => new EmployeeDeductionOverride(row))
-            };
-        }
-        return result;
+    if (filters.search) {
+      query +=
+        " AND (dt.name LIKE ? OR e.first_name LIKE ? OR e.last_name LIKE ?)";
+      const searchPattern = `%${filters.search}%`;
+      params.push(searchPattern, searchPattern, searchPattern);
     }
 
-    async save() {
-        try {
-            const query = `INSERT INTO employee_deduction_overrides 
+    query += " ORDER BY edo.created_at DESC";
+
+    // Handle pagination
+    if (filters.limit) {
+      const limit = Math.max(1, Math.min(1000, parseInt(filters.limit) || 20));
+      const offset = Math.max(0, parseInt(filters.offset) || 0);
+
+      if (offset > 0) {
+        query += ` LIMIT ${offset}, ${limit}`;
+      } else {
+        query += ` LIMIT ${limit}`;
+      }
+    }
+
+    const result = await executeQuery(query, params);
+    if (result.success) {
+      return {
+        success: true,
+        data: result.data.map(
+          (row) =>
+            new EmployeeDeductionOverride({
+              ...row,
+              deduction_type: {
+                name: row.deduction_type_name,
+                code: row.deduction_type_code,
+              },
+              employee: {
+                full_name: row.employee_name,
+                employee_number: row.employee_number,
+              },
+            })
+        ),
+      };
+    }
+    return result;
+  }
+
+  static async findById(id) {
+    const result = await findOneByTable("employee_deduction_overrides", { id });
+    if (result.success && result.data) {
+      return {
+        success: true,
+        data: new EmployeeDeductionOverride(result.data),
+      };
+    }
+    return result;
+  }
+
+  static async findByEmployee(employeeId, filters = {}) {
+    let query =
+      "SELECT * FROM employee_deduction_overrides WHERE employee_id = ?";
+    const params = [employeeId];
+
+    if (filters.is_active !== undefined) {
+      query += " AND is_active = ?";
+      params.push(filters.is_active);
+    }
+
+    query += " ORDER BY created_at DESC";
+
+    const result = await executeQuery(query, params);
+    if (result.success) {
+      return {
+        success: true,
+        data: result.data.map((row) => new EmployeeDeductionOverride(row)),
+      };
+    }
+    return result;
+  }
+
+  async save() {
+    try {
+      const query = `INSERT INTO employee_deduction_overrides 
                 (employee_id, deduction_type_id, override_amount, effective_date, end_date, is_active, created_by) 
                 VALUES (?, ?, ?, ?, ?, ?, ?)`;
-            
-            const params = [
-                this.employee_id,
-                this.deduction_type_id,
-                this.override_amount,
-                this.effective_date,
-                this.end_date,
-                this.is_active,
-                this.created_by
-            ];
 
-            const result = await executeQuery(query, params);
-            if (result.success) {
-                this.id = result.data.insertId;
-                return {
-                    success: true,
-                    data: this
-                };
-            }
-            return result;
-        } catch (error) {
-            return {
-                success: false,
-                error: error.message
-            };
-        }
+      const params = [
+        this.employee_id,
+        this.deduction_type_id,
+        this.override_amount,
+        this.effective_date,
+        this.end_date,
+        this.is_active,
+        this.created_by,
+      ];
+
+      const result = await executeQuery(query, params);
+      if (result.success) {
+        this.id = result.data.insertId;
+        return {
+          success: true,
+          data: this,
+        };
+      }
+      return result;
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message,
+      };
     }
+  }
 
-    async update() {
-        try {
-            const query = `UPDATE employee_deduction_overrides SET 
+  async update() {
+    try {
+      const query = `UPDATE employee_deduction_overrides SET 
                 override_amount = ?, effective_date = ?, end_date = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP 
                 WHERE id = ?`;
-            
-            const params = [
-                this.override_amount,
-                this.effective_date,
-                this.end_date,
-                this.is_active,
-                this.id
-            ];
 
-            const result = await executeQuery(query, params);
-            if (result.success) {
-                return {
-                    success: true,
-                    data: this
-                };
-            }
-            return result;
-        } catch (error) {
-            return {
-                success: false,
-                error: error.message
-            };
-        }
+      const params = [
+        this.override_amount,
+        this.effective_date,
+        this.end_date,
+        this.is_active,
+        this.id,
+      ];
+
+      const result = await executeQuery(query, params);
+      if (result.success) {
+        return {
+          success: true,
+          data: this,
+        };
+      }
+      return result;
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message,
+      };
     }
+  }
 
-    static async delete(id) {
-        try {
-            const query = 'DELETE FROM employee_deduction_overrides WHERE id = ?';
-            const result = await executeQuery(query, [id]);
-            
-            if (result.success) {
-                return {
-                    success: true,
-                    message: 'Deduction override deleted successfully'
-                };
-            }
-            return result;
-        } catch (error) {
-            return {
-                success: false,
-                error: error.message
-            };
-        }
+  static async delete(id) {
+    try {
+      const query = "DELETE FROM employee_deduction_overrides WHERE id = ?";
+      const result = await executeQuery(query, [id]);
+
+      if (result.success) {
+        return {
+          success: true,
+          message: "Deduction override deleted successfully",
+        };
+      }
+      return result;
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message,
+      };
     }
+  }
 
-    static async getActiveOverride(employeeId, deductionTypeId, date = new Date()) {
-        const dateStr = date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
-        const query = `
+  static async getActiveOverride(
+    employeeId,
+    deductionTypeId,
+    date = new Date()
+  ) {
+    const dateStr = date.toISOString().split("T")[0]; // Format as YYYY-MM-DD
+    const query = `
             SELECT * FROM employee_deduction_overrides
             WHERE employee_id = ? AND deduction_type_id = ?
             AND is_active = 1
@@ -525,19 +551,24 @@ class EmployeeDeductionOverride extends EmployeeOverride {
             LIMIT 1
         `;
 
-        const result = await executeQuery(query, [employeeId, deductionTypeId, dateStr, dateStr]);
-        if (result.success && result.data.length > 0) {
-            return {
-                success: true,
-                data: new EmployeeDeductionOverride(result.data[0])
-            };
-        }
-        return { success: false };
+    const result = await executeQuery(query, [
+      employeeId,
+      deductionTypeId,
+      dateStr,
+      dateStr,
+    ]);
+    if (result.success && result.data.length > 0) {
+      return {
+        success: true,
+        data: new EmployeeDeductionOverride(result.data[0]),
+      };
     }
+    return { success: false };
+  }
 }
 
 module.exports = {
-    EmployeeOverride,
-    EmployeeAllowanceOverride,
-    EmployeeDeductionOverride
+  EmployeeOverride,
+  EmployeeAllowanceOverride,
+  EmployeeDeductionOverride,
 };

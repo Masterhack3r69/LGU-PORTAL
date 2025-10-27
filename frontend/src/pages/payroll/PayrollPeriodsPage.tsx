@@ -49,6 +49,9 @@ export function PayrollPeriodsPage() {
     null
   );
   const [summary, setSummary] = useState<PayrollSummary | null>(null);
+  const [summaries, setSummaries] = useState<Map<number, PayrollSummary>>(
+    new Map()
+  );
   const [loading, setLoading] = useState(true);
 
   // Filter states
@@ -92,6 +95,35 @@ export function PayrollPeriodsPage() {
         if (periodsData.length > 0 && !selectedPeriod) {
           setSelectedPeriod(periodsData[0]);
         }
+
+        // Load summaries for all non-draft periods
+        const summaryPromises = periodsData
+          .filter((p) => p.status?.toLowerCase() !== "draft")
+          .map(async (period) => {
+            try {
+              const summaryResponse = await payrollService.getPayrollSummary(
+                period.id
+              );
+              if (summaryResponse.success) {
+                return { id: period.id, summary: summaryResponse.data };
+              }
+            } catch (error) {
+              console.error(
+                `Failed to load summary for period ${period.id}:`,
+                error
+              );
+            }
+            return null;
+          });
+
+        const summaryResults = await Promise.all(summaryPromises);
+        const newSummaries = new Map<number, PayrollSummary>();
+        summaryResults.forEach((result) => {
+          if (result) {
+            newSummaries.set(result.id, result.summary);
+          }
+        });
+        setSummaries(newSummaries);
       } else {
         showToast.error("Failed to load payroll periods");
       }
@@ -105,9 +137,17 @@ export function PayrollPeriodsPage() {
 
   const loadSummary = async (periodId: number) => {
     try {
+      // Check if we already have this summary cached
+      if (summaries.has(periodId)) {
+        setSummary(summaries.get(periodId)!);
+        return;
+      }
+
       const response = await payrollService.getPayrollSummary(periodId);
       if (response.success) {
         setSummary(response.data);
+        // Cache the summary
+        setSummaries((prev) => new Map(prev).set(periodId, response.data));
       }
     } catch (error) {
       console.error("Failed to load summary:", error);
@@ -464,7 +504,7 @@ export function PayrollPeriodsPage() {
             <div className="text-2xl font-bold">
               {
                 periods.filter((period) =>
-                  ["finalized", "paid"].includes(
+                  ["finalized", "paid", "completed", "locked"].includes(
                     period.status?.toLowerCase() || ""
                   )
                 ).length
@@ -483,7 +523,9 @@ export function PayrollPeriodsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {summary?.total_employees || "-"}
+              {selectedPeriod && summaries.get(selectedPeriod.id)
+                ? summaries.get(selectedPeriod.id)!.total_employees
+                : summary?.total_employees || "-"}
             </div>
             <p className="text-xs text-muted-foreground">in selected period</p>
           </CardContent>
@@ -661,7 +703,7 @@ export function PayrollPeriodsPage() {
                         <div>
                           {period.status?.toLowerCase() === "draft"
                             ? "-"
-                            : summary?.total_employees || "-"}
+                            : summaries.get(period.id)?.total_employees || "-"}
                         </div>
                       </div>
                       <div className="col-span-2">
@@ -772,7 +814,7 @@ export function PayrollPeriodsPage() {
                       <TableCell>
                         {period.status?.toLowerCase() === "draft"
                           ? "-"
-                          : summary?.total_employees || "-"}
+                          : summaries.get(period.id)?.total_employees || "-"}
                       </TableCell>
                       <TableCell>
                         {period.total_net_pay

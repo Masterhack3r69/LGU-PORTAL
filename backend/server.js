@@ -81,10 +81,8 @@ app.use(compression({
     threshold: 1024
 }));
 
-// CORS - Handle preflight requests first
-app.options('*', cors());
-
-app.use(cors({
+// CORS Configuration
+const corsOptions = {
     origin: function (origin, callback) {
         // Allow requests with no origin (like mobile apps, Postman, curl)
         if (!origin) return callback(null, true);
@@ -118,7 +116,10 @@ app.use(cors({
     exposedHeaders: ['X-Request-ID', 'Content-Length', 'Content-Type'],
     optionsSuccessStatus: 200,
     preflightContinue: false
-}));
+};
+
+// Apply CORS with the same options for both preflight and regular requests
+app.use(cors(corsOptions));
 
 // Body parsing - skip for multipart/form-data (handled by multer)
 app.use((req, res, next) => {
