@@ -21,8 +21,7 @@ import {
   DollarSign,
   BarChart,
   Clock,
-  Download,
-  X,
+  Download
 } from "lucide-react";
 import payrollService from "@/services/payrollService";
 import type { PayrollPeriod, PayrollItem } from "@/types/payroll";
