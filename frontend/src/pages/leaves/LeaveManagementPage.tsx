@@ -1,14 +1,18 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import AdminLeaveManagement from '@/components/leaves/AdminLeaveManagement';
-import EmployeeLeaveManagement from '@/components/leaves/EmployeeLeaveManagement';
+import { useNavigate } from 'react-router-dom';
 
 export const LeaveManagementPage: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
-  if (user?.role === 'admin') {
-    return <AdminLeaveManagement />;
-  }
+  useEffect(() => {
+    if (user?.role === 'admin') {
+      navigate('/leaves/applications', { replace: true });
+    } else {
+      navigate('/leaves/employee', { replace: true });
+    }
+  }, [user, navigate]);
 
-  return <EmployeeLeaveManagement />;
+  return null;
 };

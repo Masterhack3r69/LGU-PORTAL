@@ -33,6 +33,37 @@
     created_at: string;
     updated_at: string;
     deleted_at?: string;
+    
+    // Additional PDS fields - I. PERSONAL INFORMATION
+    height?: number;
+    weight?: number;
+    blood_type?: string;
+    umid_id_no?: string;
+    philsys_number?: string;
+    agency_employee_no?: string;
+    citizenship?: string;
+    dual_citizenship_country?: string;
+    
+    // Residential Address (detailed)
+    residential_house_no?: string;
+    residential_street?: string;
+    residential_subdivision?: string;
+    residential_barangay?: string;
+    residential_city?: string;
+    residential_province?: string;
+    residential_zipcode?: string;
+    
+    // Permanent Address (detailed)
+    permanent_house_no?: string;
+    permanent_street?: string;
+    permanent_subdivision?: string;
+    permanent_barangay?: string;
+    permanent_city?: string;
+    permanent_province?: string;
+    permanent_zipcode?: string;
+    
+    telephone_no?: string;
+    mobile_no?: string;
                                                                            
     // Computed fields for UI compatibility
     employee_id?: string;
@@ -77,6 +108,32 @@
     employment_status?: 'Active' | 'Resigned' | 'Retired' | 'Terminated' | 'AWOL';
     separation_date?: string;
     separation_reason?: string;
+    
+    // Additional PDS fields
+    height?: number;
+    weight?: number;
+    blood_type?: string;
+    umid_id_no?: string;
+    philsys_number?: string;
+    agency_employee_no?: string;
+    citizenship?: string;
+    dual_citizenship_country?: string;
+    residential_house_no?: string;
+    residential_street?: string;
+    residential_subdivision?: string;
+    residential_barangay?: string;
+    residential_city?: string;
+    residential_province?: string;
+    residential_zipcode?: string;
+    permanent_house_no?: string;
+    permanent_street?: string;
+    permanent_subdivision?: string;
+    permanent_barangay?: string;
+    permanent_city?: string;
+    permanent_province?: string;
+    permanent_zipcode?: string;
+    telephone_no?: string;
+    mobile_no?: string;
   }                                                                        
                                                                            
   export interface UpdateEmployeeDTO extends Partial<CreateEmployeeDTO> {  

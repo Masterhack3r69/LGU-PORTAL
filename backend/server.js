@@ -18,6 +18,7 @@ const { auditLogger } = require('./middleware/auditLogger');
 // Routes
 const authRoutes = require('./routes/authRoutes');
 const employeeRoutes = require('./routes/employeeRoutes');
+const pdsRoutes = require('./routes/pdsRoutes');
 const leaveRoutes = require('./routes/leaveRoutes');
 const documentRoutes = require('./routes/documentRoutes');
 const reportsRoutes = require('./routes/reportsRoutes');
@@ -220,6 +221,7 @@ app.get('/health', async (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/dashboard', authMiddleware.requireAuth, auditLogger, dashboardRoutes);
 app.use('/api/employees', authMiddleware.requireAuth, auditLogger, employeeRoutes);
+app.use('/api/pds', pdsRoutes);
 app.use('/api/leaves', authMiddleware.requireAuth, auditLogger, leaveRoutes);
 app.use('/api/payroll', authMiddleware.requireAuth, require('./routes/payrollRoutes'));
 app.use('/api/dtr', authMiddleware.requireAuth, require('./routes/dtrRoutes'));

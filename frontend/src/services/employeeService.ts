@@ -140,7 +140,7 @@ class EmployeeService {
         limit: filters.limit || 999999,                                                                                             
         ...(filters.name && { search: filters.name }),                                                                          
         ...(filters.department && { department: filters.department }),                                                          
-        ...(filters.position && { department: filters.position }),                                                                
+        ...(filters.position && { position: filters.position }),                                                                
         ...(filters.status && { employment_status: filters.status === 'active' ? 'Active' : filters.status }),                         
       };                                                                                                                        
                                                                                                                                 

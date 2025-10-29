@@ -39,6 +39,37 @@ class Employee {
         this.deleted_at = data.deleted_at || null;
         this.created_at = data.created_at || null;
         this.updated_at = data.updated_at || null;
+        
+        // Additional PDS fields - I. PERSONAL INFORMATION
+        this.height = data.height || null;
+        this.weight = data.weight || null;
+        this.blood_type = data.blood_type || null;
+        this.umid_id_no = data.umid_id_no || null;
+        this.philsys_number = data.philsys_number || null;
+        this.agency_employee_no = data.agency_employee_no || null;
+        this.citizenship = data.citizenship || 'Filipino';
+        this.dual_citizenship_country = data.dual_citizenship_country || null;
+        
+        // Residential Address (detailed)
+        this.residential_house_no = data.residential_house_no || null;
+        this.residential_street = data.residential_street || null;
+        this.residential_subdivision = data.residential_subdivision || null;
+        this.residential_barangay = data.residential_barangay || null;
+        this.residential_city = data.residential_city || null;
+        this.residential_province = data.residential_province || null;
+        this.residential_zipcode = data.residential_zipcode || null;
+        
+        // Permanent Address (detailed)
+        this.permanent_house_no = data.permanent_house_no || null;
+        this.permanent_street = data.permanent_street || null;
+        this.permanent_subdivision = data.permanent_subdivision || null;
+        this.permanent_barangay = data.permanent_barangay || null;
+        this.permanent_city = data.permanent_city || null;
+        this.permanent_province = data.permanent_province || null;
+        this.permanent_zipcode = data.permanent_zipcode || null;
+        
+        this.telephone_no = data.telephone_no || null;
+        this.mobile_no = data.mobile_no || null;
     }
 
     // Get full name
@@ -244,8 +275,15 @@ class Employee {
                 philhealth_number, sss_number, appointment_date, plantilla_position, department,
                 plantilla_number, salary_grade, step_increment, current_monthly_salary,
                 current_daily_rate, highest_monthly_salary, highest_daily_rate, employment_status,
-                separation_date, separation_reason
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                separation_date, separation_reason,
+                height, weight, blood_type, umid_id_no, philsys_number, agency_employee_no,
+                citizenship, dual_citizenship_country,
+                residential_house_no, residential_street, residential_subdivision, residential_barangay,
+                residential_city, residential_province, residential_zipcode,
+                permanent_house_no, permanent_street, permanent_subdivision, permanent_barangay,
+                permanent_city, permanent_province, permanent_zipcode,
+                telephone_no, mobile_no
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
         const params = [
@@ -257,7 +295,14 @@ class Employee {
             this.plantilla_position, this.department, this.plantilla_number, this.salary_grade,
             this.step_increment, this.current_monthly_salary, this.current_daily_rate,
             this.highest_monthly_salary, this.highest_daily_rate, this.employment_status,
-            this.separation_date, this.separation_reason
+            this.separation_date, this.separation_reason,
+            this.height, this.weight, this.blood_type, this.umid_id_no, this.philsys_number,
+            this.agency_employee_no, this.citizenship, this.dual_citizenship_country,
+            this.residential_house_no, this.residential_street, this.residential_subdivision,
+            this.residential_barangay, this.residential_city, this.residential_province,
+            this.residential_zipcode, this.permanent_house_no, this.permanent_street,
+            this.permanent_subdivision, this.permanent_barangay, this.permanent_city,
+            this.permanent_province, this.permanent_zipcode, this.telephone_no, this.mobile_no
         ];
 
         const result = await executeQuery(query, params);
@@ -288,7 +333,14 @@ class Employee {
                 plantilla_position = ?, department = ?, plantilla_number = ?, salary_grade = ?,
                 step_increment = ?, current_monthly_salary = ?, current_daily_rate = ?,
                 highest_monthly_salary = ?, highest_daily_rate = ?, employment_status = ?, 
-                separation_date = ?, separation_reason = ?
+                separation_date = ?, separation_reason = ?,
+                height = ?, weight = ?, blood_type = ?, umid_id_no = ?, philsys_number = ?,
+                agency_employee_no = ?, citizenship = ?, dual_citizenship_country = ?,
+                residential_house_no = ?, residential_street = ?, residential_subdivision = ?,
+                residential_barangay = ?, residential_city = ?, residential_province = ?,
+                residential_zipcode = ?, permanent_house_no = ?, permanent_street = ?,
+                permanent_subdivision = ?, permanent_barangay = ?, permanent_city = ?,
+                permanent_province = ?, permanent_zipcode = ?, telephone_no = ?, mobile_no = ?
             WHERE id = ?
         `;
 
@@ -301,7 +353,15 @@ class Employee {
             this.plantilla_position, this.department, this.plantilla_number, this.salary_grade,
             this.step_increment, this.current_monthly_salary, this.current_daily_rate,
             this.highest_monthly_salary, this.highest_daily_rate, this.employment_status,
-            this.separation_date, this.separation_reason, this.id
+            this.separation_date, this.separation_reason,
+            this.height, this.weight, this.blood_type, this.umid_id_no, this.philsys_number,
+            this.agency_employee_no, this.citizenship, this.dual_citizenship_country,
+            this.residential_house_no, this.residential_street, this.residential_subdivision,
+            this.residential_barangay, this.residential_city, this.residential_province,
+            this.residential_zipcode, this.permanent_house_no, this.permanent_street,
+            this.permanent_subdivision, this.permanent_barangay, this.permanent_city,
+            this.permanent_province, this.permanent_zipcode, this.telephone_no, this.mobile_no,
+            this.id
         ];
 
         const result = await executeQuery(query, params);
@@ -348,6 +408,170 @@ class Employee {
             monthlySalary: parseFloat(monthlySalary.toFixed(2)),
             dailyRate: parseFloat(dailyRate.toFixed(2))
         };
+    }
+
+    // ============================================================================
+    // PAYROLL INTEGRATION METHODS
+    // ============================================================================
+
+    /**
+     * Get consistent salary values ensuring 22-day rule compliance
+     * Requirements: 2.1, 2.2
+     * @returns {Object} { monthlySalary, dailyRate }
+     */
+    getConsistentSalaryValues() {
+        return Employee.getConsistentSalaryValues(this);
+    }
+
+    /**
+     * Get daily rate for a specific payroll period, considering overrides
+     * Requirements: 2.1, 2.2, 13.1, 13.2, 13.3
+     * @param {number} periodId - Payroll period ID
+     * @returns {Promise<number>} Daily rate with overrides applied
+     */
+    async getDailyRateForPeriod(periodId) {
+        try {
+            // Get base daily rate
+            const { dailyRate } = this.getConsistentSalaryValues();
+            
+            // Check for salary overrides for this period
+            const overrides = await this.getActiveOverrides(periodId);
+            const salaryOverride = overrides.find(
+                o => o.override_type === 'Salary Adjustment'
+            );
+            
+            if (salaryOverride) {
+                // Override amount is the adjusted daily rate
+                return parseFloat(salaryOverride.override_amount);
+            }
+            
+            return dailyRate;
+        } catch (error) {
+            console.error('Error getting daily rate for period:', error);
+            // Return base daily rate on error
+            return this.getConsistentSalaryValues().dailyRate;
+        }
+    }
+
+    /**
+     * Get active overrides for a specific payroll period
+     * Requirements: 13.1, 13.2, 13.3
+     * @param {number} periodId - Payroll period ID
+     * @returns {Promise<Array>} Array of active overrides
+     */
+    async getActiveOverrides(periodId) {
+        try {
+            // First, get the payroll period dates
+            const periodQuery = `
+                SELECT start_date, end_date 
+                FROM payroll_periods 
+                WHERE id = ?
+            `;
+            const periodResult = await executeQuery(periodQuery, [periodId]);
+            
+            if (!periodResult.success || periodResult.data.length === 0) {
+                return [];
+            }
+            
+            const { start_date, end_date } = periodResult.data[0];
+            
+            // Get overrides that apply to this period
+            const query = `
+                SELECT 
+                    eo.*,
+                    u1.username as approved_by_username,
+                    u2.username as created_by_username
+                FROM employee_overrides eo
+                LEFT JOIN users u1 ON eo.approved_by = u1.id
+                LEFT JOIN users u2 ON eo.created_by = u2.id
+                WHERE eo.employee_id = ?
+                AND (
+                    -- Period-specific override
+                    (eo.payroll_period_id = ?)
+                    OR
+                    -- Date-range override that overlaps with period
+                    (
+                        eo.payroll_period_id IS NULL
+                        AND eo.effective_from <= ?
+                        AND (eo.effective_to IS NULL OR eo.effective_to >= ?)
+                    )
+                )
+                ORDER BY eo.created_at DESC
+            `;
+            
+            const result = await executeQuery(query, [
+                this.id,
+                periodId,
+                end_date,
+                start_date
+            ]);
+            
+            return result.success ? result.data : [];
+        } catch (error) {
+            console.error('Error getting active overrides:', error);
+            return [];
+        }
+    }
+
+    /**
+     * Static method to get active overrides for an employee and period
+     * Requirements: 13.1, 13.2, 13.3
+     * @param {number} employeeId - Employee ID
+     * @param {number} periodId - Payroll period ID
+     * @returns {Promise<Array>} Array of active overrides
+     */
+    static async getActiveOverridesForPeriod(employeeId, periodId) {
+        try {
+            // Get the payroll period dates
+            const periodQuery = `
+                SELECT start_date, end_date 
+                FROM payroll_periods 
+                WHERE id = ?
+            `;
+            const periodResult = await executeQuery(periodQuery, [periodId]);
+            
+            if (!periodResult.success || periodResult.data.length === 0) {
+                return [];
+            }
+            
+            const { start_date, end_date } = periodResult.data[0];
+            
+            // Get overrides that apply to this period
+            const query = `
+                SELECT 
+                    eo.*,
+                    u1.username as approved_by_username,
+                    u2.username as created_by_username
+                FROM employee_overrides eo
+                LEFT JOIN users u1 ON eo.approved_by = u1.id
+                LEFT JOIN users u2 ON eo.created_by = u2.id
+                WHERE eo.employee_id = ?
+                AND (
+                    -- Period-specific override
+                    (eo.payroll_period_id = ?)
+                    OR
+                    -- Date-range override that overlaps with period
+                    (
+                        eo.payroll_period_id IS NULL
+                        AND eo.effective_from <= ?
+                        AND (eo.effective_to IS NULL OR eo.effective_to >= ?)
+                    )
+                )
+                ORDER BY eo.created_at DESC
+            `;
+            
+            const result = await executeQuery(query, [
+                employeeId,
+                periodId,
+                end_date,
+                start_date
+            ]);
+            
+            return result.success ? result.data : [];
+        } catch (error) {
+            console.error('Error getting active overrides:', error);
+            return [];
+        }
     }
 
     // Static methods
@@ -463,8 +687,8 @@ class Employee {
         }
 
         if (filters.department) {
-            query += ' AND e.plantilla_position LIKE ?';
-            params.push(`%${filters.department}%`);
+            query += ' AND e.department = ?';
+            params.push(filters.department);
         }
 
         if (filters.salary_grade) {

@@ -18,6 +18,12 @@ router.get('/', authMiddleware.requireAdmin, employeeController.getAllEmployees)
 // GET /api/employees/statistics - Get employee statistics (admin only)
 router.get('/statistics', authMiddleware.requireAdmin, employeeController.getEmployeeStatistics);
 
+// GET /api/employees/departments - Get unique departments (admin only)
+router.get('/departments', authMiddleware.requireAdmin, employeeController.getDepartments);
+
+// GET /api/employees/positions - Get unique positions (admin only)
+router.get('/positions', authMiddleware.requireAdmin, employeeController.getPositions);
+
 // GET /api/employees/deleted - Get soft deleted employees (admin only)
 router.get('/deleted', authMiddleware.requireAdmin, employeeController.getDeletedEmployees);
 

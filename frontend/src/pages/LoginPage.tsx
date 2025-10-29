@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LoginBackground } from "@/components/ui/login-background";
 import { showToast } from "@/lib/toast";
+import logo from "@/assets/logo.png";
 
 export function LoginPage() {
   const [credentials, setCredentials] = useState({
@@ -67,17 +68,20 @@ export function LoginPage() {
     <div className="min-h-screen flex items-center justify-center relative px-4 py-12 sm:px-6 lg:px-8">
       <LoginBackground />
       <div className="w-full max-w-md space-y-8 relative z-10">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            LGU Portal
-          </h1>
-        </div>
+        
 
         <Card className="backdrop-blur-sm bg-background/95 shadow-xl">
           <CardHeader className="text-center">
-            <CardTitle className="text-xl">Welcome back</CardTitle>
+            <div className="flex items-center justify-center gap-3 mb-2">
+              <img
+                src={logo}
+                alt="LGU Logo"
+                className="h-12 w-12 object-contain"
+              />
+              <CardTitle className="text-2xl">LGU PORTAL</CardTitle>
+            </div>
             <CardDescription>
-              Enter your credentials to access the LGU Portal
+              Enter your credentials to access your account
             </CardDescription>
           </CardHeader>
           <CardContent>

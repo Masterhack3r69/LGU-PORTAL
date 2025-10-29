@@ -35,6 +35,7 @@ import { ArrowLeft, Save } from "lucide-react";
 import { showToast } from "@/lib/toast";
 import { dateStringToDateObject, dateObjectToDateString } from "@/utils/helpers";
 import { ExamCertificateManager } from "@/components/admin/ExamCertificateManager";
+import { WorkExperienceManager } from "@/components/admin/WorkExperienceManager";
 
 const employeeSchema = z.object({
   employee_number: z.string().min(1, "Employee number is required"),
@@ -88,6 +89,47 @@ const employeeSchema = z.object({
     .optional(),
   separation_date: z.string().optional(),
   separation_reason: z.string().optional(),
+  
+  // Additional PDS fields
+  height: z
+    .union([
+      z.number().min(0),
+      z.string().transform((val) => (val === "" ? undefined : Number(val))),
+    ])
+    .optional(),
+  weight: z
+    .union([
+      z.number().min(0),
+      z.string().transform((val) => (val === "" ? undefined : Number(val))),
+    ])
+    .optional(),
+  blood_type: z.string().optional(),
+  umid_id_no: z.string().optional(),
+  philsys_number: z.string().optional(),
+  agency_employee_no: z.string().optional(),
+  citizenship: z.string().optional(),
+  dual_citizenship_country: z.string().optional(),
+  
+  // Residential Address
+  residential_house_no: z.string().optional(),
+  residential_street: z.string().optional(),
+  residential_subdivision: z.string().optional(),
+  residential_barangay: z.string().optional(),
+  residential_city: z.string().optional(),
+  residential_province: z.string().optional(),
+  residential_zipcode: z.string().optional(),
+  
+  // Permanent Address
+  permanent_house_no: z.string().optional(),
+  permanent_street: z.string().optional(),
+  permanent_subdivision: z.string().optional(),
+  permanent_barangay: z.string().optional(),
+  permanent_city: z.string().optional(),
+  permanent_province: z.string().optional(),
+  permanent_zipcode: z.string().optional(),
+  
+  telephone_no: z.string().optional(),
+  mobile_no: z.string().optional(),
 });
 
 type EmployeeFormData = z.infer<typeof employeeSchema>;
@@ -100,6 +142,7 @@ export function EmployeeEditPage() {
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [examCertificates, setExamCertificates] = useState<ExamCertificate[]>([]);
   const [originalCertificates, setOriginalCertificates] = useState<ExamCertificate[]>([]);
+  const [workExperiences, setWorkExperiences] = useState<any[]>([]);
 
   const form = useForm<EmployeeFormData>({
     resolver: zodResolver(employeeSchema) as any,
@@ -212,6 +255,37 @@ export function EmployeeEditPage() {
           employment_status: emp.employment_status || "Active",
           separation_date: formatDateForInput(emp.separation_date),
           separation_reason: ensureString(emp.separation_reason),
+          
+          // Additional PDS fields
+          height: ensureNumber(emp.height),
+          weight: ensureNumber(emp.weight),
+          blood_type: ensureString(emp.blood_type),
+          umid_id_no: ensureString(emp.umid_id_no),
+          philsys_number: ensureString(emp.philsys_number),
+          agency_employee_no: ensureString(emp.agency_employee_no),
+          citizenship: ensureString(emp.citizenship) || 'Filipino',
+          dual_citizenship_country: ensureString(emp.dual_citizenship_country),
+          
+          // Residential Address
+          residential_house_no: ensureString(emp.residential_house_no),
+          residential_street: ensureString(emp.residential_street),
+          residential_subdivision: ensureString(emp.residential_subdivision),
+          residential_barangay: ensureString(emp.residential_barangay),
+          residential_city: ensureString(emp.residential_city),
+          residential_province: ensureString(emp.residential_province),
+          residential_zipcode: ensureString(emp.residential_zipcode),
+          
+          // Permanent Address
+          permanent_house_no: ensureString(emp.permanent_house_no),
+          permanent_street: ensureString(emp.permanent_street),
+          permanent_subdivision: ensureString(emp.permanent_subdivision),
+          permanent_barangay: ensureString(emp.permanent_barangay),
+          permanent_city: ensureString(emp.permanent_city),
+          permanent_province: ensureString(emp.permanent_province),
+          permanent_zipcode: ensureString(emp.permanent_zipcode),
+          
+          telephone_no: ensureString(emp.telephone_no),
+          mobile_no: ensureString(emp.mobile_no),
         });
       } catch (error) {
         console.error("Failed to fetch employee:", error);
@@ -485,8 +559,8 @@ export function EmployeeEditPage() {
                 />
               </div>
 
-              {/* Second Row: 5 fields - Birth Date, Gender, Civil Status, Email, Contact Number */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+              {/* Second Row: 4 fields - Birth Date, Gender, Civil Status, Email */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                 <FormField
                   control={form.control as any}
                   name="birth_date"
@@ -571,23 +645,10 @@ export function EmployeeEditPage() {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control as any}
-                  name="contact_number"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Contact Number</FormLabel>
-                      <FormControl>
-                        <Input placeholder="+63 912 345 6789" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </div>
 
-              {/* Third Row: 2 fields - Birth Place, Current Address */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Third Row: 1 field - Birth Place */}
+              <div className="grid grid-cols-1">
                 <FormField
                   control={form.control as any}
                   name="birth_place"
@@ -601,17 +662,130 @@ export function EmployeeEditPage() {
                     </FormItem>
                   )}
                 />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Additional Personal Details */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Additional Personal Details</CardTitle>
+              <CardDescription>Physical attributes and additional IDs</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-6">
+              {/* Row 1: Height, Weight, Blood Type */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <FormField
                   control={form.control as any}
-                  name="current_address"
+                  name="height"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Current Address</FormLabel>
+                      <FormLabel>Height (m)</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="Complete current address"
+                          type="number"
+                          step="0.01"
+                          placeholder="1.75"
                           {...field}
+                          value={field.value ?? ''}
+                          onChange={(e) => {
+                            const value = e.target.value.trim();
+                            field.onChange(value === "" ? "" : parseFloat(value) || "");
+                          }}
                         />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control as any}
+                  name="weight"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Weight (kg)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          placeholder="70.5"
+                          {...field}
+                          value={field.value ?? ''}
+                          onChange={(e) => {
+                            const value = e.target.value.trim();
+                            field.onChange(value === "" ? "" : parseFloat(value) || "");
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control as any}
+                  name="blood_type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Blood Type</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select blood type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="A+">A+</SelectItem>
+                          <SelectItem value="A-">A-</SelectItem>
+                          <SelectItem value="B+">B+</SelectItem>
+                          <SelectItem value="B-">B-</SelectItem>
+                          <SelectItem value="O+">O+</SelectItem>
+                          <SelectItem value="O-">O-</SelectItem>
+                          <SelectItem value="AB+">AB+</SelectItem>
+                          <SelectItem value="AB-">AB-</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Row 2: Additional Government IDs */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField
+                  control={form.control as any}
+                  name="umid_id_no"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>UMID ID No.</FormLabel>
+                      <FormControl>
+                        <Input placeholder="0000-0000000-0" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control as any}
+                  name="philsys_number"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>PhilSys Number (PSN)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="0000-0000-0000" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control as any}
+                  name="agency_employee_no"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Agency Employee No.</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Agency ID" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -619,19 +793,279 @@ export function EmployeeEditPage() {
                 />
               </div>
 
-              {/* Fourth Row: 1 field - Permanent Address */}
-              <div className="grid grid-cols-1">
+              {/* Row 3: Citizenship */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control as any}
-                  name="permanent_address"
+                  name="citizenship"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Permanent Address</FormLabel>
+                      <FormLabel>Citizenship</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select citizenship" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Filipino">Filipino</SelectItem>
+                          <SelectItem value="Dual Citizenship">Dual Citizenship</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                {form.watch('citizenship') === 'Dual Citizenship' && (
+                  <FormField
+                    control={form.control as any}
+                    name="dual_citizenship_country"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Dual Citizenship Country</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Country name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+              </div>
+
+              {/* Row 4: Contact Numbers */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control as any}
+                  name="telephone_no"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Telephone No.</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="Complete permanent address"
-                          {...field}
-                        />
+                        <Input placeholder="(02) 1234-5678" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control as any}
+                  name="mobile_no"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Mobile No.</FormLabel>
+                      <FormControl>
+                        <Input placeholder="+63 912 345 6789" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Residential Address (Detailed) */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Residential Address</CardTitle>
+              <CardDescription>Complete residential address details</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField
+                  control={form.control as any}
+                  name="residential_house_no"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>House/Block/Lot No.</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Block 1 Lot 2" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control as any}
+                  name="residential_street"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Street</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Main Street" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control as any}
+                  name="residential_subdivision"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Subdivision/Village</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Greenfield Village" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <FormField
+                  control={form.control as any}
+                  name="residential_barangay"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Barangay</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Barangay Name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control as any}
+                  name="residential_city"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>City/Municipality</FormLabel>
+                      <FormControl>
+                        <Input placeholder="City Name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control as any}
+                  name="residential_province"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Province</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Province Name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control as any}
+                  name="residential_zipcode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>ZIP Code</FormLabel>
+                      <FormControl>
+                        <Input placeholder="1234" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Permanent Address (Detailed) */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Permanent Address</CardTitle>
+              <CardDescription>Complete permanent address details</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField
+                  control={form.control as any}
+                  name="permanent_house_no"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>House/Block/Lot No.</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Block 1 Lot 2" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control as any}
+                  name="permanent_street"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Street</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Main Street" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control as any}
+                  name="permanent_subdivision"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Subdivision/Village</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Greenfield Village" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <FormField
+                  control={form.control as any}
+                  name="permanent_barangay"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Barangay</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Barangay Name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control as any}
+                  name="permanent_city"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>City/Municipality</FormLabel>
+                      <FormControl>
+                        <Input placeholder="City Name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control as any}
+                  name="permanent_province"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Province</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Province Name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control as any}
+                  name="permanent_zipcode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>ZIP Code</FormLabel>
+                      <FormControl>
+                        <Input placeholder="1234" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -982,11 +1416,57 @@ export function EmployeeEditPage() {
             </Card>
           </div>
 
-          {/* Exam Certificates */}
-          <ExamCertificateManager
-            certificates={examCertificates}
-            onChange={setExamCertificates}
-          />
+          {/* Civil Service Eligibility */}
+          <Card>
+            <CardHeader>
+              <CardTitle>IV. Civil Service Eligibility</CardTitle>
+              <CardDescription>
+                Career service, RA 1080 (Board/Bar) eligibility, and professional licenses
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ExamCertificateManager
+                certificates={examCertificates}
+                onChange={setExamCertificates}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Work Experience */}
+          <Card>
+            <CardHeader>
+              <CardTitle>V. Work Experience</CardTitle>
+              <CardDescription>
+                Include all work experience starting from most recent (write in full)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <WorkExperienceManager
+                workExperiences={workExperiences}
+                onChange={setWorkExperiences}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Learning and Development */}
+          <Card>
+            <CardHeader>
+              <CardTitle>VII. Learning and Development (L&D)</CardTitle>
+              <CardDescription>
+                Training programs and interventions attended (managed in Training Management section)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8 bg-muted/30 rounded-lg border-2 border-dashed">
+                <p className="text-muted-foreground mb-2">
+                  Training programs are managed separately in the Training Management section
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  You can view and manage training records from the Training menu
+                </p>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Form Actions */}
           <div className="flex justify-end gap-4">

@@ -71,11 +71,45 @@ const COLUMN_MAPPING = {
     'email_address': ['email_address', 'email', 'email address'],
     'current_address': ['current_address', 'currentaddress', 'current address', 'address'],
     'permanent_address': ['permanent_address', 'permanentaddress', 'permanent address'],
+    
+    // Additional Personal Details
+    'height': ['height', 'height_m', 'height (m)'],
+    'weight': ['weight', 'weight_kg', 'weight (kg)'],
+    'blood_type': ['blood_type', 'bloodtype', 'blood type'],
+    'umid_id_no': ['umid_id_no', 'umid_id', 'umid'],
+    'philsys_number': ['philsys_number', 'philsys', 'psn'],
+    'agency_employee_no': ['agency_employee_no', 'agency_id', 'agency employee no'],
+    'citizenship': ['citizenship', 'nationality'],
+    'dual_citizenship_country': ['dual_citizenship_country', 'dual citizenship country'],
+    'telephone_no': ['telephone_no', 'telephone', 'tel_no'],
+    'mobile_no': ['mobile_no', 'mobile', 'cellphone'],
+    
+    // Residential Address
+    'residential_house_no': ['residential_house_no', 'res_house_no', 'residential house no'],
+    'residential_street': ['residential_street', 'res_street'],
+    'residential_subdivision': ['residential_subdivision', 'res_subdivision'],
+    'residential_barangay': ['residential_barangay', 'res_barangay'],
+    'residential_city': ['residential_city', 'res_city'],
+    'residential_province': ['residential_province', 'res_province'],
+    'residential_zipcode': ['residential_zipcode', 'res_zipcode', 'res_zip'],
+    
+    // Permanent Address
+    'permanent_house_no': ['permanent_house_no', 'perm_house_no', 'permanent house no'],
+    'permanent_street': ['permanent_street', 'perm_street'],
+    'permanent_subdivision': ['permanent_subdivision', 'perm_subdivision'],
+    'permanent_barangay': ['permanent_barangay', 'perm_barangay'],
+    'permanent_city': ['permanent_city', 'perm_city'],
+    'permanent_province': ['permanent_province', 'perm_province'],
+    'permanent_zipcode': ['permanent_zipcode', 'perm_zipcode', 'perm_zip'],
+    
+    // Government IDs
     'tin': ['tin', 'tax_identification_number'],
     'gsis_number': ['gsis_number', 'gsisnumber', 'gsis number', 'gsis'],
     'pagibig_number': ['pagibig_number', 'pagibibnumber', 'pagibig number', 'pagibig'],
     'philhealth_number': ['philhealth_number', 'philhealthnumber', 'philhealth number', 'philhealth'],
     'sss_number': ['sss_number', 'sssnumber', 'sss number', 'sss'],
+    
+    // Employment Information
     'plantilla_position': ['plantilla_position', 'position', 'job_title', 'designation'],
     'department': ['department', 'dept', 'office', 'division'],
     'plantilla_number': ['plantilla_number', 'plantillanumber', 'plantilla number'],
@@ -634,10 +668,28 @@ const downloadImportTemplate = asyncHandler(async (req, res) => {
     
     // Define template headers with descriptions
     const headers = [
+        // Basic Information
         'employee_number', 'first_name', 'middle_name', 'last_name', 'suffix',
-        'sex', 'birth_date', 'birth_place', 'civil_status', 'contact_number',
-        'email_address', 'current_address', 'permanent_address', 'tin',
-        'gsis_number', 'pagibig_number', 'philhealth_number', 'sss_number',
+        'sex', 'birth_date', 'birth_place', 'civil_status',
+        'email_address',
+        
+        // Additional Personal Details
+        'height', 'weight', 'blood_type', 'umid_id_no', 'philsys_number',
+        'agency_employee_no', 'citizenship', 'dual_citizenship_country',
+        'telephone_no', 'mobile_no',
+        
+        // Residential Address (Detailed)
+        'residential_house_no', 'residential_street', 'residential_subdivision',
+        'residential_barangay', 'residential_city', 'residential_province', 'residential_zipcode',
+        
+        // Permanent Address (Detailed)
+        'permanent_house_no', 'permanent_street', 'permanent_subdivision',
+        'permanent_barangay', 'permanent_city', 'permanent_province', 'permanent_zipcode',
+        
+        // Government IDs
+        'tin', 'gsis_number', 'pagibig_number', 'philhealth_number', 'sss_number',
+        
+        // Employment Information
         'appointment_date', 'plantilla_position', 'department', 'plantilla_number',
         'salary_grade', 'step_increment', 'current_monthly_salary',
         'current_daily_rate', 'employment_status'
@@ -645,10 +697,27 @@ const downloadImportTemplate = asyncHandler(async (req, res) => {
     
     // Sample data row
     const sampleData = [
+        // Basic Information
         'EMP001', 'Juan', 'Dela', 'Cruz', 'Jr.',
-        'Male', '1990-01-15', 'Manila, Philippines', 'Single', '09123456789',
-        'juan.cruz@company.com', '123 Main St, Manila', '456 Home St, Quezon City', '123-456-789-000',
-        '1234567890', '1234567890123', '12-345678901-2', '03-4567890-1',
+        'Male', '1990-01-15', 'Manila, Philippines', 'Single',
+        'juan.cruz@company.com',
+        
+        // Additional Personal Details
+        '1.75', '70.5', 'O+', '0000-0000000-0', '0000-0000-0000',
+        'AGY-001', 'Filipino', '', '(02) 1234-5678', '+63 912 345 6789',
+        
+        // Residential Address (Detailed)
+        'Block 1 Lot 2', 'Main Street', 'Greenfield Village',
+        'Barangay 1', 'Manila', 'Metro Manila', '1000',
+        
+        // Permanent Address (Detailed)
+        'Block 1 Lot 2', 'Home Street', 'Sunshine Village',
+        'Barangay 2', 'Quezon City', 'Metro Manila', '1100',
+        
+        // Government IDs
+        '123-456-789-000', '1234567890', '1234567890123', '12-345678901-2', '03-4567890-1',
+        
+        // Employment Information
         '2023-01-01', 'Administrative Assistant I', 'Human Resources', 'PLANTILLA-001',
         '11', '1', '22000.00', '1000.00', 'Active'
     ];
@@ -668,7 +737,7 @@ const downloadImportTemplate = asyncHandler(async (req, res) => {
     
     // Create instructions sheet
     const instructions = [
-        ['Employee Import Template Instructions'],
+        ['Employee Import Template Instructions - Complete PDS Format'],
         [''],
         ['Required Fields (must be filled):'],
         ['- employee_number: Unique identifier for the employee'],
@@ -678,28 +747,59 @@ const downloadImportTemplate = asyncHandler(async (req, res) => {
         ['- birth_date: Date in YYYY-MM-DD format or Excel date'],
         ['- appointment_date: Date in YYYY-MM-DD format or Excel date'],
         [''],
-        ['Optional Fields:'],
+        ['Basic Optional Fields:'],
         ['- middle_name: Employee\'s middle name'],
         ['- suffix: Jr., Sr., III, etc.'],
         ['- birth_place: Place of birth'],
-        ['- civil_status: Single, Married, Divorced, Widowed'],
-        ['- contact_number: Philippine mobile number format'],
+        ['- civil_status: Single, Married, Divorced, Widowed, Separated'],
         ['- email_address: Valid email (required for user account creation)'],
-        ['- current_address: Current residential address'],
-        ['- permanent_address: Permanent address'],
+        [''],
+        ['Additional Personal Details (PDS):'],
+        ['- height: Height in meters (e.g., 1.75)'],
+        ['- weight: Weight in kilograms (e.g., 70.5)'],
+        ['- blood_type: Blood type (A+, A-, B+, B-, O+, O-, AB+, AB-)'],
+        ['- umid_id_no: UMID ID Number'],
+        ['- philsys_number: PhilSys Number (PSN)'],
+        ['- agency_employee_no: Agency Employee Number'],
+        ['- citizenship: Filipino or Dual Citizenship'],
+        ['- dual_citizenship_country: Country if dual citizen'],
+        ['- telephone_no: Telephone number'],
+        ['- mobile_no: Mobile number'],
+        [''],
+        ['Residential Address (Detailed):'],
+        ['- residential_house_no: House/Block/Lot Number'],
+        ['- residential_street: Street name'],
+        ['- residential_subdivision: Subdivision/Village'],
+        ['- residential_barangay: Barangay'],
+        ['- residential_city: City/Municipality'],
+        ['- residential_province: Province'],
+        ['- residential_zipcode: ZIP Code'],
+        [''],
+        ['Permanent Address (Detailed):'],
+        ['- permanent_house_no: House/Block/Lot Number'],
+        ['- permanent_street: Street name'],
+        ['- permanent_subdivision: Subdivision/Village'],
+        ['- permanent_barangay: Barangay'],
+        ['- permanent_city: City/Municipality'],
+        ['- permanent_province: Province'],
+        ['- permanent_zipcode: ZIP Code'],
+        [''],
+        ['Government IDs:'],
         ['- tin: Tax Identification Number'],
         ['- gsis_number: GSIS number'],
         ['- pagibig_number: Pag-IBIG number'],
         ['- philhealth_number: PhilHealth number'],
         ['- sss_number: SSS number'],
+        [''],
+        ['Employment Information:'],
         ['- plantilla_position: Job position/title'],
         ['- department: Department or office name'],
         ['- plantilla_number: Plantilla item number'],
-        ['- salary_grade: Salary grade (numeric)'],
-        ['- step_increment: Step increment (numeric, default: 1)'],
+        ['- salary_grade: Salary grade (numeric, 1-33)'],
+        ['- step_increment: Step increment (numeric, 1-8, default: 1)'],
         ['- current_monthly_salary: Monthly salary amount'],
         ['- current_daily_rate: Daily rate amount'],
-        ['- employment_status: Active, Resigned, Retired, Terminated (default: Active)'],
+        ['- employment_status: Active, Resigned, Retired, Terminated, AWOL (default: Active)'],
         [''],
         ['Password Generation Options:'],
         ['1. Employee Number: Uses employee number as password'],
@@ -713,7 +813,9 @@ const downloadImportTemplate = asyncHandler(async (req, res) => {
         ['- Dates can be in Excel date format or YYYY-MM-DD text'],
         ['- All employees should change their passwords on first login'],
         ['- Invalid rows can be skipped during import'],
-        ['- Leave balances will be automatically initialized']
+        ['- Leave balances will be automatically initialized'],
+        ['- New PDS fields are optional but recommended for complete records'],
+        ['- Use detailed address fields (residential/permanent) instead of legacy fields']
     ];
     
     const instructionsWs = XLSX.utils.aoa_to_sheet(instructions);

@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import logo from "@/assets/logo.png"
 
 export function LoginForm({
   className,
@@ -18,7 +19,10 @@ export function LoginForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="text-xl">Welcome back</CardTitle>
+          <div className="flex items-center justify-center gap-3 mb-2">
+            <img src={logo} alt="LGU Logo" className="h-12 w-12 object-contain" />
+            <CardTitle className="text-2xl">Welcome back</CardTitle>
+          </div>
           <CardDescription>
             Login with your Apple or Google account
           </CardDescription>

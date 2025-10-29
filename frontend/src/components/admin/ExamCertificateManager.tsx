@@ -109,9 +109,9 @@ export function ExamCertificateManager({ certificates = [], onChange, disabled =
           <div>
             <CardTitle className="flex items-center gap-2">
               <Award className="h-5 w-5" />
-              Exam Certificates
+              Civil Service Eligibility
             </CardTitle>
-            <CardDescription>Civil Service and other professional examinations</CardDescription>
+            <CardDescription>Career Service, RA 1080 (Board/Bar), and other professional eligibilities</CardDescription>
           </div>
           <div className="flex items-center gap-3">
             {certificates.length > 0 && (
@@ -123,7 +123,7 @@ export function ExamCertificateManager({ certificates = [], onChange, disabled =
             {!isAdding && editingIndex === null && !disabled && (
               <Button type="button" size="sm" onClick={startAdding}>
                 <Plus className="h-4 w-4 mr-2" />
-                Add Certificate
+                Add Eligibility
               </Button>
             )}
           </div>
@@ -237,23 +237,23 @@ export function ExamCertificateManager({ certificates = [], onChange, disabled =
             <div className="flex items-center gap-2 mb-2">
               <Award className="h-5 w-5 text-primary" />
               <h4 className="font-semibold text-base">
-                {editingIndex !== null ? 'Edit Certificate' : 'Add New Certificate'}
+                {editingIndex !== null ? 'Edit Eligibility' : 'Add New Eligibility'}
               </h4>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <label className="text-sm font-medium">Exam Name *</label>
+                <label className="text-sm font-medium">Eligibility/Exam Name *</label>
                 <Input
-                  placeholder="e.g., Career Service Professional"
+                  placeholder="e.g., Career Service Professional, RA 1080 (Board/Bar)"
                   value={formData.exam_name}
                   onChange={(e) => setFormData({ ...formData, exam_name: e.target.value })}
                 />
               </div>
               
               <div>
-                <label className="text-sm font-medium">Exam Type</label>
+                <label className="text-sm font-medium">Type/Category</label>
                 <Input
-                  placeholder="e.g., Professional, Sub-Professional"
+                  placeholder="e.g., Professional, Sub-Professional, Board Exam"
                   value={formData.exam_type}
                   onChange={(e) => setFormData({ ...formData, exam_type: e.target.value })}
                 />
@@ -275,7 +275,7 @@ export function ExamCertificateManager({ certificates = [], onChange, disabled =
               <div>
                 <DatePicker
                   id="date_taken"
-                  label="Date Taken"
+                  label="Date of Examination/Conferment"
                   placeholder="Select date"
                   value={dateStringToDateObject(formData.date_taken)}
                   onChange={(date) => setFormData({ ...formData, date_taken: dateObjectToDateString(date) })}
@@ -292,7 +292,7 @@ export function ExamCertificateManager({ certificates = [], onChange, disabled =
               </div>
               
               <div className="md:col-span-2">
-                <label className="text-sm font-medium">Place of Examination</label>
+                <label className="text-sm font-medium">Place of Examination/Conferment</label>
                 <Input
                   placeholder="City, Province"
                   value={formData.place_of_examination}
@@ -332,8 +332,8 @@ export function ExamCertificateManager({ certificates = [], onChange, disabled =
         {certificates.length === 0 && !isAdding && (
           <div className="text-center py-12">
             <Award className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
-            <p className="text-muted-foreground">No exam certificates added yet</p>
-            <p className="text-sm text-muted-foreground mt-1">Click "Add Certificate" to get started</p>
+            <p className="text-muted-foreground">No civil service eligibility added yet</p>
+            <p className="text-sm text-muted-foreground mt-1">Click "Add Eligibility" to get started</p>
           </div>
         )}
       </CardContent>

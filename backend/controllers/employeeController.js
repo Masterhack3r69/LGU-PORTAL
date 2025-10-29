@@ -926,6 +926,54 @@ const getEmployeeLeaveBalances = asyncHandler(async (req, res) => {
     });
 });
 
+// GET /api/employees/departments - Get unique departments
+const getDepartments = asyncHandler(async (req, res) => {
+    const query = `
+        SELECT DISTINCT department 
+        FROM employees 
+        WHERE department IS NOT NULL 
+        AND department != '' 
+        AND deleted_at IS NULL
+        AND employment_status = 'Active'
+        ORDER BY department ASC
+    `;
+    
+    const result = await executeQuery(query);
+    
+    if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch departments');
+    }
+    
+    // Extract department names from result
+    const departments = result.data.map(row => row.department);
+    
+    res.json(departments);
+});
+
+// GET /api/employees/positions - Get unique positions
+const getPositions = asyncHandler(async (req, res) => {
+    const query = `
+        SELECT DISTINCT plantilla_position 
+        FROM employees 
+        WHERE plantilla_position IS NOT NULL 
+        AND plantilla_position != '' 
+        AND deleted_at IS NULL
+        AND employment_status = 'Active'
+        ORDER BY plantilla_position ASC
+    `;
+    
+    const result = await executeQuery(query);
+    
+    if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch positions');
+    }
+    
+    // Extract position names from result
+    const positions = result.data.map(row => row.plantilla_position);
+    
+    res.json(positions);
+});
+
 module.exports = {
     getAllEmployees,
     getEmployeeById,
@@ -940,6 +988,8 @@ module.exports = {
     processEmployeeSeparation,
     searchEmployees,
     getEmployeeLeaveBalances,
+    getDepartments,
+    getPositions,
     employeeCreationRules,
     employeeUpdateRules
 };

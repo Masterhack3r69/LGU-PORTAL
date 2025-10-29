@@ -12,6 +12,8 @@
     "setup": "node scripts/setup.js",
     "setup:compensation": "node scripts/setup-compensation-benefits.js",
     "seed": "node scripts/seed.js",
+    "test": "jest --verbose",
+    "test:watch": "jest --watch",
     "test:cors": "node scripts/test-cors.js",
     "kill:port": "npx kill-port 3000",
     "restart": "npm run kill:port && npm run dev",

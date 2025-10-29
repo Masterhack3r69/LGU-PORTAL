@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -63,202 +63,171 @@ function EmployeeViewDialog({ employee, open, onOpenChange }: EmployeeViewDialog
 
   if (!employee) return null;
 
+  const InfoField = ({ label, value, className = "" }: { label: string; value: string | number | null | undefined; className?: string }) => (
+    <div className={className}>
+      <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{label}</label>
+      <p className="text-sm mt-1">{value || 'N/A'}</p>
+    </div>
+  );
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[95vw] max-w-4xl max-h-[95vh] overflow-y-auto">
+      <DialogContent className="w-[95vw] max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-lg sm:text-xl">Employee Details</DialogTitle>
-          <DialogDescription>
-            Complete information for {employee.first_name} {employee.last_name}
-          </DialogDescription>
+          <div className="flex items-start justify-between">
+            <div>
+              <DialogTitle className="text-xl font-bold">
+                {employee.first_name} {employee.middle_name} {employee.last_name} {employee.suffix}
+              </DialogTitle>
+              <DialogDescription className="mt-1">
+                {employee.employee_number} • {employee.plantilla_position || 'No Position'}
+              </DialogDescription>
+            </div>
+            <Badge className={employee.employment_status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
+              {employee.employment_status}
+            </Badge>
+          </div>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          {/* Personal Information Section */}
+
+        <div className="grid gap-6 py-4">
+          {/* I. Personal Information */}
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Personal Information</CardTitle>
+            <CardHeader className="pb-3 bg-muted/30">
+              <CardTitle className="text-sm font-semibold">I. PERSONAL INFORMATION</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="text-sm font-medium">Employee ID</label>
-                  <p className="text-sm text-muted-foreground">{employee.employee_number}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Status</label>
-                  <p className="text-sm text-muted-foreground">
-                    <Badge className={employee.employment_status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
-                      {employee.employment_status}
-                    </Badge>
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Full Name</label>
-                  <p className="text-sm text-muted-foreground break-words">
-                    {employee.first_name} {employee.middle_name} {employee.last_name} {employee.suffix}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Gender</label>
-                  <p className="text-sm text-muted-foreground">{employee.sex || 'N/A'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Birth Date</label>
-                  <p className="text-sm text-muted-foreground">
-                    {employee.birth_date ? new Date(employee.birth_date).toLocaleDateString() : 'N/A'}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Birth Place</label>
-                  <p className="text-sm text-muted-foreground">{employee.birth_place || 'N/A'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Civil Status</label>
-                  <p className="text-sm text-muted-foreground">{employee.civil_status || 'N/A'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Contact Number</label>
-                  <p className="text-sm text-muted-foreground">{employee.contact_number || 'N/A'}</p>
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="text-sm font-medium">Email</label>
-                  <p className="text-sm text-muted-foreground break-all">{employee.email_address || 'N/A'}</p>
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="text-sm font-medium">Current Address</label>
-                  <p className="text-sm text-muted-foreground">{employee.current_address || 'N/A'}</p>
-                </div>
+            <CardContent className="pt-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <InfoField label="Gender" value={employee.sex} />
+                <InfoField label="Birth Date" value={employee.birth_date ? new Date(employee.birth_date).toLocaleDateString() : null} />
+                <InfoField label="Birth Place" value={employee.birth_place} />
+                <InfoField label="Civil Status" value={employee.civil_status} />
+                <InfoField label="Height" value={employee.height ? `${employee.height} m` : null} />
+                <InfoField label="Weight" value={employee.weight ? `${employee.weight} kg` : null} />
+                <InfoField label="Blood Type" value={employee.blood_type} />
+                <InfoField label="Citizenship" value={employee.citizenship} />
+                {employee.dual_citizenship_country && (
+                  <InfoField label="Dual Citizenship" value={employee.dual_citizenship_country} className="md:col-span-2" />
+                )}
+                <InfoField label="Email" value={employee.email_address} className="md:col-span-2" />
+                <InfoField label="Telephone" value={employee.telephone_no} />
+                <InfoField label="Mobile" value={employee.mobile_no} />
               </div>
             </CardContent>
           </Card>
 
-          {/* Employment Information Section */}
+          {/* Residential Address */}
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Employment Information</CardTitle>
+            <CardHeader className="pb-3 bg-muted/30">
+              <CardTitle className="text-sm font-semibold">RESIDENTIAL ADDRESS</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="text-sm font-medium">Position</label>
-                  <p className="text-sm text-muted-foreground break-words">{employee.plantilla_position || 'N/A'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Department</label>
-                  <p className="text-sm text-muted-foreground">{employee.department || 'N/A'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Plantilla Number</label>
-                  <p className="text-sm text-muted-foreground">{employee.plantilla_number || 'N/A'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Appointment Date</label>
-                  <p className="text-sm text-muted-foreground">
-                    {employee.appointment_date ? new Date(employee.appointment_date).toLocaleDateString() : 'N/A'}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Salary Grade</label>
-                  <p className="text-sm text-muted-foreground">{employee.salary_grade || 'N/A'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Step Increment</label>
-                  <p className="text-sm text-muted-foreground">{employee.step_increment || 'N/A'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Monthly Salary</label>
-                  <p className="text-sm text-muted-foreground">
-                    {employee.current_monthly_salary ? `₱${employee.current_monthly_salary.toLocaleString()}` : 'N/A'}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Daily Rate</label>
-                  <p className="text-sm text-muted-foreground">
-                    {employee.current_daily_rate ? `₱${employee.current_daily_rate.toLocaleString()}` : 'N/A'}
-                  </p>
-                </div>
+            <CardContent className="pt-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <InfoField label="House/Block/Lot No." value={employee.residential_house_no} />
+                <InfoField label="Street" value={employee.residential_street} />
+                <InfoField label="Subdivision/Village" value={employee.residential_subdivision} />
+                <InfoField label="Barangay" value={employee.residential_barangay} />
+                <InfoField label="City/Municipality" value={employee.residential_city} />
+                <InfoField label="Province" value={employee.residential_province} />
+                <InfoField label="ZIP Code" value={employee.residential_zipcode} />
               </div>
             </CardContent>
           </Card>
 
-          {/* Government IDs Section */}
+          {/* Permanent Address */}
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Government IDs</CardTitle>
+            <CardHeader className="pb-3 bg-muted/30">
+              <CardTitle className="text-sm font-semibold">PERMANENT ADDRESS</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="text-sm font-medium">TIN</label>
-                  <p className="text-sm text-muted-foreground">{employee.tin || 'N/A'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">GSIS Number</label>
-                  <p className="text-sm text-muted-foreground">{employee.gsis_number || 'N/A'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Pag-IBIG Number</label>
-                  <p className="text-sm text-muted-foreground">{employee.pagibig_number || 'N/A'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">PhilHealth Number</label>
-                  <p className="text-sm text-muted-foreground">{employee.philhealth_number || 'N/A'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">SSS Number</label>
-                  <p className="text-sm text-muted-foreground">{employee.sss_number || 'N/A'}</p>
-                </div>
+            <CardContent className="pt-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <InfoField label="House/Block/Lot No." value={employee.permanent_house_no} />
+                <InfoField label="Street" value={employee.permanent_street} />
+                <InfoField label="Subdivision/Village" value={employee.permanent_subdivision} />
+                <InfoField label="Barangay" value={employee.permanent_barangay} />
+                <InfoField label="City/Municipality" value={employee.permanent_city} />
+                <InfoField label="Province" value={employee.permanent_province} />
+                <InfoField label="ZIP Code" value={employee.permanent_zipcode} />
               </div>
             </CardContent>
           </Card>
 
-          {/* Exam Certificates Section */}
+          {/* Government IDs */}
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Exam Certificates</CardTitle>
+            <CardHeader className="pb-3 bg-muted/30">
+              <CardTitle className="text-sm font-semibold">GOVERNMENT IDs</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <InfoField label="TIN" value={employee.tin} />
+                <InfoField label="GSIS Number" value={employee.gsis_number} />
+                <InfoField label="Pag-IBIG Number" value={employee.pagibig_number} />
+                <InfoField label="PhilHealth Number" value={employee.philhealth_number} />
+                <InfoField label="SSS Number" value={employee.sss_number} />
+                <InfoField label="UMID ID" value={employee.umid_id_no} />
+                <InfoField label="PhilSys Number" value={employee.philsys_number} />
+                <InfoField label="Agency Employee No." value={employee.agency_employee_no} />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Employment Information */}
+          <Card>
+            <CardHeader className="pb-3 bg-muted/30">
+              <CardTitle className="text-sm font-semibold">EMPLOYMENT INFORMATION</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <InfoField label="Position" value={employee.plantilla_position} className="md:col-span-2" />
+                <InfoField label="Department" value={employee.department} className="md:col-span-2" />
+                <InfoField label="Plantilla Number" value={employee.plantilla_number} />
+                <InfoField label="Appointment Date" value={employee.appointment_date ? new Date(employee.appointment_date).toLocaleDateString() : null} />
+                <InfoField label="Salary Grade" value={employee.salary_grade} />
+                <InfoField label="Step Increment" value={employee.step_increment} />
+                <InfoField label="Monthly Salary" value={employee.current_monthly_salary ? `₱${employee.current_monthly_salary.toLocaleString()}` : null} />
+                <InfoField label="Daily Rate" value={employee.current_daily_rate ? `₱${employee.current_daily_rate.toLocaleString()}` : null} />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* IV. Civil Service Eligibility */}
+          <Card>
+            <CardHeader className="pb-3 bg-muted/30">
+              <CardTitle className="text-sm font-semibold">IV. CIVIL SERVICE ELIGIBILITY</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-4">
               {isLoadingCerts ? (
-                <div className="text-center py-4 text-sm text-muted-foreground">
-                  Loading exam certificates...
+                <div className="text-center py-8 text-sm text-muted-foreground">
+                  Loading eligibility records...
                 </div>
               ) : examCertificates.length > 0 ? (
                 <div className="space-y-3">
                   {examCertificates.map((cert, index) => (
-                    <div key={cert.id || index} className="border rounded-lg p-3">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-                        <div>
-                          <label className="font-medium">Exam Name</label>
-                          <p className="text-muted-foreground">{cert.exam_name}</p>
+                    <div key={cert.id || index} className="border rounded-lg p-4 hover:bg-muted/20 transition-colors">
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+                        <div className="md:col-span-2">
+                          <label className="text-xs font-medium text-muted-foreground uppercase">Eligibility/Exam Name</label>
+                          <p className="font-medium mt-1">{cert.exam_name}</p>
                         </div>
                         <div>
-                          <label className="font-medium">Exam Type</label>
-                          <p className="text-muted-foreground">{cert.exam_type || 'N/A'}</p>
+                          <label className="text-xs font-medium text-muted-foreground uppercase">Rating</label>
+                          <p className="mt-1">{cert.rating ? `${cert.rating}%` : 'N/A'}</p>
                         </div>
                         <div>
-                          <label className="font-medium">Rating</label>
-                          <p className="text-muted-foreground">{cert.rating || 'N/A'}</p>
+                          <label className="text-xs font-medium text-muted-foreground uppercase">Date of Exam/Conferment</label>
+                          <p className="mt-1">{cert.date_taken ? new Date(cert.date_taken).toLocaleDateString() : 'N/A'}</p>
                         </div>
                         <div>
-                          <label className="font-medium">Date Taken</label>
-                          <p className="text-muted-foreground">
-                            {cert.date_taken ? new Date(cert.date_taken).toLocaleDateString() : 'N/A'}
-                          </p>
+                          <label className="text-xs font-medium text-muted-foreground uppercase">Place</label>
+                          <p className="mt-1">{cert.place_of_examination || 'N/A'}</p>
                         </div>
                         <div>
-                          <label className="font-medium">Place of Examination</label>
-                          <p className="text-muted-foreground">{cert.place_of_examination || 'N/A'}</p>
-                        </div>
-                        <div>
-                          <label className="font-medium">License Number</label>
-                          <p className="text-muted-foreground">{cert.license_number || 'N/A'}</p>
+                          <label className="text-xs font-medium text-muted-foreground uppercase">License Number</label>
+                          <p className="mt-1">{cert.license_number || 'N/A'}</p>
                         </div>
                         {cert.validity_date && (
-                          <div className="sm:col-span-2">
-                            <label className="font-medium">Validity Date</label>
-                            <p className="text-muted-foreground">
-                              {new Date(cert.validity_date).toLocaleDateString()}
-                            </p>
+                          <div>
+                            <label className="text-xs font-medium text-muted-foreground uppercase">Validity Date</label>
+                            <p className="mt-1">{new Date(cert.validity_date).toLocaleDateString()}</p>
                           </div>
                         )}
                       </div>
@@ -266,16 +235,23 @@ function EmployeeViewDialog({ employee, open, onOpenChange }: EmployeeViewDialog
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-4 text-sm text-muted-foreground">
-                  No exam certificates found
+                <div className="text-center py-8 text-sm text-muted-foreground">
+                  No civil service eligibility records found
                 </div>
               )}
             </CardContent>
           </Card>
         </div>
+
         <DialogFooter className="flex-col sm:flex-row gap-2">
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
+            Close
+          </Button>
           <Button asChild className="w-full sm:w-auto">
-            <Link to={`/employees/${employee.id}/edit`}>Edit Employee</Link>
+            <Link to={`/employees/${employee.id}/edit`}>
+              <Edit className="mr-2 h-4 w-4" />
+              Edit Employee
+            </Link>
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -667,6 +643,7 @@ function DocumentsDialog({ employee, open, onOpenChange }: DocumentsDialogProps)
 export function EmployeeListPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchParams] = useSearchParams();
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [documentsDialogOpen, setDocumentsDialogOpen] = useState(false);
@@ -675,13 +652,25 @@ export function EmployeeListPage() {
   const [isFiltersOpen, setIsFiltersOpen] = useState(false); // Collapsible state for filters
   const [filters, setFilters] = useState<EmployeeFilters>({
     name: '',
-    department: '',
+    department: searchParams.get('department') || '',
     position: '',
     status: '',
     page: 1,
     limit: 1000, // Fetch up to 1000 emp
   });
   const [total, setTotal] = useState(0);
+
+  // Update filters when URL department parameter changes
+  useEffect(() => {
+    const deptParam = searchParams.get('department') || '';
+    setFilters(prev => {
+      // Only update if department actually changed
+      if (prev.department !== deptParam) {
+        return { ...prev, department: deptParam, page: 1 };
+      }
+      return prev;
+    });
+  }, [searchParams]);
 
   const fetchEmployees = useCallback(async () => {
     try {
