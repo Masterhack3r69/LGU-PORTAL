@@ -63,6 +63,7 @@ const employeeSchema = z.object({
   sss_number: z.string().optional(),
   appointment_date: z.string().min(1, "Appointment date is required"),
   plantilla_position: z.string().optional(),
+  department: z.string().optional(),
   plantilla_number: z.string().optional(),
   salary_grade: z
     .union([
@@ -121,6 +122,7 @@ export function EmployeeEditPage() {
       sss_number: "",
       appointment_date: "",
       plantilla_position: "",
+      department: "",
       plantilla_number: "",
       separation_date: "",
       separation_reason: "",
@@ -202,6 +204,7 @@ export function EmployeeEditPage() {
           sss_number: ensureString(emp.sss_number),
           appointment_date: formatDateForInput(emp.appointment_date),
           plantilla_position: ensureString(emp.plantilla_position),
+          department: ensureString(emp.department),
           plantilla_number: ensureString(emp.plantilla_number),
           salary_grade: ensureNumber(emp.salary_grade),
           step_increment: ensureNumber(emp.step_increment),
@@ -297,6 +300,7 @@ export function EmployeeEditPage() {
           ? formatDate(data.appointment_date)!
           : data.appointment_date,
         plantilla_position: cleanString(data.plantilla_position),
+        department: cleanString(data.department),
         plantilla_number: cleanString(data.plantilla_number),
         salary_grade: safeNumber(data.salary_grade),
         step_increment: safeNumber(data.step_increment),
@@ -648,8 +652,8 @@ export function EmployeeEditPage() {
               </CardHeader>
               <CardContent className="grid gap-6">
                 <div className="grid gap-4">
-                  {/* Row 1: Position */}
-                  <div className="grid grid-cols-1">
+                  {/* Row 1: Position and Department */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control as any}
                       name="plantilla_position"
@@ -659,6 +663,22 @@ export function EmployeeEditPage() {
                           <FormControl>
                             <Input
                               placeholder="Software Developer"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control as any}
+                      name="department"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Department</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="IT Department"
                               {...field}
                             />
                           </FormControl>

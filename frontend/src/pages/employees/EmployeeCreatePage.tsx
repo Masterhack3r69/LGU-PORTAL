@@ -46,6 +46,7 @@ const employeeSchema = z.object({
   sss_number: z.string().optional(),
   appointment_date: z.string().min(1, 'Appointment date is required'),
   plantilla_position: z.string().optional(),
+  department: z.string().optional(),
   plantilla_number: z.string().optional(),
   salary_grade: z.number().min(1).max(33).optional(),
   step_increment: z.number().min(1).max(8).optional(),
@@ -86,6 +87,7 @@ export function EmployeeCreatePage() {
       sss_number: '',
       appointment_date: '',
       plantilla_position: '',
+      department: '',
       plantilla_number: '',
       separation_date: '',
       separation_reason: '',
@@ -156,6 +158,7 @@ export function EmployeeCreatePage() {
         sss_number: data.sss_number || undefined,
         appointment_date: data.appointment_date ? formatDate(data.appointment_date)! : data.appointment_date,
         plantilla_position: data.plantilla_position || undefined,
+        department: data.department || undefined,
         plantilla_number: data.plantilla_number || undefined,
         salary_grade: data.salary_grade,
         step_increment: data.step_increment,
@@ -443,8 +446,8 @@ export function EmployeeCreatePage() {
               </CardHeader>
               <CardContent className="grid gap-6">
                 <div className="grid gap-4">
-                  {/* Row 1: Position */}
-                  <div className="grid grid-cols-1">
+                  {/* Row 1: Position and Department */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="plantilla_position"
@@ -453,6 +456,19 @@ export function EmployeeCreatePage() {
                           <FormLabel>Position</FormLabel>
                           <FormControl>
                             <Input placeholder="Software Developer" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="department"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Department</FormLabel>
+                          <FormControl>
+                            <Input placeholder="IT Department" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>

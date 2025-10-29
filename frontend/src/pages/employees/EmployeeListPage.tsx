@@ -26,7 +26,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { employeeService } from '@/services/employeeService';
 import { documentService } from '@/services/documentService';
-import type { Employee, EmployeeFilters, Document } from '@/types/employee';
+import { examCertificateService } from '@/services/examCertificateService';
+import type { Employee, EmployeeFilters, Document, ExamCertificate } from '@/types/employee';
 import { Plus, Search, Eye, Edit, Trash2, FileText, MoreHorizontal, RefreshCw, Filter, ChevronDown } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { showToast } from "@/lib/toast";
@@ -38,67 +39,239 @@ interface EmployeeViewDialogProps {
 }
 
 function EmployeeViewDialog({ employee, open, onOpenChange }: EmployeeViewDialogProps) {
+  const [examCertificates, setExamCertificates] = useState<ExamCertificate[]>([]);
+  const [isLoadingCerts, setIsLoadingCerts] = useState(false);
+
+  useEffect(() => {
+    const fetchExamCertificates = async () => {
+      if (!employee?.id || !open) return;
+      
+      try {
+        setIsLoadingCerts(true);
+        const certs = await examCertificateService.getExamCertificatesByEmployee(employee.id);
+        setExamCertificates(certs || []);
+      } catch (error) {
+        console.error('Failed to fetch exam certificates:', error);
+        setExamCertificates([]);
+      } finally {
+        setIsLoadingCerts(false);
+      }
+    };
+
+    fetchExamCertificates();
+  }, [employee?.id, open]);
+
   if (!employee) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[95vw] max-w-2xl max-h-[95vh] overflow-y-auto">
+      <DialogContent className="w-[95vw] max-w-4xl max-h-[95vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-lg sm:text-xl">Employee Details</DialogTitle>
           <DialogDescription>
             Complete information for {employee.first_name} {employee.last_name}
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-3 sm:gap-4 py-4">
-          {/* Container for Employee ID and Status in a single row */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            <div>
-              <label className="text-sm font-medium">Employee ID</label>
-              <p className="text-sm text-muted-foreground">{employee.employee_number}</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Status</label>
-              <p className="text-sm text-muted-foreground">
-                <Badge className={employee.employment_status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
-                  {employee.employment_status}
-                </Badge>
-              </p>
-            </div>
-          </div>
+        <div className="grid gap-4 py-4">
+          {/* Personal Information Section */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Personal Information</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm font-medium">Employee ID</label>
+                  <p className="text-sm text-muted-foreground">{employee.employee_number}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Status</label>
+                  <p className="text-sm text-muted-foreground">
+                    <Badge className={employee.employment_status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
+                      {employee.employment_status}
+                    </Badge>
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Full Name</label>
+                  <p className="text-sm text-muted-foreground break-words">
+                    {employee.first_name} {employee.middle_name} {employee.last_name} {employee.suffix}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Gender</label>
+                  <p className="text-sm text-muted-foreground">{employee.sex || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Birth Date</label>
+                  <p className="text-sm text-muted-foreground">
+                    {employee.birth_date ? new Date(employee.birth_date).toLocaleDateString() : 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Birth Place</label>
+                  <p className="text-sm text-muted-foreground">{employee.birth_place || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Civil Status</label>
+                  <p className="text-sm text-muted-foreground">{employee.civil_status || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Contact Number</label>
+                  <p className="text-sm text-muted-foreground">{employee.contact_number || 'N/A'}</p>
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="text-sm font-medium">Email</label>
+                  <p className="text-sm text-muted-foreground break-all">{employee.email_address || 'N/A'}</p>
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="text-sm font-medium">Current Address</label>
+                  <p className="text-sm text-muted-foreground">{employee.current_address || 'N/A'}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-          {/* The rest of the details in a two-column grid on larger screens */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            <div>
-              <label className="text-sm font-medium">Full Name</label>
-              <p className="text-sm text-muted-foreground break-words">
-                {employee.first_name} {employee.middle_name} {employee.last_name} {employee.suffix}
-              </p>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Email</label>
-              <p className="text-sm text-muted-foreground break-all">{employee.email_address || 'N/A'}</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Position</label>
-              <p className="text-sm text-muted-foreground break-words">{employee.plantilla_position || 'N/A'}</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Contact Number</label>
-              <p className="text-sm text-muted-foreground">{employee.contact_number || 'N/A'}</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Appointment Date</label>
-              <p className="text-sm text-muted-foreground">
-                {employee.appointment_date ? new Date(employee.appointment_date).toLocaleDateString() : 'N/A'}
-              </p>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Monthly Salary</label>
-              <p className="text-sm text-muted-foreground">
-                {employee.current_monthly_salary ? `₱${employee.current_monthly_salary.toLocaleString()}` : 'N/A'}
-              </p>
-            </div>
-          </div>
+          {/* Employment Information Section */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Employment Information</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm font-medium">Position</label>
+                  <p className="text-sm text-muted-foreground break-words">{employee.plantilla_position || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Department</label>
+                  <p className="text-sm text-muted-foreground">{employee.department || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Plantilla Number</label>
+                  <p className="text-sm text-muted-foreground">{employee.plantilla_number || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Appointment Date</label>
+                  <p className="text-sm text-muted-foreground">
+                    {employee.appointment_date ? new Date(employee.appointment_date).toLocaleDateString() : 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Salary Grade</label>
+                  <p className="text-sm text-muted-foreground">{employee.salary_grade || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Step Increment</label>
+                  <p className="text-sm text-muted-foreground">{employee.step_increment || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Monthly Salary</label>
+                  <p className="text-sm text-muted-foreground">
+                    {employee.current_monthly_salary ? `₱${employee.current_monthly_salary.toLocaleString()}` : 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Daily Rate</label>
+                  <p className="text-sm text-muted-foreground">
+                    {employee.current_daily_rate ? `₱${employee.current_daily_rate.toLocaleString()}` : 'N/A'}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Government IDs Section */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Government IDs</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm font-medium">TIN</label>
+                  <p className="text-sm text-muted-foreground">{employee.tin || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">GSIS Number</label>
+                  <p className="text-sm text-muted-foreground">{employee.gsis_number || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Pag-IBIG Number</label>
+                  <p className="text-sm text-muted-foreground">{employee.pagibig_number || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">PhilHealth Number</label>
+                  <p className="text-sm text-muted-foreground">{employee.philhealth_number || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">SSS Number</label>
+                  <p className="text-sm text-muted-foreground">{employee.sss_number || 'N/A'}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Exam Certificates Section */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Exam Certificates</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoadingCerts ? (
+                <div className="text-center py-4 text-sm text-muted-foreground">
+                  Loading exam certificates...
+                </div>
+              ) : examCertificates.length > 0 ? (
+                <div className="space-y-3">
+                  {examCertificates.map((cert, index) => (
+                    <div key={cert.id || index} className="border rounded-lg p-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                        <div>
+                          <label className="font-medium">Exam Name</label>
+                          <p className="text-muted-foreground">{cert.exam_name}</p>
+                        </div>
+                        <div>
+                          <label className="font-medium">Exam Type</label>
+                          <p className="text-muted-foreground">{cert.exam_type || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <label className="font-medium">Rating</label>
+                          <p className="text-muted-foreground">{cert.rating || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <label className="font-medium">Date Taken</label>
+                          <p className="text-muted-foreground">
+                            {cert.date_taken ? new Date(cert.date_taken).toLocaleDateString() : 'N/A'}
+                          </p>
+                        </div>
+                        <div>
+                          <label className="font-medium">Place of Examination</label>
+                          <p className="text-muted-foreground">{cert.place_of_examination || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <label className="font-medium">License Number</label>
+                          <p className="text-muted-foreground">{cert.license_number || 'N/A'}</p>
+                        </div>
+                        {cert.validity_date && (
+                          <div className="sm:col-span-2">
+                            <label className="font-medium">Validity Date</label>
+                            <p className="text-muted-foreground">
+                              {new Date(cert.validity_date).toLocaleDateString()}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-4 text-sm text-muted-foreground">
+                  No exam certificates found
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
         <DialogFooter className="flex-col sm:flex-row gap-2">
           <Button asChild className="w-full sm:w-auto">
@@ -732,10 +905,10 @@ export function EmployeeListPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
                   <TableHead>Employee ID</TableHead>
+                  <TableHead>Name</TableHead>
                   <TableHead>Position</TableHead>
-                  <TableHead>Email</TableHead>
+                  <TableHead>Department</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -744,12 +917,12 @@ export function EmployeeListPage() {
                 {employees.length > 0 ? (
                   employees.map((employee) => (
                     <TableRow key={employee.id}>
-                      <TableCell className="font-medium">
+                      <TableCell className="font-medium">{employee.employee_number}</TableCell>
+                      <TableCell>
                         {employee.first_name} {employee.last_name}
                       </TableCell>
-                      <TableCell>{employee.employee_number}</TableCell>
                       <TableCell>{employee.plantilla_position || 'N/A'}</TableCell>
-                      <TableCell>{employee.email_address || 'N/A'}</TableCell>
+                      <TableCell>{employee.department || 'N/A'}</TableCell>
                       <TableCell>{getStatusBadge(employee.employment_status)}</TableCell>
                       <TableCell>
                         <DropdownMenu>

@@ -25,6 +25,7 @@ class Employee {
         this.sss_number = data.sss_number || null;
         this.appointment_date = data.appointment_date || null;
         this.plantilla_position = data.plantilla_position || null;
+        this.department = data.department || null;
         this.plantilla_number = data.plantilla_number || null;
         this.salary_grade = data.salary_grade || null;
         this.step_increment = data.step_increment || 1;
@@ -240,11 +241,11 @@ class Employee {
                 user_id, employee_number, first_name, middle_name, last_name, suffix,
                 sex, birth_date, birth_place, civil_status, contact_number, email_address,
                 current_address, permanent_address, tin, gsis_number, pagibig_number,
-                philhealth_number, sss_number, appointment_date, plantilla_position,
+                philhealth_number, sss_number, appointment_date, plantilla_position, department,
                 plantilla_number, salary_grade, step_increment, current_monthly_salary,
                 current_daily_rate, highest_monthly_salary, highest_daily_rate, employment_status,
                 separation_date, separation_reason
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
         const params = [
@@ -253,7 +254,7 @@ class Employee {
             this.civil_status, this.contact_number, this.email_address, this.current_address,
             this.permanent_address, this.tin, this.gsis_number, this.pagibig_number,
             this.philhealth_number, this.sss_number, this.appointment_date,
-            this.plantilla_position, this.plantilla_number, this.salary_grade,
+            this.plantilla_position, this.department, this.plantilla_number, this.salary_grade,
             this.step_increment, this.current_monthly_salary, this.current_daily_rate,
             this.highest_monthly_salary, this.highest_daily_rate, this.employment_status,
             this.separation_date, this.separation_reason
@@ -284,7 +285,7 @@ class Employee {
                 civil_status = ?, contact_number = ?, email_address = ?, current_address = ?,
                 permanent_address = ?, tin = ?, gsis_number = ?, pagibig_number = ?,
                 philhealth_number = ?, sss_number = ?, appointment_date = ?,
-                plantilla_position = ?, plantilla_number = ?, salary_grade = ?,
+                plantilla_position = ?, department = ?, plantilla_number = ?, salary_grade = ?,
                 step_increment = ?, current_monthly_salary = ?, current_daily_rate = ?,
                 highest_monthly_salary = ?, highest_daily_rate = ?, employment_status = ?, 
                 separation_date = ?, separation_reason = ?
@@ -297,7 +298,7 @@ class Employee {
             this.civil_status, this.contact_number, this.email_address, this.current_address,
             this.permanent_address, this.tin, this.gsis_number, this.pagibig_number,
             this.philhealth_number, this.sss_number, this.appointment_date,
-            this.plantilla_position, this.plantilla_number, this.salary_grade,
+            this.plantilla_position, this.department, this.plantilla_number, this.salary_grade,
             this.step_increment, this.current_monthly_salary, this.current_daily_rate,
             this.highest_monthly_salary, this.highest_daily_rate, this.employment_status,
             this.separation_date, this.separation_reason, this.id

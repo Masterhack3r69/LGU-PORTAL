@@ -77,6 +77,7 @@ const COLUMN_MAPPING = {
     'philhealth_number': ['philhealth_number', 'philhealthnumber', 'philhealth number', 'philhealth'],
     'sss_number': ['sss_number', 'sssnumber', 'sss number', 'sss'],
     'plantilla_position': ['plantilla_position', 'position', 'job_title', 'designation'],
+    'department': ['department', 'dept', 'office', 'division'],
     'plantilla_number': ['plantilla_number', 'plantillanumber', 'plantilla number'],
     'salary_grade': ['salary_grade', 'salarygrade', 'salary grade', 'sg'],
     'step_increment': ['step_increment', 'stepincrement', 'step increment', 'step'],
@@ -181,7 +182,7 @@ const validateEmployeeData = (rowData, rowIndex) => {
     const optionalFields = [
         'middle_name', 'suffix', 'birth_place', 'civil_status', 'contact_number',
         'current_address', 'permanent_address', 'tin', 'gsis_number', 'pagibig_number',
-        'philhealth_number', 'sss_number', 'plantilla_position', 'plantilla_number',
+        'philhealth_number', 'sss_number', 'plantilla_position', 'department', 'plantilla_number',
         'employment_status'
     ];
     
@@ -637,7 +638,7 @@ const downloadImportTemplate = asyncHandler(async (req, res) => {
         'sex', 'birth_date', 'birth_place', 'civil_status', 'contact_number',
         'email_address', 'current_address', 'permanent_address', 'tin',
         'gsis_number', 'pagibig_number', 'philhealth_number', 'sss_number',
-        'appointment_date', 'plantilla_position', 'plantilla_number',
+        'appointment_date', 'plantilla_position', 'department', 'plantilla_number',
         'salary_grade', 'step_increment', 'current_monthly_salary',
         'current_daily_rate', 'employment_status'
     ];
@@ -648,7 +649,7 @@ const downloadImportTemplate = asyncHandler(async (req, res) => {
         'Male', '1990-01-15', 'Manila, Philippines', 'Single', '09123456789',
         'juan.cruz@company.com', '123 Main St, Manila', '456 Home St, Quezon City', '123-456-789-000',
         '1234567890', '1234567890123', '12-345678901-2', '03-4567890-1',
-        '2023-01-01', 'Administrative Assistant I', 'PLANTILLA-001',
+        '2023-01-01', 'Administrative Assistant I', 'Human Resources', 'PLANTILLA-001',
         '11', '1', '22000.00', '1000.00', 'Active'
     ];
     
@@ -692,6 +693,7 @@ const downloadImportTemplate = asyncHandler(async (req, res) => {
         ['- philhealth_number: PhilHealth number'],
         ['- sss_number: SSS number'],
         ['- plantilla_position: Job position/title'],
+        ['- department: Department or office name'],
         ['- plantilla_number: Plantilla item number'],
         ['- salary_grade: Salary grade (numeric)'],
         ['- step_increment: Step increment (numeric, default: 1)'],

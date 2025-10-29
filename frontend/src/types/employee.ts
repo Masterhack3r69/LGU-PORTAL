@@ -21,6 +21,7 @@
     sss_number?: string;
     appointment_date: string;
     plantilla_position?: string;
+    department?: string;
     plantilla_number?: string;
     salary_grade?: number;
     step_increment?: number;
@@ -68,6 +69,7 @@
     sss_number?: string;
     appointment_date: string;
     plantilla_position?: string;
+    department?: string;
     plantilla_number?: string;
     salary_grade?: number;
     step_increment?: number;
