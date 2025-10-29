@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CS Form No. 6 - Application for Leave</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 10px;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .form-container {
+            width: 8.5in;
+            min-height: 11in;
+            background-color: #fff;
+            border: 1px solid #333;
+            padding: 0.5in;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            box-sizing: border-box;
+        }
+
+        .header {
+            text-align: center;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .header-left {
+            position: absolute;
+            left: 0;
+            top: 0;
+            font-size: 9px;
+            text-align: left;
+        }
+
+        .header-right {
+            position: absolute;
+            right: 0;
+            top: 0;
+            border: 1px dashed #666;
+            padding: 10px 20px;
+            font-size: 9px;
+            text-align: center;
+            height: 50px;
+        }
+
+        .logo {
+            border: 1px solid #000;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            font-weight: bold;
+            margin: 10px auto 5px auto;
+        }
+
+        .form-title {
+            font-size: 14px;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0 10px 0;
+        }
+
+        .main-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #000;
+        }
+
+        .main-table th,
+        .main-table td {
+            border: 1px solid #000;
+            padding: 4px 6px;
+            vertical-align: top;
+        }
+
+        .section-title {
+            background-color: #dbdbdb;
+            text-align: center;
+            font-weight: bold;
+            font-size: 11px;
+            padding: 5px;
+        }
+
+        .field-label {
+            font-size: 9px;
+            color: #333;
+            margin-bottom: 2px;
+        }
+
+        .field-value {
+            font-weight: bold;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 11px;
+            min-height: 14px;
+        }
+
+        .field-value-input {
+            width: 100%;
+            border: none;
+            border-bottom: 1px solid #000;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 2px 0;
+            box-sizing: border-box;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            margin-bottom: 4px;
+            font-size: 10px;
+        }
+
+        input[type="checkbox"] {
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+
+        .details-box {
+            border-bottom: 1px solid #000;
+            padding-bottom: 5px;
+            margin-bottom: 5px;
+        }
+
+        .details-box:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+        
+        .sub-field-label {
+            display: block;
+            margin-left: 22px;
+            font-size: 9px;
+        }
+
+        .sub-field-input {
+            width: calc(100% - 22px);
+            margin-left: 22px;
+            border: none;
+            border-bottom: 1px solid #000;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 10px;
+        }
+        
+        .signature-box {
+            text-align: center;
+            padding-top: 30px;
+        }
+        
+        .signature-line {
+            border-top: 1px solid #000;
+            margin: 0 auto;
+            width: 250px;
+            padding-top: 3px;
+            font-size: 9px;
+        }
+
+        .footer-signature {
+            text-align: center;
+            padding-top: 40px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="form-container">
+        <div class="header">
+            <div class="header-left">
+                [cite_start]Civil Service Form No. 6 [cite: 1]<br>
+                [cite_start]Revised 2020 [cite: 1]
+            </div>
+            <div class="header-right">
+                [cite_start]Stamp of Date of Receipt [cite: 6]
+            </div>
+            [cite_start]<div class="logo">AGENCY<br>LOGO [cite: 3, 4]</div>
+            [cite_start]Republic of the Philippines [cite: 2]<br>
+            [cite_start]<strong>(Agency Name)</strong> [cite: 5]<br>
+            (Agency Address) [cite_start][cite: 7]
+        </div>
+
+        [cite_start]<div class="form-title">APPLICATION FOR LEAVE [cite: 8]</div>
+
+        <table class="main-table">
+            <tbody>
+                <tr>
+                    <td style="width: 50%;">
+                        <div class="field-label">1. [cite_start]OFFICE/DEPARTMENT [cite: 9]</div>
+                        [cite_start]<div class="field-value">Human Resource Department [cite: 14]</div>
+                    </td>
+                    <td style="width: 50%;" colspan="2">
+                        <div class="field-label">2. [cite_start]NAME: (Last) (First) (Middle) [cite: 10, 11, 12, 13]</div>
+                        [cite_start]<div class="field-value">DELA CRUZ, JUAN D. [cite: 15]</div>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width: 33.3%;">
+                        <div class="field-label">3. [cite_start]DATE OF FILING [cite: 16]</div>
+                        [cite_start]<div class="field-value">April 17, 2021 [cite: 16]</div>
+                    </td>
+                    <td style="width: 33.3%;">
+                        <div class="field-label">4. [cite_start]POSITION [cite: 18]</div>
+                        [cite_start]<div class="field-value">Administrative Assistant I [cite: 17]</div>
+                    </td>
+                    <td style="width: 33.3%;">
+                        <div class="field-label">5. [cite_start]SALARY [cite: 19]</div>
+                        [cite_start]<div class="field-value">P0.00 [cite: 20]</div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <table class="main-table" style="margin-top: -1px;">
+            <thead>
+                <tr>
+                    <th class="section-title" colspan="2">6. [cite_start]DETAILS OF APPLICATION [cite: 23]</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="width: 50%; vertical-align: top;">
+                        <div style="padding: 5px;">
+                            [cite_start]<strong>6.A TYPE OF LEAVE TO BE AVAILED OF</strong> [cite: 22]<br><br>
+                            <label class="checkbox-label">
+                                [cite_start]<input type="checkbox" checked> [cite: 25]
+                                [cite_start]<strong>Vacation Leave</strong> (Sec. 51, Rule XVI, Omnibus Rules Implementing E.O. No. 292) [cite: 26]
+                            </label>
+                            <label class="checkbox-label">
+                                [cite_start]<input type="checkbox"> [cite: 29]
+                                [cite_start]Mandatory/Forced Leave (Sec. 25, Rule XVI, Omnibus Rules Implementing EO. No. 292) [cite: 21]
+                            </label>
+                            <label class="checkbox-label">
+                                [cite_start]<input type="checkbox"> [cite: 31]
+                                [cite_start]<strong>Sick Leave</strong> (Sec. 43, Rule XVI, Omnibus Rules Implementing E.O. No. 292) [cite: 45]
+                            </label>
+                            <label class="checkbox-label">
+                                [cite_start]<input type="checkbox"> [cite: 32]
+                                [cite_start]Maternity Leave (R.A. No. 11210/IRR issued by CSC, DOLE and SSS) [cite: 33]
+                            </label>
+                            <label class="checkbox-label">
+                                [cite_start]<input type="checkbox"> [cite: 35]
+                                [cite_start]Paternity Leave (R.A. No. 8187/CSC MC No. 71, s. 1998, as amended) [cite: 46]
+                            </label>
+                            <label class="checkbox-label">
+                                [cite_start]<input type="checkbox"> [cite: 36]
+                                [cite_start]Special Privilege Leave (Sec. 21, Rule XVI, Omnibus Rules Implementing E.O. No. 292) [cite: 47]
+                            </label>
+                            <label class="checkbox-label">
+                                [cite_start]<input type="checkbox"> [cite: 37]
+                                [cite_start]Solo Parent Leave (RA No. 8972/CSC MC No. 8, s. 2004) [cite: 48]
+                            </label>
+                            <label class="checkbox-label">
+                                [cite_start]<input type="checkbox"> [cite: 38]
+                                [cite_start]Study Leave (Sec. 68, Rule XVI, Omnibus Rules Implementing E.O. No. 292) [cite: 49]
+                            </label>
+                            <label class="checkbox-label">
+                                [cite_start]<input type="checkbox"> [cite: 41]
+                                [cite_start]10-Day VAWC Leave (RA No. 9262/CSC MC No. 15. s. 2005) [cite: 50]
+                            </label>
+                            <label class="checkbox-label">
+                                [cite_start]<input type="checkbox"> [cite: 42]
+                                [cite_start]Rehabilitation Privilege (Sec. 55, Rule XVI, Omnibus Rules Implementing E.O. No. 292) [cite: 51]
+                            </label>
+                            <label class="checkbox-label">
+                                [cite_start]<input type="checkbox"> [cite: 43]
+                                [cite_start]Special Leave Benefits for Women (RA No. 9710/CSC MC No. 25, s. 2010) [cite: 52]
+                            </label>
+                            <label class="checkbox-label">
+                                [cite_start]<input type="checkbox"> [cite: 44]
+                                [cite_start]Special Emergency (Calamity) Leave (CSC MC No. 2, s. 2012, as amended) [cite: 52]
+                            </label>
+                            <label class="checkbox-label">
+                                [cite_start]<input type="checkbox"> [cite: 58]
+                                [cite_start]Adoption Leave (R.A. No. 8552) [cite: 59]
+                            </label>
+                            <br>
+                            [cite_start]<div class="field-label">Others: [cite: 62]</div>
+                            <input type="text" class="field-value-input" style="border-bottom: 1px solid #000;">
+                        </div>
+
+                        <hr style="border: none; border-top: 1px solid #000; margin: 0;">
+
+                        <div style="padding: 5px;">
+                            [cite_start]<strong>6.C NUMBER OF WORKING DAYS APPLIED FOR</strong> [cite: 67]
+                            [cite_start]<div class="field-value" style="margin-top: 5px;">2 days [cite: 68]</div>
+                            <br>
+                            [cite_start]<div class="field-label">INCLUSIVE DATES [cite: 72]</div>
+                            [cite_start]<div class="field-value">April 28-29, 2021 [cite: 74]</div>
+                        </div>
+                    </td>
+
+                    <td style="width: 50%; vertical-align: top; border-left: 1px solid #000;">
+                        <div style="padding: 5px;">
+                            [cite_start]<strong>6.B DETAILS OF LEAVE</strong> [cite: 24]
+
+                            <div class="details-box">
+                                [cite_start]In case of Vacation/Special Privilege Leave: [cite: 27]
+                                <label class="checkbox-label" style="margin-left: 10px; margin-top: 5px;">
+                                    [cite_start]<input type="checkbox" checked> [cite: 28]
+                                    [cite_start]Within the Philippines [cite: 28]
+                                </label>
+                                [cite_start]<div class="field-value" style="margin-left: 32px;">Residence [cite: 28]</div>
+
+                                <label class="checkbox-label" style="margin-left: 10px; margin-top: 5px;">
+                                    [cite_start]<input type="checkbox"> [cite: 30]
+                                    [cite_start]Abroad (Specify) [cite: 30]
+                                </label>
+                                <input type="text" class="sub-field-input" style="border-bottom: 1px solid #000;">
+                            </div>
+
+                            <div class="details-box">
+                                [cite_start]In case of Sick Leave: [cite: 34]
+                                <label class="checkbox-label" style="margin-left: 10px; margin-top: 5px;">
+                                    [cite_start]<input type="checkbox"> [cite: 56]
+                                    [cite_start]In Hospital (Specify Illness) [cite: 39]
+                                </label>
+                                <input type="text" class="sub-field-input" style="border-bottom: 1px solid #000;">
+                                <label class="checkbox-label" style="margin-left: 10px; margin-top: 5px;">
+                                    [cite_start]<input type="checkbox"> [cite: 57]
+                                    [cite_start]Out Patient (Specify Illness) [cite: 40]
+                                </label>
+                                <input type="text" class="sub-field-input" style="border-bottom: 1px solid #000;">
+                            </div>
+
+                            <div class="details-box">
+                                [cite_start]In case of Special Leave Benefits for Women: [cite: 53]<br>
+                                [cite_start]<label class="sub-field-label">(Specify Illness) [cite: 53]</label>
+                                <input type="text" class="sub-field-input" style="border-bottom: 1px solid #000;">
+                                <input type="text" class="sub-field-input" style="border-bottom: 1px solid #000;">
+                            </div>
+
+                            <div class="details-box">
+                                [cite_start]In case of Study Leave: [cite: 54]
+                                <label class="checkbox-label" style="margin-left: 10px; margin-top: 5px;">
+                                    <input type="checkbox">
+                                    [cite_start]Completion of Master's Degree [cite: 55]
+                                </label>
+                                <label class="checkbox-label" style="margin-left: 10px; margin-top: 5px;">
+                                    <input type="checkbox">
+                                    [cite_start]BAR/Board Examination Review [cite: 60]
+                                </label>
+                                [cite_start]<div class="field-label" style="margin-left: 10px; margin-top: 5px;">Other purpose: [cite: 61]</div>
+                                <label class="checkbox-label" style="margin-left: 10px; margin-top: 5px;">
+                                    [cite_start]<input type="checkbox"> [cite: 63]
+                                    [cite_start]Monetization of Leave Credits [cite: 65]
+                                </label>
+                                <label class="checkbox-label" style="margin-left: 10px; margin-top: 5px;">
+                                    [cite_start]<input type="checkbox"> [cite: 64]
+                                    [cite_start]Terminal Leave [cite: 66]
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <hr style="border: none; border-top: 1px solid #000; margin: 0;">
+
+                        <div style="padding: 5px;">
+                            [cite_start]<strong>6.D COMMUTATION</strong> [cite: 70]
+                            <label class="checkbox-label" style="margin-left: 10px; margin-top: 5px;">
+                                [cite_start]<input type="checkbox" checked> [cite: 69]
+                                [cite_start]Not Requested [cite: 71]
+                            </label>
+                            <label class="checkbox-label" style="margin-left: 10px; margin-top: 5px;">
+                                [cite_start]<input type="checkbox"> [cite: 73]
+                                [cite_start]Requested [cite: 73]
+                            </label>
+                        </div>
+                        
+                        <div class="signature-box">
+                            [cite_start]<div class="signature-line">(Signature of Applicant) [cite: 75]</div>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <table class="main-table" style="margin-top: -1px;">
+            <thead>
+                <tr>
+                    <th class="section-title" colspan="2">7. [cite_start]DETAILS OF ACTION ON APPLICATION [cite: 76]</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="width: 50%; vertical-align: top;">
+                        <div style="padding: 5px;">
+                            [cite_start]<strong>7.A CERTIFICATION OF LEAVE CREDITS</strong> [cite: 77]<br>
+                            [cite_start]As of <strong>March 2021</strong> [cite: 79]
+                            <table class="main-table" style="margin-top: 5px; text-align: center; font-size: 9px;">
+                                <thead>
+                                    <tr>
+                                        <th></th>
+                                        [cite_start]<th>Vacation Leave [cite: 80]</th>
+                                        [cite_start]<th>Sick Leave [cite: 80]</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        [cite_start]<td style="text-align: left;">Total Earned [cite: 80]</td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        [cite_start]<td style="text-align: left;">Less this application [cite: 80]</td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        [cite_start]<td style="text-align: left;">Balance [cite: 80]</td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div class="signature-box" style="padding-top: 20px;">
+                                [cite_start]<div class="signature-line">(Authorized Officer) [cite: 87]</div>
+                            </div>
+                        </div>
+                        
+                        <hr style="border: none; border-top: 1px solid #000; margin: 0;">
+
+                        <div style="padding: 5px;">
+                            [cite_start]<strong>7.C APPROVED FOR:</strong> [cite: 85]<br>
+                            <div style="margin-top: 5px;">
+                                [cite_start]<input type="text" value="2" style="width: 40px; text-align: center; border:none; border-bottom: 1px solid #000; font-weight: bold;"> [cite: 86]
+                                [cite_start]days with pay [cite: 88]
+                            </div>
+                            <div style="margin-top: 5px;">
+                                <input type="text" style="width: 40px; border:none; border-bottom: 1px solid #000;">
+                                [cite_start]days without pay [cite: 88]
+                            </div>
+                            <div style="margin-top: 5px;">
+                                <input type="text" style="width: 40px; border:none; border-bottom: 1px solid #000;">
+                                [cite_start]others (Specify) [cite: 88]
+                            </div>
+                        </div>
+                    </td>
+
+                    <td style="width: 50%; vertical-align: top; border-left: 1px solid #000;">
+                        <div style="padding: 5px;">
+                            [cite_start]<strong>7.B RECOMMENDATION</strong> [cite: 78]
+                            <label class="checkbox-label" style="margin-left: 10px; margin-top: 5px;">
+                                [cite_start]<input type="checkbox" checked> [cite: 81]
+                                [cite_start]For approval [cite: 83]
+                            </label>
+                            <label class="checkbox-label" style="margin-left: 10px; margin-top: 5px;">
+                                [cite_start]<input type="checkbox"> [cite: 82]
+                                [cite_start]For disapproval due to [cite: 84]
+                            </label>
+                            <input type="text" class="field-value-input" style="margin-left: 32px; width: calc(100% - 32px); border-bottom: 1px solid #000;">
+                            
+                            <div class="signature-box" style="padding-top: 105px;">
+                                [cite_start]<div class="signature-line">(Authorized Officer) [cite: 89]</div>
+                            </div>
+                        </div>
+
+                        <hr style="border: none; border-top: 1px solid #000; margin: 0;">
+
+                        <div style="padding: 5px;">
+                            [cite_start]<strong>7.D DISAPPROVED DUE TO:</strong> [cite: 90]<br>
+                            <input type="text" class="field-value-input" style="margin-top: 5px; border-bottom: 1px solid #000;">
+                            <input type="text" class="field-value-input" style="margin-top: 5px; border-bottom: 1px solid #000;">
+                            <input type="text" class="field-value-input" style="margin-top: 5px; border-bottom: 1px solid #000;">
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="footer-signature">
+            [cite_start]<div class="signature-line" style="width: 300px;">(Authorized Official) [cite: 91]</div>
+        </div>
+
+    </div>
+
+</body>
+</html>

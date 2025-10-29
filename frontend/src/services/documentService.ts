@@ -80,6 +80,17 @@ export const documentService = {
     return { success: true, message: 'Document downloaded successfully' };
   },
 
+  // Preview a document (admin only)
+  async previewDocument(id: number) {
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+    const previewUrl = `${baseUrl}/documents/${id}/preview`;
+    
+    // Open in new tab/window
+    window.open(previewUrl, '_blank', 'noopener,noreferrer');
+    
+    return { success: true, message: 'Document opened for preview' };
+  },
+
   // Delete a document
   async deleteDocument(id: number) {
     const response = await apiService.delete<{ success: boolean; message: string }>(`/documents/${id}`);

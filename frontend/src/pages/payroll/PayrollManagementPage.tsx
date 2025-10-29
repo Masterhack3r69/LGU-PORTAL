@@ -215,7 +215,9 @@ export function PayrollManagementPage() {
     if (!selectedPeriod) return;
 
     // Verify all payroll items are paid
-    const allPaid = payrollItems.every(item => item.status?.toLowerCase() === "paid");
+    const allPaid = payrollItems.every(
+      (item) => item.status?.toLowerCase() === "paid"
+    );
     if (!allPaid) {
       showToast.error(
         "Cannot Complete Period",
@@ -227,7 +229,7 @@ export function PayrollManagementPage() {
     setProcessingLoading(true);
     try {
       const response = await payrollService.finalizePeriod(selectedPeriod.id);
-      
+
       if (response.success) {
         showToast.success(
           "Period Completed",
@@ -246,7 +248,8 @@ export function PayrollManagementPage() {
       console.error("Failed to complete period:", error);
       showToast.error(
         "Failed to Complete Period",
-        error.response?.data?.error?.message || "Could not complete the payroll period"
+        error.response?.data?.error?.message ||
+          "Could not complete the payroll period"
       );
     } finally {
       setProcessingLoading(false);
@@ -286,9 +289,9 @@ export function PayrollManagementPage() {
 
       if (successCount > 0) {
         showToast.success(
-          `Finalized ${successCount} payroll item${successCount > 1 ? "s" : ""}${
-            failCount > 0 ? `, ${failCount} failed` : ""
-          }`
+          `Finalized ${successCount} payroll item${
+            successCount > 1 ? "s" : ""
+          }${failCount > 0 ? `, ${failCount} failed` : ""}`
         );
         await loadPayrollItems(selectedPeriod.id);
         await loadSummary(selectedPeriod.id);
@@ -337,9 +340,9 @@ export function PayrollManagementPage() {
 
       if (successCount > 0) {
         showToast.success(
-          `Marked ${successCount} payroll item${successCount > 1 ? "s" : ""} as paid${
-            failCount > 0 ? `, ${failCount} failed` : ""
-          }`
+          `Marked ${successCount} payroll item${
+            successCount > 1 ? "s" : ""
+          } as paid${failCount > 0 ? `, ${failCount} failed` : ""}`
         );
         await loadPayrollItems(selectedPeriod.id);
         await loadSummary(selectedPeriod.id);
@@ -396,10 +399,10 @@ export function PayrollManagementPage() {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-PH", {
-      style: "currency",
-      currency: "PHP",
-    }).format(amount);
+    return `₱${new Intl.NumberFormat("en-PH", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount)}`;
   };
 
   const getMonthName = (year: number, month: number) => {
@@ -489,7 +492,6 @@ export function PayrollManagementPage() {
 
                   {period.total_net_pay && (
                     <div className="flex items-center gap-1 text-xs">
-                      <DollarSign className="h-3 w-3" />
                       <span className="font-medium">
                         {formatCurrency(period.total_net_pay)}
                       </span>
@@ -631,7 +633,8 @@ export function PayrollManagementPage() {
                           : selectedPeriod.status?.toLowerCase() === "finalized"
                           ? "finalized"
                           : "completed"}
-                        . To make changes, you must reopen the payroll period first.
+                        . To make changes, you must reopen the payroll period
+                        first.
                       </AlertDescription>
                     </Alert>
                   )}
@@ -705,7 +708,9 @@ export function PayrollManagementPage() {
                     </Button>
                   )}
 
-                  {payrollItems.some(item => item.status?.toLowerCase() === "processed") && (
+                  {payrollItems.some(
+                    (item) => item.status?.toLowerCase() === "processed"
+                  ) && (
                     <Button
                       onClick={handleBulkFinalize}
                       disabled={processingLoading}
@@ -716,7 +721,9 @@ export function PayrollManagementPage() {
                     </Button>
                   )}
 
-                  {payrollItems.some(item => item.status?.toLowerCase() === "finalized") && (
+                  {payrollItems.some(
+                    (item) => item.status?.toLowerCase() === "finalized"
+                  ) && (
                     <Button
                       onClick={handleBulkMarkPaid}
                       disabled={processingLoading}
@@ -727,21 +734,24 @@ export function PayrollManagementPage() {
                     </Button>
                   )}
 
-                  {payrollItems.length > 0 && 
-                   payrollItems.every(item => item.status?.toLowerCase() === "paid") &&
-                   (selectedPeriod.status?.toLowerCase() === "draft" || 
-                    selectedPeriod.status?.toLowerCase() === "open" ||
-                    selectedPeriod.status?.toLowerCase() === "processing") && (
-                    <Button
-                      onClick={handleCompletePeriod}
-                      disabled={processingLoading}
-                      variant="default"
-                      className="bg-green-600 hover:bg-green-700"
-                    >
-                      <Lock className="mr-2 h-4 w-4" />
-                      Complete Payroll Period
-                    </Button>
-                  )}
+                  {payrollItems.length > 0 &&
+                    payrollItems.every(
+                      (item) => item.status?.toLowerCase() === "paid"
+                    ) &&
+                    (selectedPeriod.status?.toLowerCase() === "draft" ||
+                      selectedPeriod.status?.toLowerCase() === "open" ||
+                      selectedPeriod.status?.toLowerCase() ===
+                        "processing") && (
+                      <Button
+                        onClick={handleCompletePeriod}
+                        disabled={processingLoading}
+                        variant="default"
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        <Lock className="mr-2 h-4 w-4" />
+                        Complete Payroll Period
+                      </Button>
+                    )}
                 </div>
 
                 {/* Payroll Items Summary */}
@@ -822,8 +832,8 @@ export function PayrollManagementPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <PayrollItemsTable 
-                    items={payrollItems} 
+                  <PayrollItemsTable
+                    items={payrollItems}
                     onItemUpdate={() => {
                       loadPayrollItems(selectedPeriod.id);
                       loadSummary(selectedPeriod.id);
@@ -882,7 +892,12 @@ export function PayrollManagementPage() {
           {selectedPeriod && (
             <DTRRecordsTable
               periodId={selectedPeriod.id}
-              periodDescription={`View and manage DTR records for ${getMonthName(selectedPeriod.year, selectedPeriod.month)} ${selectedPeriod.year} - Period ${selectedPeriod.period_number}`}
+              periodDescription={`View and manage DTR records for ${getMonthName(
+                selectedPeriod.year,
+                selectedPeriod.month
+              )} ${selectedPeriod.year} - Period ${
+                selectedPeriod.period_number
+              }`}
               onRecordUpdate={() => {
                 loadDTRStats(selectedPeriod.id);
                 loadPayrollItems(selectedPeriod.id);

@@ -21,8 +21,8 @@ import {
   Printer,
 } from "lucide-react";
 import leaveService from "@/services/leaveService";
+import employeeService from "@/services/employeeService";
 import LeaveCard from "./LeaveCard";
-import PrintableLeaveApplication from "./PrintableLeaveApplication";
 import { showToast } from "@/lib/toast";
 import type { LeaveApplication } from "@/types/leave";
 
@@ -119,12 +119,73 @@ const AdminLeaveApplications: React.FC = () => {
     }
   };
 
-  const handlePrint = (application: LeaveApplication) => {
+  const handlePrint = async (application: LeaveApplication) => {
+    // Fetch employee details to get position and salary
+    let employeePosition = "";
+    let employeeSalary = 0;
+    
+    try {
+      const employee = await employeeService.getEmployee(application.employee_id);
+      employeePosition = employee.position || "";
+      employeeSalary = employee.salary || 0;
+    } catch (error) {
+      console.error("Error fetching employee details:", error);
+      // Continue with printing even if employee fetch fails
+    }
+    
+    const formatDateRange = () => {
+      const start = new Date(application.start_date);
+      const end = new Date(application.end_date);
+      const options: Intl.DateTimeFormatOptions = {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      };
+
+      if (start.toDateString() === end.toDateString()) {
+        return start.toLocaleDateString("en-US", options);
+      }
+      return `${start.toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+      })}-${end.toLocaleDateString("en-US", {
+        day: "numeric",
+        year: "numeric",
+      })}`;
+    };
+
+    const getLeaveTypeCheckbox = (type: string) => {
+      const leaveType = application.leave_type_name?.toLowerCase() || "";
+      return leaveType.includes(type.toLowerCase()) ? "checked" : "";
+    };
+
+    const formatSalary = (salary?: number) => {
+      if (!salary || salary === 0) return "";
+      return `P${salary.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`;
+    };
+    
+    // Use fetched employee data
+    const position = employeePosition;
+    const salary = formatSalary(employeeSalary);
+
     // Create a temporary container for the printable content
     const printContainer = document.createElement("div");
     printContainer.innerHTML = `
       <style>
         @media print {
+          @page {
+            size: letter;
+            margin: 0.3in;
+          }
+          html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            height: 100%;
+            overflow: hidden;
+          }
           body * {
             visibility: hidden;
           }
@@ -138,140 +199,471 @@ const AdminLeaveApplications: React.FC = () => {
             width: 100%;
           }
         }
+        .print-content {
+          font-family: Arial, sans-serif;
+          font-size: 9px;
+          background-color: #fff;
+          box-sizing: border-box;
+          padding: 10px;
+        }
+        .print-header {
+          text-align: center;
+          position: relative;
+          padding-bottom: 5px;
+          margin-bottom: 5px;
+        }
+        .print-header-left {
+          position: absolute;
+          left: 0;
+          top: 0;
+          font-size: 8px;
+          text-align: left;
+        }
+        .print-header-right {
+          position: absolute;
+          right: 0;
+          top: 0;
+          border: 1px dashed #666;
+          padding: 5px 10px;
+          font-size: 8px;
+          text-align: center;
+          height: 40px;
+        }
+        .print-logo {
+          border: 1px solid #000;
+          width: 50px;
+          height: 50px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 8px;
+          font-weight: bold;
+          background-color: #4a90e2;
+          color: white;
+          flex-shrink: 0;
+        }
+        .print-form-title {
+          font-size: 12px;
+          font-weight: bold;
+          text-align: center;
+          margin: 5px 0 8px 0;
+          clear: both;
+          width: 100%;
+          display: block;
+        }
+        .print-main-table {
+          width: 100%;
+          border-collapse: collapse;
+          border: 1px solid #000;
+        }
+        .print-main-table th,
+        .print-main-table td {
+          border: 1px solid #000;
+          padding: 2px 4px;
+          vertical-align: top;
+        }
+        .print-section-title {
+          background-color: #dbdbdb;
+          text-align: center;
+          font-weight: bold;
+          font-size: 10px;
+          padding: 3px;
+        }
+        .print-field-label {
+          font-size: 8px;
+          color: #333;
+          margin-bottom: 1px;
+        }
+        .print-field-value {
+          font-weight: bold;
+          font-family: 'Consolas', 'Courier New', monospace;
+          font-size: 9px;
+          min-height: 12px;
+        }
+        .print-checkbox-label {
+          display: flex;
+          align-items: center;
+          margin-bottom: 2px;
+          font-size: 8px;
+        }
+        .print-checkbox-label input[type="checkbox"] {
+          margin-right: 3px;
+          vertical-align: middle;
+        }
+        .print-signature-box {
+          text-align: center;
+          padding-top: 15px;
+        }
+        .print-signature-line {
+          border-top: 1px solid #000;
+          margin: 0 auto;
+          width: 200px;
+          padding-top: 2px;
+          font-size: 8px;
+        }
       </style>
-      <div class="print-content" style="padding: 40px; font-family: Arial, sans-serif;">
-        <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 20px;">
-          <div style="font-size: 24px; font-weight: bold; margin-bottom: 10px;">LEAVE APPLICATION FORM</div>
-          <div>Application ID: #${application.id}</div>
-        </div>
-
-        <div style="margin-bottom: 25px;">
-          <h3 style="font-size: 18px; margin-bottom: 15px; font-weight: bold;">Employee Information</h3>
-          <div style="margin-bottom: 12px;">
-            <span style="font-weight: bold; display: inline-block; width: 150px;">Employee Name:</span>
-            <span>${application.employee_name}</span>
+      <div class="print-content">
+        <div class="print-header">
+          <div class="print-header-left">
+            Civil Service Form No. 6<br>
+            Revised 2020
           </div>
-          <div style="margin-bottom: 12px;">
-            <span style="font-weight: bold; display: inline-block; width: 150px;">Employee Number:</span>
-            <span>${application.employee_number}</span>
+          <div class="print-header-right">
+            Stamp of Date of Receipt
           </div>
-        </div>
-
-        <div style="margin-bottom: 25px;">
-          <h3 style="font-size: 18px; margin-bottom: 15px; font-weight: bold;">Leave Details</h3>
-          <div style="margin-bottom: 12px;">
-            <span style="font-weight: bold; display: inline-block; width: 150px;">Leave Type:</span>
-            <span>${application.leave_type_name}</span>
-          </div>
-          <div style="margin-bottom: 12px;">
-            <span style="font-weight: bold; display: inline-block; width: 150px;">Start Date:</span>
-            <span>${new Date(application.start_date).toLocaleDateString(
-              "en-US",
-              { year: "numeric", month: "long", day: "numeric" }
-            )}</span>
-          </div>
-          <div style="margin-bottom: 12px;">
-            <span style="font-weight: bold; display: inline-block; width: 150px;">End Date:</span>
-            <span>${new Date(application.end_date).toLocaleDateString("en-US", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}</span>
-          </div>
-          <div style="margin-bottom: 12px;">
-            <span style="font-weight: bold; display: inline-block; width: 150px;">Duration:</span>
-            <span>${application.days_requested} day(s)</span>
-          </div>
-          <div style="margin-bottom: 12px;">
-            <span style="font-weight: bold; display: inline-block; width: 150px;">Status:</span>
-            <span style="display: inline-block; padding: 4px 12px; border: 2px solid #000; border-radius: 4px; font-weight: bold;">${
-              application.status
-            }</span>
-          </div>
-        </div>
-
-        ${
-          application.reason
-            ? `
-        <div style="margin-bottom: 25px;">
-          <h3 style="font-size: 18px; margin-bottom: 15px; font-weight: bold;">Reason for Leave</h3>
-          <div style="padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
-            ${application.reason}
-          </div>
-        </div>
-        `
-            : ""
-        }
-
-        <div style="margin-bottom: 25px;">
-          <h3 style="font-size: 18px; margin-bottom: 15px; font-weight: bold;">Application Timeline</h3>
-          <div style="margin-bottom: 12px;">
-            <span style="font-weight: bold; display: inline-block; width: 150px;">Applied On:</span>
-            <span>${new Date(application.applied_at).toLocaleDateString(
-              "en-US",
-              { year: "numeric", month: "long", day: "numeric" }
-            )}</span>
-          </div>
-          ${
-            application.reviewed_at
-              ? `
-          <div style="margin-bottom: 12px;">
-            <span style="font-weight: bold; display: inline-block; width: 150px;">Reviewed On:</span>
-            <span>${new Date(application.reviewed_at).toLocaleDateString(
-              "en-US",
-              { year: "numeric", month: "long", day: "numeric" }
-            )}</span>
-          </div>
-          `
-              : ""
-          }
-          ${
-            application.reviewed_by
-              ? `
-          <div style="margin-bottom: 12px;">
-            <span style="font-weight: bold; display: inline-block; width: 150px;">Reviewed By:</span>
-            <span>${application.reviewed_by}</span>
-          </div>
-          `
-              : ""
-          }
-        </div>
-
-        ${
-          application.review_notes
-            ? `
-        <div style="margin-bottom: 25px;">
-          <h3 style="font-size: 18px; margin-bottom: 15px; font-weight: bold;">Review Notes</h3>
-          <div style="padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
-            ${application.review_notes}
-          </div>
-        </div>
-        `
-            : ""
-        }
-
-        <div style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #ccc;">
-          <div style="display: flex; justify-content: space-between; margin-top: 60px;">
-            <div>
-              <div style="margin-top: 40px; border-top: 1px solid #000; width: 250px; padding-top: 5px;">Employee Signature</div>
-              <div style="margin-top: 5px; font-size: 12px;">Date: _________________</div>
-            </div>
-            <div>
-              <div style="margin-top: 40px; border-top: 1px solid #000; width: 250px; padding-top: 5px;">Supervisor Signature</div>
-              <div style="margin-top: 5px; font-size: 12px;">Date: _________________</div>
+          <div style="display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 15px; padding-top: 45px;">
+            <div class="print-logo">AGENCY<br>LOGO</div>
+            <div style="text-align: center; font-size: 9px;">
+              Republic of the Philippines<br>
+              <strong>(Agency Name)</strong><br>
+              (Agency Address)
             </div>
           </div>
-          <div style="margin-top: 40px; font-size: 12px; text-align: center; color: #666;">
-            This is a computer-generated document. Printed on ${new Date().toLocaleDateString(
-              "en-US",
-              {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-              }
-            )}
+        </div>
+
+        <div class="print-form-title">APPLICATION FOR LEAVE</div>
+
+        <table class="print-main-table">
+          <tbody>
+            <tr>
+              <td style="width: 50%;">
+                <div class="print-field-label">1. OFFICE/DEPARTMENT</div>
+                <div class="print-field-value">LGU Department</div>
+              </td>
+              <td style="width: 50%;" colspan="2">
+                <div class="print-field-label">2. NAME: (Last) (First) (Middle)</div>
+                <div class="print-field-value">${(
+                  application.employee_name || "N/A"
+                ).toUpperCase()}</div>
+              </td>
+            </tr>
+            <tr>
+              <td style="width: 33.3%;">
+                <div class="print-field-label">3. DATE OF FILING</div>
+                <div class="print-field-value">${new Date(
+                  application.applied_at
+                ).toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}</div>
+              </td>
+              <td style="width: 33.3%;">
+                <div class="print-field-label">4. POSITION</div>
+                <div class="print-field-value">${position}</div>
+              </td>
+              <td style="width: 33.3%;">
+                <div class="print-field-label">5. SALARY</div>
+                <div class="print-field-value">${salary}</div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <table class="print-main-table" style="margin-top: -1px;">
+          <thead>
+            <tr>
+              <th class="print-section-title" colspan="2">6. DETAILS OF APPLICATION</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="width: 50%; vertical-align: top;">
+                <div style="padding: 5px;">
+                  <strong>6.A TYPE OF LEAVE TO BE AVAILED OF</strong><br><br>
+                  <label class="print-checkbox-label">
+                    <input type="checkbox" ${getLeaveTypeCheckbox("vacation")}>
+                    <strong>Vacation Leave</strong> (Sec. 51, Rule XVI, Omnibus Rules Implementing E.O. No. 292)
+                  </label>
+                  <label class="print-checkbox-label">
+                    <input type="checkbox" ${getLeaveTypeCheckbox("mandatory")}>
+                    Mandatory/Forced Leave (Sec. 25, Rule XVI, Omnibus Rules Implementing EO. No. 292)
+                  </label>
+                  <label class="print-checkbox-label">
+                    <input type="checkbox" ${getLeaveTypeCheckbox("sick")}>
+                    <strong>Sick Leave</strong> (Sec. 43, Rule XVI, Omnibus Rules Implementing E.O. No. 292)
+                  </label>
+                  <label class="print-checkbox-label">
+                    <input type="checkbox" ${getLeaveTypeCheckbox("maternity")}>
+                    Maternity Leave (R.A. No. 11210/IRR issued by CSC, DOLE and SSS)
+                  </label>
+                  <label class="print-checkbox-label">
+                    <input type="checkbox" ${getLeaveTypeCheckbox("paternity")}>
+                    Paternity Leave (R.A. No. 8187/CSC MC No. 71, s. 1998, as amended)
+                  </label>
+                  <label class="print-checkbox-label">
+                    <input type="checkbox" ${getLeaveTypeCheckbox(
+                      "special privilege"
+                    )}>
+                    Special Privilege Leave (Sec. 21, Rule XVI, Omnibus Rules Implementing E.O. No. 292)
+                  </label>
+                  <label class="print-checkbox-label">
+                    <input type="checkbox" ${getLeaveTypeCheckbox(
+                      "solo parent"
+                    )}>
+                    Solo Parent Leave (RA No. 8972/CSC MC No. 8, s. 2004)
+                  </label>
+                  <label class="print-checkbox-label">
+                    <input type="checkbox" ${getLeaveTypeCheckbox("study")}>
+                    Study Leave (Sec. 68, Rule XVI, Omnibus Rules Implementing E.O. No. 292)
+                  </label>
+                  <label class="print-checkbox-label">
+                    <input type="checkbox" ${getLeaveTypeCheckbox("vawc")}>
+                    10-Day VAWC Leave (RA No. 9262/CSC MC No. 15. s. 2005)
+                  </label>
+                  <label class="print-checkbox-label">
+                    <input type="checkbox" ${getLeaveTypeCheckbox(
+                      "rehabilitation"
+                    )}>
+                    Rehabilitation Privilege (Sec. 55, Rule XVI, Omnibus Rules Implementing E.O. No. 292)
+                  </label>
+                  <label class="print-checkbox-label">
+                    <input type="checkbox" ${getLeaveTypeCheckbox(
+                      "special leave benefits for women"
+                    )}>
+                    Special Leave Benefits for Women (RA No. 9710/CSC MC No. 25, s. 2010)
+                  </label>
+                  <label class="print-checkbox-label">
+                    <input type="checkbox" ${getLeaveTypeCheckbox("calamity")}>
+                    Special Emergency (Calamity) Leave (CSC MC No. 2, s. 2012, as amended)
+                  </label>
+                  <label class="print-checkbox-label">
+                    <input type="checkbox" ${getLeaveTypeCheckbox("adoption")}>
+                    Adoption Leave (R.A. No. 8552)
+                  </label>
+                  <br>
+                  <div class="print-field-label">Others:</div>
+                  <div style="border-bottom: 1px solid #000; min-height: 14px;"></div>
+                </div>
+
+                <hr style="border: none; border-top: 1px solid #000; margin: 0;">
+
+                <div style="padding: 5px;">
+                  <strong>6.C NUMBER OF WORKING DAYS APPLIED FOR</strong>
+                  <div class="print-field-value" style="margin-top: 5px;">${
+                    application.days_requested
+                  } day(s)</div>
+                  <br>
+                  <div class="print-field-label">INCLUSIVE DATES</div>
+                  <div class="print-field-value">${formatDateRange()}</div>
+                </div>
+              </td>
+
+              <td style="width: 50%; vertical-align: top; border-left: 1px solid #000;">
+                <div style="padding: 5px;">
+                  <strong>6.B DETAILS OF LEAVE</strong>
+
+                  <div style="border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 5px;">
+                    In case of Vacation/Special Privilege Leave:
+                    <label class="print-checkbox-label" style="margin-left: 10px; margin-top: 5px;">
+                      <input type="checkbox" ${
+                        getLeaveTypeCheckbox("vacation") ? "checked" : ""
+                      }>
+                      Within the Philippines
+                    </label>
+                    <div class="print-field-value" style="margin-left: 32px;">Residence</div>
+                    <label class="print-checkbox-label" style="margin-left: 10px; margin-top: 5px;">
+                      <input type="checkbox">
+                      Abroad (Specify)
+                    </label>
+                    <div style="border-bottom: 1px solid #000; margin-left: 32px; min-height: 14px;"></div>
+                  </div>
+
+                  <div style="border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 5px;">
+                    In case of Sick Leave:
+                    <label class="print-checkbox-label" style="margin-left: 10px; margin-top: 5px;">
+                      <input type="checkbox">
+                      In Hospital (Specify Illness)
+                    </label>
+                    <div style="border-bottom: 1px solid #000; margin-left: 32px; min-height: 14px;">${
+                      getLeaveTypeCheckbox("sick")
+                        ? application.reason || ""
+                        : ""
+                    }</div>
+                    <label class="print-checkbox-label" style="margin-left: 10px; margin-top: 5px;">
+                      <input type="checkbox">
+                      Out Patient (Specify Illness)
+                    </label>
+                    <div style="border-bottom: 1px solid #000; margin-left: 32px; min-height: 14px;"></div>
+                  </div>
+
+                  <div style="border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 5px;">
+                    In case of Special Leave Benefits for Women:<br>
+                    <label style="display: block; margin-left: 22px; font-size: 9px;">(Specify Illness)</label>
+                    <div style="border-bottom: 1px solid #000; margin-left: 22px; min-height: 14px;"></div>
+                  </div>
+
+                  <div style="padding-bottom: 5px;">
+                    In case of Study Leave:
+                    <label class="print-checkbox-label" style="margin-left: 10px; margin-top: 5px;">
+                      <input type="checkbox">
+                      Completion of Master's Degree
+                    </label>
+                    <label class="print-checkbox-label" style="margin-left: 10px; margin-top: 5px;">
+                      <input type="checkbox">
+                      BAR/Board Examination Review
+                    </label>
+                    <div class="print-field-label" style="margin-left: 10px; margin-top: 5px;">Other purpose:</div>
+                    <label class="print-checkbox-label" style="margin-left: 10px; margin-top: 5px;">
+                      <input type="checkbox">
+                      Monetization of Leave Credits
+                    </label>
+                    <label class="print-checkbox-label" style="margin-left: 10px; margin-top: 5px;">
+                      <input type="checkbox">
+                      Terminal Leave
+                    </label>
+                  </div>
+                </div>
+                
+                <hr style="border: none; border-top: 1px solid #000; margin: 0;">
+
+                <div style="padding: 5px;">
+                  <strong>6.D COMMUTATION</strong>
+                  <label class="print-checkbox-label" style="margin-left: 10px; margin-top: 5px;">
+                    <input type="checkbox" checked>
+                    Not Requested
+                  </label>
+                  <label class="print-checkbox-label" style="margin-left: 10px; margin-top: 5px;">
+                    <input type="checkbox">
+                    Requested
+                  </label>
+                </div>
+                
+                <div class="print-signature-box">
+                  <div class="print-signature-line">(Signature of Applicant)</div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <table class="print-main-table" style="margin-top: -1px;">
+          <thead>
+            <tr>
+              <th class="print-section-title" colspan="2">7. DETAILS OF ACTION ON APPLICATION</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="width: 50%; vertical-align: top;">
+                <div style="padding: 5px;">
+                  <strong>7.A CERTIFICATION OF LEAVE CREDITS</strong><br>
+                  As of <strong>${new Date().toLocaleDateString("en-US", {
+                    month: "long",
+                    year: "numeric",
+                  })}</strong>
+                  <table class="print-main-table" style="margin-top: 5px; text-align: center; font-size: 9px;">
+                    <thead>
+                      <tr>
+                        <th></th>
+                        <th>Vacation Leave</th>
+                        <th>Sick Leave</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td style="text-align: left;">Total Earned</td>
+                        <td></td>
+                        <td></td>
+                      </tr>
+                      <tr>
+                        <td style="text-align: left;">Less this application</td>
+                        <td></td>
+                        <td></td>
+                      </tr>
+                      <tr>
+                        <td style="text-align: left;">Balance</td>
+                        <td></td>
+                        <td></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <div class="print-signature-box" style="padding-top: 20px;">
+                    <div class="print-signature-line">(Authorized Officer)</div>
+                  </div>
+                </div>
+                
+                <hr style="border: none; border-top: 1px solid #000; margin: 0;">
+
+                <div style="padding: 5px;">
+                  <strong>7.C APPROVED FOR:</strong><br>
+                  <div style="margin-top: 5px;">
+                    <span style="display: inline-block; width: 40px; text-align: center; border-bottom: 1px solid #000; font-weight: bold;">${
+                      application.status === "Approved"
+                        ? application.days_requested
+                        : ""
+                    }</span>
+                    days with pay
+                  </div>
+                  <div style="margin-top: 5px;">
+                    <span style="display: inline-block; width: 40px; border-bottom: 1px solid #000;"></span>
+                    days without pay
+                  </div>
+                  <div style="margin-top: 5px;">
+                    <span style="display: inline-block; width: 40px; border-bottom: 1px solid #000;"></span>
+                    others (Specify)
+                  </div>
+                </div>
+              </td>
+
+              <td style="width: 50%; vertical-align: top; border-left: 1px solid #000;">
+                <div style="padding: 5px;">
+                  <strong>7.B RECOMMENDATION</strong>
+                  <label class="print-checkbox-label" style="margin-left: 10px; margin-top: 5px;">
+                    <input type="checkbox" ${
+                      application.status === "Approved" ? "checked" : ""
+                    }>
+                    For approval
+                  </label>
+                  <label class="print-checkbox-label" style="margin-left: 10px; margin-top: 5px;">
+                    <input type="checkbox" ${
+                      application.status === "Rejected" ? "checked" : ""
+                    }>
+                    For disapproval due to
+                  </label>
+                  <div style="margin-left: 32px; border-bottom: 1px solid #000; min-height: 14px;">${
+                    application.status === "Rejected"
+                      ? application.review_notes || ""
+                      : ""
+                  }</div>
+                  
+                  <div class="print-signature-box" style="padding-top: 61px;">
+                    <div class="print-signature-line">${
+                      application.reviewed_by_name || "(Authorized Officer)"
+                    }</div>
+                  </div>
+                </div>
+
+                <hr style="border: none; border-top: 1px solid #000; margin: 0;">
+
+                <div style="padding: 5px;">
+                  <strong>7.D DISAPPROVED DUE TO:</strong><br>
+                  <div style="margin-top: 5px; border-bottom: 1px solid #000; min-height: 14px;">${
+                    application.status === "Rejected"
+                      ? application.review_notes || ""
+                      : ""
+                  }</div>
+                  <div style="margin-top: 5px; border-bottom: 1px solid #000; min-height: 14px;"></div>
+                  
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        
+        <div style="display: flex; justify-content: space-between; padding-top: 25px; gap: 30px;">
+          <div style="flex: 1; text-align: center;">
+            <div class="print-signature-line" style="width: 100%;">(Authorized Official)</div>
+            <div style="margin-top: 3px; font-size: 8px;">Name and Signature</div>
+          </div>
+          <div style="flex: 1; text-align: center;">
+            <div class="print-signature-line" style="width: 100%;">(Authorized Official)</div>
+            <div style="margin-top: 3px; font-size: 8px;">Name and Signature</div>
+          </div>
+           <div style="flex: 1; text-align: center;">
+            <div class="print-signature-line" style="width: 100%;">(Authorized Official)</div>
+            <div style="margin-top: 3px; font-size: 8px;">Name and Signature</div>
           </div>
         </div>
       </div>

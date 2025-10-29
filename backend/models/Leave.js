@@ -538,7 +538,11 @@ class Leave {
         const query = `
             SELECT la.*, lt.name as leave_type_name, lt.code as leave_type_code,
                    CONCAT(e.first_name, ' ', e.last_name) as employee_name,
-                   CONCAT(r.first_name, ' ', r.last_name) as reviewer_name
+                   e.employee_number,
+                   e.plantilla_position as employee_position,
+                   e.current_monthly_salary as employee_salary,
+                   CONCAT(r.first_name, ' ', r.last_name) as reviewer_name,
+                   CONCAT(r.first_name, ' ', r.last_name) as reviewed_by_name
             FROM leave_applications la
             LEFT JOIN leave_types lt ON la.leave_type_id = lt.id
             LEFT JOIN employees e ON la.employee_id = e.id
@@ -564,7 +568,10 @@ class Leave {
             SELECT la.*, lt.name as leave_type_name, lt.code as leave_type_code,
                    CONCAT(e.first_name, ' ', IFNULL(e.middle_name, ''), ' ', e.last_name) as employee_name,
                    e.employee_number,
+                   e.plantilla_position as employee_position,
+                   e.current_monthly_salary as employee_salary,
                    CONCAT(r.first_name, ' ', IFNULL(r.middle_name, ''), ' ', r.last_name) as reviewer_name,
+                   CONCAT(r.first_name, ' ', IFNULL(r.middle_name, ''), ' ', r.last_name) as reviewed_by_name,
                    DATEDIFF(la.end_date, la.start_date) + 1 as duration_days
             FROM leave_applications la
             LEFT JOIN leave_types lt ON la.leave_type_id = lt.id

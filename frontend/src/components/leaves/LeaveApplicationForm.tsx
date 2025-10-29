@@ -70,6 +70,27 @@ const LeaveApplicationForm: React.FC<LeaveApplicationFormProps> = ({
     loadLeaveTypes();
   }, []);
 
+  // Auto-calculate end date for Maternity and Paternity leave
+  useEffect(() => {
+    if (!selectedLeaveTypeId || !startDate) return;
+
+    const selectedLeaveType = leaveTypes.find(type => type.id === selectedLeaveTypeId);
+    if (!selectedLeaveType) return;
+
+    // Check if it's Maternity Leave (ML) or Paternity Leave (PL)
+    if (selectedLeaveType.code === 'ML') {
+      // Maternity Leave: 105 days
+      const calculatedEndDate = new Date(startDate);
+      calculatedEndDate.setDate(calculatedEndDate.getDate() + 104); // 104 days added = 105 days total
+      form.setValue('end_date', calculatedEndDate);
+    } else if (selectedLeaveType.code === 'PL') {
+      // Paternity Leave: 7 days
+      const calculatedEndDate = new Date(startDate);
+      calculatedEndDate.setDate(calculatedEndDate.getDate() + 6); // 6 days added = 7 days total
+      form.setValue('end_date', calculatedEndDate);
+    }
+  }, [selectedLeaveTypeId, startDate, leaveTypes, form]);
+
   useEffect(() => {
     const validateApplication = async () => {
       if (!selectedLeaveTypeId || !startDate || !endDate) {
@@ -212,6 +233,11 @@ const LeaveApplicationForm: React.FC<LeaveApplicationFormProps> = ({
                     className={`w-full justify-start text-left font-normal ${
                       !endDate && 'text-muted-foreground'
                     }`}
+                    disabled={
+                      selectedLeaveTypeId && 
+                      leaveTypes.find(type => type.id === selectedLeaveTypeId)?.code === 'ML' ||
+                      leaveTypes.find(type => type.id === selectedLeaveTypeId)?.code === 'PL'
+                    }
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {endDate ? format(endDate, 'PPP') : 'Pick an end date'}
@@ -229,6 +255,13 @@ const LeaveApplicationForm: React.FC<LeaveApplicationFormProps> = ({
               </Popover>
               {form.formState.errors.end_date && (
                 <p className="text-sm text-red-600">{form.formState.errors.end_date.message}</p>
+              )}
+              {selectedLeaveTypeId && 
+                (leaveTypes.find(type => type.id === selectedLeaveTypeId)?.code === 'ML' ||
+                 leaveTypes.find(type => type.id === selectedLeaveTypeId)?.code === 'PL') && (
+                <p className="text-sm text-muted-foreground">
+                  End date is automatically calculated based on start date
+                </p>
               )}
             </div>
           </div>

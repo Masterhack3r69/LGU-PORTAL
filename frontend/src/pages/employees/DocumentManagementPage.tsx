@@ -47,6 +47,7 @@ import {
   RefreshCw,
   Filter,
   ChevronDown,
+  Eye,
 } from "lucide-react";
 import { documentService } from "@/services/documentService";
 import type {
@@ -175,6 +176,15 @@ export function DocumentManagementPage() {
     } catch (error) {
       console.error("Download failed:", error);
       setMessage({ type: "error", text: "Failed to download document" });
+    }
+  };
+
+  const handlePreview = async (document: Document) => {
+    try {
+      await documentService.previewDocument(document.id);
+    } catch (error) {
+      console.error("Preview failed:", error);
+      setMessage({ type: "error", text: "Failed to preview document" });
     }
   };
 
@@ -482,6 +492,7 @@ export function DocumentManagementPage() {
             documents={getPendingDocuments()}
             onReview={handleReview}
             onDownload={handleDownload}
+            onPreview={handlePreview}
             showReviewActions={true}
           />
         </TabsContent>
@@ -490,6 +501,7 @@ export function DocumentManagementPage() {
           <DocumentTable
             documents={getApprovedDocuments()}
             onDownload={handleDownload}
+            onPreview={handlePreview}
             showReviewActions={false}
           />
         </TabsContent>
@@ -498,6 +510,7 @@ export function DocumentManagementPage() {
           <DocumentTable
             documents={getRejectedDocuments()}
             onDownload={handleDownload}
+            onPreview={handlePreview}
             showReviewActions={false}
           />
         </TabsContent>
@@ -507,6 +520,7 @@ export function DocumentManagementPage() {
             documents={documents}
             onReview={handleReview}
             onDownload={handleDownload}
+            onPreview={handlePreview}
             showReviewActions={true}
           />
         </TabsContent>
@@ -514,7 +528,7 @@ export function DocumentManagementPage() {
 
       {/* Review Dialog */}
       <Dialog open={reviewDialogOpen} onOpenChange={setReviewDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Review Document</DialogTitle>
             <DialogDescription>
@@ -524,25 +538,33 @@ export function DocumentManagementPage() {
 
           {selectedDocument && (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
                 <div>
-                  <Label className="font-semibold">Employee:</Label>
-                  <p>
+                  <Label className="font-semibold text-xs text-muted-foreground">
+                    Employee:
+                  </Label>
+                  <p className="mt-1">
                     {selectedDocument.employee_name} (
                     {selectedDocument.employee_number})
                   </p>
                 </div>
                 <div>
-                  <Label className="font-semibold">Document Type:</Label>
-                  <p>{selectedDocument.document_type_name}</p>
+                  <Label className="font-semibold text-xs text-muted-foreground">
+                    Document Type:
+                  </Label>
+                  <p className="mt-1">{selectedDocument.document_type_name}</p>
+                </div>
+                <div className="col-span-2">
+                  <Label className="font-semibold text-xs text-muted-foreground">
+                    File Name:
+                  </Label>
+                  <p className="mt-1 break-all">{selectedDocument.file_name}</p>
                 </div>
                 <div>
-                  <Label className="font-semibold">File Name:</Label>
-                  <p>{selectedDocument.file_name}</p>
-                </div>
-                <div>
-                  <Label className="font-semibold">File Size:</Label>
-                  <p>{formatFileSize(selectedDocument.file_size)}</p>
+                  <Label className="font-semibold text-xs text-muted-foreground">
+                    File Size:
+                  </Label>
+                  <p className="mt-1">{formatFileSize(selectedDocument.file_size)}</p>
                 </div>
               </div>
 
@@ -566,24 +588,40 @@ export function DocumentManagementPage() {
                 />
               </div>
 
-              <div className="flex justify-between">
-                <Button
-                  variant="outline"
-                  onClick={() => handleDownload(selectedDocument)}
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  Download & Review
-                </Button>
+              <div className="flex flex-col sm:flex-row justify-between gap-3 pt-2">
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => handlePreview(selectedDocument)}
+                    className="flex-1 sm:flex-none"
+                  >
+                    <Eye className="mr-2 h-4 w-4" />
+                    Preview
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => handleDownload(selectedDocument)}
+                    className="flex-1 sm:flex-none"
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    Download
+                  </Button>
+                </div>
                 <div className="flex gap-2">
                   <Button
                     variant="destructive"
                     onClick={handleReject}
                     disabled={isReviewing}
+                    className="flex-1 sm:flex-none"
                   >
                     <X className="mr-2 h-4 w-4" />
                     {isReviewing ? "Rejecting..." : "Reject"}
                   </Button>
-                  <Button onClick={handleApprove} disabled={isReviewing}>
+                  <Button
+                    onClick={handleApprove}
+                    disabled={isReviewing}
+                    className="flex-1 sm:flex-none"
+                  >
                     <CheckCircle className="mr-2 h-4 w-4" />
                     {isReviewing ? "Approving..." : "Approve"}
                   </Button>
@@ -602,6 +640,7 @@ interface DocumentTableProps {
   documents: Document[];
   onReview?: (document: Document) => void;
   onDownload: (document: Document) => void;
+  onPreview: (document: Document) => void;
   showReviewActions: boolean;
 }
 
@@ -609,6 +648,7 @@ function DocumentTable({
   documents,
   onReview,
   onDownload,
+  onPreview,
   showReviewActions,
 }: DocumentTableProps) {
   const getStatusBadge = (status: string) => {
@@ -687,8 +727,13 @@ function DocumentTable({
                 <TableCell>
                   {document.document_type_name || "Unknown"}
                 </TableCell>
-                <TableCell className="font-medium">
-                  {document.file_name}
+                <TableCell className="font-medium max-w-[200px]">
+                  <div 
+                    className="truncate" 
+                    title={document.file_name}
+                  >
+                    {document.file_name}
+                  </div>
                 </TableCell>
                 <TableCell>{formatFileSize(document.file_size)}</TableCell>
                 <TableCell>{getStatusBadge(document.status)}</TableCell>
@@ -702,7 +747,16 @@ function DocumentTable({
                     <Button
                       variant="outline"
                       size="sm"
+                      onClick={() => onPreview(document)}
+                      title="Preview document"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => onDownload(document)}
+                      title="Download document"
                     >
                       <Download className="h-4 w-4" />
                     </Button>
@@ -713,6 +767,7 @@ function DocumentTable({
                           variant="outline"
                           size="sm"
                           onClick={() => onReview(document)}
+                          title="Review document"
                         >
                           <FileInput className="h-4 w-4" />
                         </Button>

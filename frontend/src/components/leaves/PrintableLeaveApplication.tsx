@@ -145,7 +145,7 @@ const PrintableLeaveApplication: React.FC<PrintableLeaveApplicationProps> = ({ l
       {leave.review_notes && (
         <div className="print-section">
           <h3 style={{ fontSize: '18px', marginBottom: '15px', fontWeight: 'bold' }}>Review Notes</h3>
-          <div style={{ padding: '10px', border: '1px solid #ccc', borderRadius: '4px' }}>
+          <div style={{ padding: '10px', border: '1px  solid #ccc', borderRadius: '4px' }}>
             {leave.review_notes}
           </div>
         </div>

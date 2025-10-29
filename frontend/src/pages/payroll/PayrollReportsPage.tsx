@@ -1,29 +1,58 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { showToast } from "@/lib/toast";
 import {
   FileText,
   Eye,
   DollarSign,
   BarChart,
-  Clock
-} from 'lucide-react';
-import payrollService from '@/services/payrollService';
-import type { PayrollPeriod, PayrollItem } from '@/types/payroll';
+  Clock,
+  Download,
+  X,
+} from "lucide-react";
+import payrollService from "@/services/payrollService";
+import type { PayrollPeriod, PayrollItem } from "@/types/payroll";
 
 export function PayrollReportsPage() {
   const [periods, setPeriods] = useState<PayrollPeriod[]>([]);
-  const [selectedPeriod, setSelectedPeriod] = useState<PayrollPeriod | null>(null);
+  const [selectedPeriod, setSelectedPeriod] = useState<PayrollPeriod | null>(
+    null
+  );
   const [payrollItems, setPayrollItems] = useState<PayrollItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [downloadingItems, setDownloadingItems] = useState<Set<number>>(new Set());
+  const [downloadingItems, setDownloadingItems] = useState<Set<number>>(
+    new Set()
+  );
   const [downloadingSummary, setDownloadingSummary] = useState(false);
+  const [previewDialog, setPreviewDialog] = useState<{
+    open: boolean;
+    pdfUrl: string | null;
+    employeeName: string;
+    payrollItemId: number | null;
+  }>({
+    open: false,
+    pdfUrl: null,
+    employeeName: "",
+    payrollItemId: null,
+  });
 
   useEffect(() => {
     loadPeriods();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -37,18 +66,22 @@ export function PayrollReportsPage() {
       const response = await payrollService.getPeriods();
       if (response.success) {
         // Handle paginated response structure
-        const responseData = response.data as { periods?: PayrollPeriod[] } | PayrollPeriod[];
-        const periodsData = Array.isArray(responseData) ? responseData : responseData.periods || [];
+        const responseData = response.data as
+          | { periods?: PayrollPeriod[] }
+          | PayrollPeriod[];
+        const periodsData = Array.isArray(responseData)
+          ? responseData
+          : responseData.periods || [];
         setPeriods(Array.isArray(periodsData) ? periodsData : []);
         if (periodsData.length > 0 && !selectedPeriod) {
           setSelectedPeriod(periodsData[0]);
         }
       } else {
-        showToast.error('Failed to load payroll periods');
+        showToast.error("Failed to load payroll periods");
       }
     } catch (error) {
-      console.error('Failed to load payroll periods:', error);
-      showToast.error('Failed to load payroll periods');
+      console.error("Failed to load payroll periods:", error);
+      showToast.error("Failed to load payroll periods");
     } finally {
       setLoading(false);
     }
@@ -56,45 +89,57 @@ export function PayrollReportsPage() {
 
   const loadPayrollItems = async (periodId: number) => {
     try {
-      const response = await payrollService.getPayrollItems({ period_id: periodId });
+      const response = await payrollService.getPayrollItems({
+        period_id: periodId,
+      });
       if (response.success) {
         setPayrollItems(response.data);
       }
     } catch (error) {
-      console.error('Failed to load payroll items:', error);
+      console.error("Failed to load payroll items:", error);
     }
   };
 
   const handleGeneratePayslip = async (payrollItemId: number) => {
     try {
-      setDownloadingItems(prev => new Set(prev).add(payrollItemId));
-      
+      setDownloadingItems((prev) => new Set(prev).add(payrollItemId));
+
       const response = await payrollService.generatePayslipPDF(payrollItemId);
 
       // Ensure we have a valid blob
       if (response instanceof Blob && response.size > 0) {
         // Create download link
         const url = window.URL.createObjectURL(response);
-        const a = document.createElement('a');
+        const a = document.createElement("a");
         a.href = url;
-        a.download = `payslip_${payrollItemId}_${new Date().toISOString().split('T')[0]}.pdf`;
+        a.download = `payslip_${payrollItemId}_${
+          new Date().toISOString().split("T")[0]
+        }.pdf`;
         document.body.appendChild(a);
         a.click();
-        
+
         // Clean up
         setTimeout(() => {
           window.URL.revokeObjectURL(url);
           document.body.removeChild(a);
         }, 100);
 
-        showToast.success('Payslip PDF downloaded successfully');
+        showToast.success("Payslip PDF downloaded successfully");
       } else {
-        throw new Error(`Invalid PDF response: ${response instanceof Blob ? 'Empty blob' : 'Not a blob'}`);
+        throw new Error(
+          `Invalid PDF response: ${
+            response instanceof Blob ? "Empty blob" : "Not a blob"
+          }`
+        );
       }
     } catch (error) {
-      showToast.error(`Failed to generate payslip PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      showToast.error(
+        `Failed to generate payslip PDF: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
     } finally {
-      setDownloadingItems(prev => {
+      setDownloadingItems((prev) => {
         const newSet = new Set(prev);
         newSet.delete(payrollItemId);
         return newSet;
@@ -102,68 +147,78 @@ export function PayrollReportsPage() {
     }
   };
 
-  const handleDownloadPayslip = async (payrollItemId: number) => {
+  const handleViewPayslip = async (
+    payrollItemId: number,
+    employeeName: string
+  ) => {
     try {
-      setDownloadingItems(prev => new Set(prev).add(payrollItemId));
-      
-      const response = await payrollService.downloadPayslipAsBase64(payrollItemId);
+      setDownloadingItems((prev) => new Set(prev).add(payrollItemId));
+
+      const response = await payrollService.downloadPayslipAsBase64(
+        payrollItemId
+      );
 
       if (response.success && response.data) {
-        const { pdf_data, file_name } = response.data;
+        const { pdf_data } = response.data;
 
         // Validate base64 data
         if (!pdf_data || pdf_data.length === 0) {
-          throw new Error('Empty PDF data received from server');
+          throw new Error("Empty PDF data received from server");
         }
 
         // Validate base64 format
         const base64Pattern = /^[A-Za-z0-9+/]*={0,2}$/;
         if (!base64Pattern.test(pdf_data)) {
-          throw new Error('Invalid base64 PDF data format');
+          throw new Error("Invalid base64 PDF data format");
         }
 
         try {
           // Convert base64 to blob
           const binaryString = atob(pdf_data);
           const bytes = new Uint8Array(binaryString.length);
-          
+
           for (let i = 0; i < binaryString.length; i++) {
             bytes[i] = binaryString.charCodeAt(i);
           }
-          
-          const blob = new Blob([bytes], { type: 'application/pdf' });
+
+          const blob = new Blob([bytes], { type: "application/pdf" });
 
           // Validate blob
           if (blob.size === 0) {
-            throw new Error('Generated PDF blob is empty');
+            throw new Error("Generated PDF blob is empty");
           }
 
-          // Create download link
+          // Create object URL for preview
           const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = file_name || `payslip_${payrollItemId}_${new Date().toISOString().split('T')[0]}.pdf`;
-          document.body.appendChild(a);
-          a.click();
 
-          // Clean up
-          setTimeout(() => {
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-          }, 100);
-
-          showToast.success('Payslip downloaded successfully');
+          // Open preview dialog
+          setPreviewDialog({
+            open: true,
+            pdfUrl: url,
+            employeeName,
+            payrollItemId,
+          });
         } catch (decodeError) {
-          showToast.error(`Failed to process PDF data: ${decodeError instanceof Error ? decodeError.message : 'Unknown error'}`);
+          showToast.error(
+            `Failed to process PDF data: ${
+              decodeError instanceof Error
+                ? decodeError.message
+                : "Unknown error"
+            }`
+          );
         }
       } else {
-        const errorMsg = response.message || 'No data received from server';
-        showToast.error(`Failed to download payslip: ${errorMsg}`);
+        const errorMsg = response.message || "No data received from server";
+        showToast.error(`Failed to load payslip: ${errorMsg}`);
       }
     } catch (error) {
-      showToast.error(`Failed to download payslip: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      showToast.error(
+        `Failed to load payslip: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
     } finally {
-      setDownloadingItems(prev => {
+      setDownloadingItems((prev) => {
         const newSet = new Set(prev);
         newSet.delete(payrollItemId);
         return newSet;
@@ -171,40 +226,102 @@ export function PayrollReportsPage() {
     }
   };
 
+  const handleDownloadFromPreview = async () => {
+    if (!previewDialog.pdfUrl || !previewDialog.payrollItemId) return;
+
+    try {
+      // Fetch the blob from the URL
+      const response = await fetch(previewDialog.pdfUrl);
+      const blob = await response.blob();
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `payslip_${previewDialog.employeeName.replace(
+        /\s+/g,
+        "_"
+      )}_${new Date().toISOString().split("T")[0]}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+
+      // Clean up
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }, 100);
+
+      showToast.success("Payslip downloaded successfully");
+    } catch (error) {
+      showToast.error(
+        `Failed to download payslip: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+    }
+  };
+
+  const handleClosePreview = () => {
+    // Clean up the object URL
+    if (previewDialog.pdfUrl) {
+      window.URL.revokeObjectURL(previewDialog.pdfUrl);
+    }
+    setPreviewDialog({
+      open: false,
+      pdfUrl: null,
+      employeeName: "",
+      payrollItemId: null,
+    });
+  };
+
   const handleGenerateSummaryReport = async () => {
     if (!selectedPeriod) {
-      showToast.error('Please select a payroll period');
+      showToast.error("Please select a payroll period");
       return;
     }
 
     try {
       setDownloadingSummary(true);
-      
-      const blob = await payrollService.generatePayrollReport(selectedPeriod.id, 'pdf');
+
+      const blob = await payrollService.generatePayrollReport(
+        selectedPeriod.id,
+        "pdf"
+      );
 
       if (blob instanceof Blob && blob.size > 0) {
         // Create download link
         const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
+        const a = document.createElement("a");
         a.href = url;
-        const periodName = `${new Date(selectedPeriod.year, selectedPeriod.month - 1).toLocaleString('default', { month: 'long' })}_${selectedPeriod.year}_Period_${selectedPeriod.period_number}`;
-        a.download = `Payroll_Summary_${periodName}_${new Date().toISOString().split('T')[0]}.pdf`;
+        const periodName = `${new Date(
+          selectedPeriod.year,
+          selectedPeriod.month - 1
+        ).toLocaleString("default", { month: "long" })}_${
+          selectedPeriod.year
+        }_Period_${selectedPeriod.period_number}`;
+        a.download = `Payroll_Summary_${periodName}_${
+          new Date().toISOString().split("T")[0]
+        }.pdf`;
         document.body.appendChild(a);
         a.click();
-        
+
         // Clean up
         setTimeout(() => {
           window.URL.revokeObjectURL(url);
           document.body.removeChild(a);
         }, 100);
 
-        showToast.success('Summary report downloaded successfully');
+        showToast.success("Summary report downloaded successfully");
       } else {
-        throw new Error('Invalid PDF response');
+        throw new Error("Invalid PDF response");
       }
     } catch (error) {
-      console.error('Failed to generate summary report:', error);
-      showToast.error(`Failed to generate summary report: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error("Failed to generate summary report:", error);
+      showToast.error(
+        `Failed to generate summary report: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
     } finally {
       setDownloadingSummary(false);
     }
@@ -213,58 +330,63 @@ export function PayrollReportsPage() {
   const getStatusBadge = (status: string) => {
     const statusLower = status.toLowerCase();
     const variants = {
-      draft: 'secondary',
-      processing: 'default',
-      completed: 'outline',
-      finalized: 'outline',
-      paid: 'destructive',
-      open: 'secondary',
-      calculating: 'default',
-      locked: 'destructive'
+      draft: "secondary",
+      processing: "default",
+      completed: "outline",
+      finalized: "outline",
+      paid: "destructive",
+      open: "secondary",
+      calculating: "default",
+      locked: "destructive",
     } as const;
 
     const displayNames: { [key: string]: string } = {
-      draft: 'Draft',
-      processing: 'Processing',
-      completed: 'Completed',
-      finalized: 'Finalized',
-      paid: 'Paid',
-      open: 'Open',
-      calculating: 'Calculating',
-      locked: 'Locked'
+      draft: "Draft",
+      processing: "Processing",
+      completed: "Completed",
+      finalized: "Finalized",
+      paid: "Paid",
+      open: "Open",
+      calculating: "Calculating",
+      locked: "Locked",
     };
 
     const displayName = displayNames[statusLower] || status;
-    const variant = variants[statusLower as keyof typeof variants] || 'default';
+    const variant = variants[statusLower as keyof typeof variants] || "default";
 
     return <Badge variant={variant}>{displayName}</Badge>;
   };
 
   const formatDate = (dateString: string | Date) => {
     try {
-      const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+      const date =
+        typeof dateString === "string" ? new Date(dateString) : dateString;
       return date.toLocaleDateString();
     } catch {
-      return 'Invalid Date';
+      return "Invalid Date";
     }
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-PH', {
-      style: 'currency',
-      currency: 'PHP'
+    return new Intl.NumberFormat("en-PH", {
+      style: "currency",
+      currency: "PHP",
     }).format(amount);
   };
 
   const stats = {
     totalPayslips: payrollItems.length,
-    totalAmount: selectedPeriod?.total_net_pay || payrollItems.reduce((sum, item) => sum + (Number(item.net_pay) || 0), 0),
+    totalAmount:
+      selectedPeriod?.total_net_pay ||
+      payrollItems.reduce((sum, item) => sum + (Number(item.net_pay) || 0), 0),
     reportsGenerated: 0, // Placeholder, as summary report is coming soon
-    totalPayrollPeriods: periods.length
+    totalPayrollPeriods: periods.length,
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center h-96">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center h-96">Loading...</div>
+    );
   }
 
   return (
@@ -272,7 +394,9 @@ export function PayrollReportsPage() {
       <div className="sticky top-0 z-10 bg-background pb-4 pt-2 border-b border-border">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
           <div>
-            <h1 className="text-xl font-semibold tracking-tight">Payroll Reports</h1>
+            <h1 className="text-xl font-semibold tracking-tight">
+              Payroll Reports
+            </h1>
             <p className="text-muted-foreground text-sm sm:text-base">
               Generate and download payroll reports and payslips
             </p>
@@ -284,7 +408,9 @@ export function PayrollReportsPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="border-l-4 border-l-blue-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Payslips</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Payslips
+            </CardTitle>
             <FileText className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
@@ -300,7 +426,9 @@ export function PayrollReportsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {stats.totalAmount > 0 ? formatCurrency(stats.totalAmount) : '₱0.00'}
+              {stats.totalAmount > 0
+                ? formatCurrency(stats.totalAmount)
+                : "₱0.00"}
             </div>
             <p className="text-xs text-muted-foreground">payroll amount</p>
           </CardContent>
@@ -308,7 +436,9 @@ export function PayrollReportsPage() {
 
         <Card className="border-l-4 border-l-orange-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Reports Generated</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Reports Generated
+            </CardTitle>
             <BarChart className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
@@ -319,11 +449,15 @@ export function PayrollReportsPage() {
 
         <Card className="border-l-4 border-l-purple-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Payroll Periods</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Payroll Periods
+            </CardTitle>
             <Clock className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalPayrollPeriods}</div>
+            <div className="text-2xl font-bold">
+              {stats.totalPayrollPeriods}
+            </div>
             <p className="text-xs text-muted-foreground">all periods</p>
           </CardContent>
         </Card>
@@ -345,8 +479,8 @@ export function PayrollReportsPage() {
                   key={period.id}
                   className={`p-4 border rounded-lg cursor-pointer transition-colors ${
                     selectedPeriod?.id === period.id
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border hover:border-primary/50'
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/50"
                   }`}
                   onClick={() => setSelectedPeriod(period)}
                 >
@@ -354,18 +488,25 @@ export function PayrollReportsPage() {
                     <div className="font-medium">
                       Period {period.period_number} - {period.year}
                     </div>
-                    {getStatusBadge(period.status || 'Draft')}
+                    {getStatusBadge(period.status || "Draft")}
                   </div>
                   <div className="text-sm text-muted-foreground mt-1">
-                    {new Date(period.year, period.month - 1).toLocaleString('default', { month: 'long' })}
+                    {new Date(period.year, period.month - 1).toLocaleString(
+                      "default",
+                      { month: "long" }
+                    )}
                   </div>
                   {period.start_date && period.end_date && (
                     <div className="text-xs text-muted-foreground mt-1">
-                      {formatDate(period.start_date)} - {formatDate(period.end_date)}
+                      {formatDate(period.start_date)} -{" "}
+                      {formatDate(period.end_date)}
                     </div>
                   )}
                   <div className="text-xs text-muted-foreground mt-1">
-                    Net Pay: {period.total_net_pay ? formatCurrency(period.total_net_pay) : '-'}
+                    Net Pay:{" "}
+                    {period.total_net_pay
+                      ? formatCurrency(period.total_net_pay)
+                      : "-"}
                   </div>
                 </div>
               ))}
@@ -387,7 +528,9 @@ export function PayrollReportsPage() {
                 {/* Summary Report */}
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Period Summary Report</CardTitle>
+                    <CardTitle className="text-lg">
+                      Period Summary Report
+                    </CardTitle>
                     <CardDescription>
                       Generate a summary report for the selected payroll period
                     </CardDescription>
@@ -395,10 +538,12 @@ export function PayrollReportsPage() {
                   <CardContent>
                     <div className="space-y-4">
                       <div className="text-sm text-muted-foreground">
-                        Download a comprehensive PDF report including all payroll details, employee summaries, and financial breakdowns for this period.
+                        Download a comprehensive PDF report including all
+                        payroll details, employee summaries, and financial
+                        breakdowns for this period.
                       </div>
                       <div className="text-center py-4">
-                        <Button 
+                        <Button
                           onClick={handleGenerateSummaryReport}
                           disabled={downloadingSummary || !selectedPeriod}
                         >
@@ -437,11 +582,18 @@ export function PayrollReportsPage() {
                         <div className="font-medium">Available Payslips:</div>
                         <div className="max-h-60 overflow-y-auto space-y-1">
                           {payrollItems.map((item) => (
-                            <div key={item.id} className="flex items-center justify-between p-2 border rounded">
+                            <div
+                              key={item.id}
+                              className="flex items-center justify-between p-2 border rounded"
+                            >
                               <div className="flex-1">
-                                <div className="font-medium">{item.employee?.full_name || 'Unknown Employee'}</div>
+                                <div className="font-medium">
+                                  {item.employee?.full_name ||
+                                    "Unknown Employee"}
+                                </div>
                                 <div className="text-sm text-muted-foreground">
-                                  {formatCurrency(item.net_pay || 0)} • {getStatusBadge(item.status || 'Draft')}
+                                  {formatCurrency(item.net_pay || 0)} •{" "}
+                                  {getStatusBadge(item.status || "Draft")}
                                 </div>
                               </div>
                               <div className="flex gap-2">
@@ -451,7 +603,10 @@ export function PayrollReportsPage() {
                                   onClick={() => handleGeneratePayslip(item.id)}
                                   disabled={
                                     downloadingItems.has(item.id) ||
-                                    (!item.status || (item.status.toLowerCase() !== 'processed' && item.status.toLowerCase() !== 'finalized'))
+                                    !item.status ||
+                                    (item.status.toLowerCase() !==
+                                      "processed" &&
+                                      item.status.toLowerCase() !== "finalized")
                                   }
                                 >
                                   {downloadingItems.has(item.id) ? (
@@ -464,10 +619,19 @@ export function PayrollReportsPage() {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => handleDownloadPayslip(item.id)}
+                                  onClick={() =>
+                                    handleViewPayslip(
+                                      item.id,
+                                      item.employee?.full_name ||
+                                        "Unknown Employee"
+                                    )
+                                  }
                                   disabled={
                                     downloadingItems.has(item.id) ||
-                                    (!item.status || (item.status.toLowerCase() !== 'processed' && item.status.toLowerCase() !== 'finalized'))
+                                    !item.status ||
+                                    (item.status.toLowerCase() !==
+                                      "processed" &&
+                                      item.status.toLowerCase() !== "finalized")
                                   }
                                 >
                                   {downloadingItems.has(item.id) ? (
@@ -498,6 +662,44 @@ export function PayrollReportsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* PDF Preview Dialog */}
+      <Dialog
+        open={previewDialog.open}
+        onOpenChange={(open) => !open && handleClosePreview()}
+      >
+        <DialogContent className="max-w-5xl h-[90vh] flex flex-col">
+          <DialogHeader>
+            <div className="flex items-center justify-between">
+              <DialogTitle>
+                Payslip Preview - {previewDialog.employeeName}
+              </DialogTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mr-6"
+                onClick={handleDownloadFromPreview}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Download
+              </Button>
+            </div>
+          </DialogHeader>
+          <div className="flex-1 overflow-hidden">
+            {previewDialog.pdfUrl ? (
+              <iframe
+                src={previewDialog.pdfUrl}
+                className="w-full h-full border-0"
+                title="Payslip Preview"
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-muted-foreground">Loading preview...</div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

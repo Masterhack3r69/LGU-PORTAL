@@ -440,8 +440,10 @@ export function DocumentUpload({
                     <TableCell>
                       {document.document_type_name || "Unknown"}
                     </TableCell>
-                    <TableCell className="font-medium">
-                      {document.file_name}
+                    <TableCell className="font-medium max-w-[200px]">
+                      <div className="truncate" title={document.file_name}>
+                        {document.file_name}
+                      </div>
                     </TableCell>
                     <TableCell>{formatFileSize(document.file_size)}</TableCell>
                     <TableCell>{getStatusBadge(document.status)}</TableCell>

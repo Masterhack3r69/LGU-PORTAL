@@ -51,9 +51,12 @@ export interface LeaveApplication {
   // Joined fields
   employee_name?: string;
   employee_number?: string;
+  employee_position?: string;
+  employee_salary?: number;
   leave_type_name?: string;
   leave_type_code?: string;
   reviewer_name?: string;
+  reviewed_by_name?: string;
 }
 
 export interface CreateLeaveApplicationDTO {

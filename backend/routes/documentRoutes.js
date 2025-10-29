@@ -276,6 +276,37 @@ router.get('/:id/download', asyncHandler(async (req, res) => {
     fileStream.pipe(res);
 }));
 
+// GET /api/documents/:id/preview - Preview document file (admin only)
+router.get('/:id/preview', authMiddleware.requireAdmin, asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    
+    const result = await Document.findById(id);
+    
+    if (!result.success || !result.data) {
+        throw new NotFoundError('Document not found');
+    }
+    
+    const document = result.data;
+    
+    // Check if file exists
+    const filePath = document.file_path;
+    if (!await fileHandler.fileExists(filePath)) {
+        throw new NotFoundError('File not found on server');
+    }
+    
+    // Set appropriate headers for inline preview
+    res.setHeader('Content-Disposition', `inline; filename="${document.file_name}"`);
+    res.setHeader('Content-Type', document.mime_type || 'application/octet-stream');
+    
+    // Add security headers
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    
+    // Stream the file
+    const fileStream = await fileHandler.getFileStream(filePath);
+    fileStream.pipe(res);
+}));
+
 // GET /api/documents/statistics - Get document statistics
 router.get('/statistics', asyncHandler(async (req, res) => {
     const { employee_id, document_type_id } = req.query;

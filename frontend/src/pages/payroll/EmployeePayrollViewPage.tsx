@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { showToast } from "@/lib/toast";
-import { Download, Eye, Calendar, DollarSign } from "lucide-react";
+import { Download, Eye, Calendar, Wallet } from "lucide-react";
 import payrollService from "@/services/payrollService";
 import type { PayrollPeriod, PayrollItem, PayslipData } from "@/types/payroll";
 
@@ -72,7 +72,7 @@ export function EmployeePayrollViewPage() {
             }
           } catch (error) {
             console.error(
-              `Failed to check payroll items for period ${period.id}:`,
+              `Failed to check payroll items for period ₱{period.id}:`,
               error
             );
           }
@@ -142,7 +142,7 @@ export function EmployeePayrollViewPage() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `payslip-${selectedPeriod?.year}-${selectedPeriod?.month}.pdf`;
+      a.download = `payslip-₱{selectedPeriod?.year}-₱{selectedPeriod?.month}.pdf`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -172,10 +172,10 @@ export function EmployeePayrollViewPage() {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-PH", {
-      style: "currency",
-      currency: "PHP",
-    }).format(amount);
+    return `₱${new Intl.NumberFormat("en-PH", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount)}`;
   };
 
   const formatDate = (dateString: string) => {
@@ -205,7 +205,8 @@ export function EmployeePayrollViewPage() {
             My Payroll
           </h1>
           <p className="text-muted-foreground text-sm sm:text-base">
-            View your processed and finalized payroll history and download payslips
+            View your processed and finalized payroll history and download
+            payslips
           </p>
         </div>
       </div>
@@ -225,7 +226,7 @@ export function EmployeePayrollViewPage() {
               periods.map((period) => (
                 <div
                   key={period.id}
-                  className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                  className={`p-3 border rounded-lg cursor-pointer transition-colors ₱{
                     selectedPeriod?.id === period.id
                       ? "border-primary bg-primary/5"
                       : "border-border hover:border-primary/50"
@@ -272,15 +273,15 @@ export function EmployeePayrollViewPage() {
         <Card className="md:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4" />
+              <Wallet className="h-4 w-4" />
               Payroll Details
             </CardTitle>
             <CardDescription>
               {selectedPeriod
-                ? `Details for ${new Date(
+                ? `Details for ₱{new Date(
                     selectedPeriod.year,
                     selectedPeriod.month - 1
-                  ).toLocaleString("default", { month: "long" })} ${
+                  ).toLocaleString("default", { month: "long" })} ₱{
                     selectedPeriod.year
                   }`
                 : "Select a period to view details"}
@@ -395,7 +396,7 @@ export function EmployeePayrollViewPage() {
               </div>
             ) : selectedPeriod ? (
               <div className="text-center py-8 text-muted-foreground">
-                <DollarSign className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                <Wallet className="h-16 w-16 mx-auto mb-4 opacity-50" />
                 <div className="space-y-2">
                   <p className="text-lg font-medium">
                     No processed payroll data available
