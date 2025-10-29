@@ -156,6 +156,8 @@ router.post('/upload', asyncHandler(async (req, res) => {
     });
     
     console.log('Document object created:', document);
+    console.log('DEBUG: Current user role:', currentUser.role);
+    console.log('DEBUG: Document status will be:', document.status);
     
     console.log('Saving document to database...');
     const result = await document.save();
@@ -167,6 +169,69 @@ router.post('/upload', asyncHandler(async (req, res) => {
         // Clean up uploaded file if database save fails
         await fileHandler.deleteFile(saveResult.filePath);
         throw new Error(result.error);
+    }
+    
+    // Send notification to admin users if document is pending approval
+    console.log('DEBUG: Document status:', document.status);
+    if (document.status === 'Pending') {
+        console.log('DEBUG: Document is pending, sending notifications...');
+        try {
+            const notificationService = require('../services/notificationService');
+            const { pool } = require('../config/database');
+            
+            console.log('DEBUG: Getting admin users...');
+            // Get admin users
+            const adminUsers = await notificationService.getAdminUsers();
+            console.log('DEBUG: Admin users found:', adminUsers);
+            const adminUserIds = adminUsers.map(user => user.id);
+            console.log('DEBUG: Admin user IDs:', adminUserIds);
+            
+            if (adminUserIds.length > 0) {
+                // Get employee name for notification
+                console.log('DEBUG: Getting employee name for ID:', employee_id);
+                const [employeeRows] = await pool.execute(
+                    'SELECT first_name, last_name FROM employees WHERE id = ?',
+                    [employee_id]
+                );
+                console.log('DEBUG: Employee rows:', employeeRows);
+                
+                const employeeName = employeeRows.length > 0 
+                    ? `${employeeRows[0].first_name} ${employeeRows[0].last_name}`
+                    : 'Employee';
+                console.log('DEBUG: Employee name:', employeeName);
+                
+                // Send notification to all admin users
+                for (const adminUserId of adminUserIds) {
+                    console.log('DEBUG: Sending notification to admin user ID:', adminUserId);
+                    const notifResult = await notificationService.createNotification({
+                        user_id: adminUserId,
+                        type: 'document_approval_request',
+                        title: 'Document Approval Request',
+                        message: `${employeeName} has uploaded a ${documentType.name} document for approval.`,
+                        priority: 'HIGH',
+                        reference_type: 'employee_document',
+                        reference_id: result.data.id,
+                        metadata: {
+                            employee_id: employee_id,
+                            employee_name: employeeName,
+                            document_type: documentType.name,
+                            document_id: result.data.id
+                        }
+                    });
+                    console.log('DEBUG: Notification result:', notifResult);
+                }
+                
+                console.log(`Admin notifications sent to ${adminUserIds.length} admin(s) for document approval request`);
+            } else {
+                console.log('DEBUG: No admin users found to notify');
+            }
+        } catch (notificationError) {
+            console.error('Failed to send document approval notification:', notificationError);
+            console.error('Error stack:', notificationError.stack);
+            // Don't fail the request if notification fails
+        }
+    } else {
+        console.log('DEBUG: Document is not pending (status:', document.status, '), skipping notification');
     }
     
     console.log('=== Document Upload Completed Successfully ===');
@@ -291,13 +356,53 @@ router.put('/:id/approve', authMiddleware.requireAdmin, asyncHandler(async (req,
         throw new Error(approveResult.error);
     }
     
+    // Send notification to employee
+    console.log('DEBUG: Sending document approval notification to employee ID:', document.employee_id);
+    try {
+        const notificationService = require('../services/notificationService');
+        const { pool } = require('../config/database');
+        
+        const [employeeRows] = await pool.execute(
+            'SELECT u.id, e.first_name, e.last_name FROM users u JOIN employees e ON e.user_id = u.id WHERE e.id = ? AND u.is_active = 1',
+            [document.employee_id]
+        );
+        
+        console.log('DEBUG: Employee rows found:', employeeRows);
+        
+        if (employeeRows.length > 0) {
+            const employee = employeeRows[0];
+            console.log('DEBUG: Sending approval notification to user ID:', employee.id);
+            const notifResult = await notificationService.createNotification({
+                user_id: employee.id,
+                type: 'document_approved',
+                title: 'Document Approved',
+                message: `Your ${document.document_type_name} document has been approved.`,
+                priority: 'MEDIUM',
+                reference_type: 'employee_document',
+                reference_id: document.id,
+                metadata: {
+                    document_type: document.document_type_name,
+                    document_id: document.id,
+                    review_notes: review_notes
+                }
+            });
+            console.log('DEBUG: Approval notification sent successfully:', notifResult);
+        } else {
+            console.log('DEBUG: No active employee user found for employee ID:', document.employee_id);
+        }
+    } catch (notificationError) {
+        console.error('Failed to send document approval notification:', notificationError);
+        console.error('Error stack:', notificationError.stack);
+        // Don't fail the request if notification fails
+    }
+    
     res.json({
         success: true,
         message: 'Document approved successfully'
     });
 }));
 
-// PUT /api/documents/:id/reject - Reject document (admin only)
+// PUT /api/documents/:id/reject - Reject and delete document (admin only)
 router.put('/:id/reject', authMiddleware.requireAdmin, asyncHandler(async (req, res) => {
     const { id } = req.params;
     const { review_notes } = req.body;
@@ -319,15 +424,58 @@ router.put('/:id/reject', authMiddleware.requireAdmin, asyncHandler(async (req, 
         throw new ValidationError('Document has already been reviewed');
     }
     
-    const rejectResult = await document.reject(currentUser.id, review_notes);
-    
-    if (!rejectResult.success) {
-        throw new Error(rejectResult.error);
+    // Send notification to employee BEFORE deleting
+    console.log('DEBUG: Sending document rejection notification to employee ID:', document.employee_id);
+    try {
+        const notificationService = require('../services/notificationService');
+        const { pool } = require('../config/database');
+        
+        const [employeeRows] = await pool.execute(
+            'SELECT u.id, e.first_name, e.last_name FROM users u JOIN employees e ON e.user_id = u.id WHERE e.id = ? AND u.is_active = 1',
+            [document.employee_id]
+        );
+        
+        console.log('DEBUG: Employee rows found:', employeeRows);
+        
+        if (employeeRows.length > 0) {
+            const employee = employeeRows[0];
+            console.log('DEBUG: Sending rejection notification to user ID:', employee.id);
+            const notifResult = await notificationService.createNotification({
+                user_id: employee.id,
+                type: 'document_rejected',
+                title: 'Document Rejected and Deleted',
+                message: `Your ${document.document_type_name} document has been rejected and removed from the system. Reason: ${review_notes}. Please upload a corrected version.`,
+                priority: 'HIGH',
+                reference_type: 'employee_document',
+                reference_id: null, // Document will be deleted
+                metadata: {
+                    document_type: document.document_type_name,
+                    document_type_id: document.document_type_id,
+                    review_notes: review_notes,
+                    rejected_by: currentUser.username
+                }
+            });
+            console.log('DEBUG: Rejection notification sent successfully:', notifResult);
+        }
+    } catch (notificationError) {
+        console.error('Failed to send document rejection notification:', notificationError);
+        // Don't fail the request if notification fails
     }
+    
+    // Delete the document and its file
+    console.log('DEBUG: Deleting rejected document and file...');
+    const deleteResult = await document.delete();
+    
+    if (!deleteResult.success) {
+        console.error('Failed to delete document:', deleteResult.error);
+        throw new Error('Failed to delete rejected document');
+    }
+    
+    console.log('DEBUG: Document and file deleted successfully');
     
     res.json({
         success: true,
-        message: 'Document rejected successfully'
+        message: 'Document rejected and deleted successfully'
     });
 }));
 

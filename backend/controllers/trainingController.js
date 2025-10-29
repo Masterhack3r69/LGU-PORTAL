@@ -219,16 +219,9 @@ const getTrainingStatistics = asyncHandler(async (req, res) => {
     });
 });
 
-// POST /api/trainings - Create new training record
+// POST /api/trainings - Create new training record (admin only)
 const createTraining = asyncHandler(async (req, res) => {
-    const currentUser = req.session.user;
-
-    // Ensure employee can only create their own training records (unless admin)
-    if (currentUser.role !== 'admin') {
-        req.body.employee_id = currentUser.employee_id;
-    }
-
-    // Additional validation for employee_id after setting it
+    // Additional validation for employee_id
     if (!req.body.employee_id || req.body.employee_id < 1) {
         throw new ValidationError('Valid employee ID is required');
     }
@@ -266,7 +259,7 @@ const createTraining = asyncHandler(async (req, res) => {
     });
 });
 
-// PUT /api/trainings/:id - Update training record
+// PUT /api/trainings/:id - Update training record (admin only)
 const updateTraining = asyncHandler(async (req, res) => {
     // Check validation errors
     const errors = validationResult(req);
@@ -275,9 +268,8 @@ const updateTraining = asyncHandler(async (req, res) => {
     }
 
     const { id } = req.params;
-    const currentUser = req.session.user;
 
-    // First, get the existing training record to check access permissions
+    // First, get the existing training record
     const existingResult = await Training.findById(id);
     if (!existingResult.success) {
         throw new Error(existingResult.error);
@@ -288,11 +280,6 @@ const updateTraining = asyncHandler(async (req, res) => {
     }
 
     const existingTraining = existingResult.data;
-
-    // Check if user can update this training record
-    if (currentUser.role !== 'admin' && existingTraining.employee_id !== currentUser.employee_id) {
-        throw new ValidationError('Access denied - employees can only update their own training records');
-    }
 
     const trainingData = {
         id: parseInt(id),
@@ -308,11 +295,6 @@ const updateTraining = asyncHandler(async (req, res) => {
         certificate_number: req.body.certificate_number
     };
 
-    // Admins can change the employee_id, but regular employees cannot
-    if (currentUser.role !== 'admin') {
-        trainingData.employee_id = existingTraining.employee_id;
-    }
-
     const training = new Training(trainingData);
     const result = await training.save();
 
@@ -327,12 +309,11 @@ const updateTraining = asyncHandler(async (req, res) => {
     });
 });
 
-// DELETE /api/trainings/:id - Delete training record
+// DELETE /api/trainings/:id - Delete training record (admin only)
 const deleteTraining = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const currentUser = req.session.user;
 
-    // First, get the existing training record to check access permissions
+    // First, get the existing training record
     const existingResult = await Training.findById(id);
     if (!existingResult.success) {
         throw new Error(existingResult.error);
@@ -340,13 +321,6 @@ const deleteTraining = asyncHandler(async (req, res) => {
 
     if (!existingResult.data) {
         throw new NotFoundError('Training record not found');
-    }
-
-    const existingTraining = existingResult.data;
-
-    // Check if user can delete this training record
-    if (currentUser.role !== 'admin' && existingTraining.employee_id !== currentUser.employee_id) {
-        throw new ValidationError('Access denied - employees can only delete their own training records');
     }
 
     const result = await Training.delete(id);

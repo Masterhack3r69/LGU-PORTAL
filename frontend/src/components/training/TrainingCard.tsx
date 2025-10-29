@@ -90,25 +90,33 @@ const TrainingCard: React.FC<TrainingCardProps> = ({
   };
 
   return (
-    <Card className={`transition-all duration-200 hover:shadow-md ${className}`}>
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <CardTitle className="text-lg font-semibold line-clamp-2">
+    <Card className={`group relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:scale-[1.02] border-l-4 ${
+      status.label === 'Completed' ? 'border-l-green-500' : 
+      status.label === 'In Progress' ? 'border-l-blue-500' : 
+      'border-l-yellow-500'
+    } ${className}`}>
+      {/* Decorative gradient overlay */}
+      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/5 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      
+      <CardHeader className="pb-3 relative">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <CardTitle className="text-lg font-bold line-clamp-2 mb-2 group-hover:text-primary transition-colors">
               {training.training_title}
             </CardTitle>
             {training.program_title && training.program_title !== training.training_title && (
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-sm text-muted-foreground mt-1 line-clamp-1 flex items-center gap-1">
+                <span className="inline-block w-1 h-1 rounded-full bg-muted-foreground/50" />
                 {training.program_title}
               </p>
             )}
           </div>
-          <div className="flex flex-col gap-2 ml-4">
-            <Badge className={status.color} variant="secondary">
+          <div className="flex flex-col gap-1.5 flex-shrink-0">
+            <Badge className={`${status.color} font-medium shadow-sm`} variant="secondary">
               {status.label}
             </Badge>
             {training.training_type && (
-              <Badge className={typeColor} variant="outline">
+              <Badge className={`${typeColor} font-medium`} variant="outline">
                 {training.training_type}
               </Badge>
             )}
@@ -116,7 +124,7 @@ const TrainingCard: React.FC<TrainingCardProps> = ({
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3 relative">
         {/* Employee Info (shown for admin view) */}
         {showEmployeeInfo && training.employee_name && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -131,87 +139,95 @@ const TrainingCard: React.FC<TrainingCardProps> = ({
         )}
 
         {/* Date Information */}
-        <div className="flex items-center gap-4 text-sm">
-          <div className="flex items-center gap-1">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-            <span>{formatDate(training.start_date)}</span>
+        <div className="bg-muted/30 rounded-lg p-3 space-y-2">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <Calendar className="h-4 w-4 text-primary" />
+            <span className="text-foreground">{formatDate(training.start_date)}</span>
+            {training.start_date !== training.end_date && (
+              <>
+                <span className="text-muted-foreground">→</span>
+                <span className="text-foreground">{formatDate(training.end_date)}</span>
+              </>
+            )}
           </div>
-          {training.start_date !== training.end_date && (
-            <>
-              <span className="text-muted-foreground">to</span>
-              <span>{formatDate(training.end_date)}</span>
-            </>
-          )}
+          
+          {/* Duration */}
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Clock className="h-4 w-4" />
+            <span className="font-medium">{calculateDuration()} hours</span>
+          </div>
         </div>
 
-        {/* Duration */}
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Clock className="h-4 w-4" />
-          <span>{calculateDuration()} hours</span>
-        </div>
-
-        {/* Venue */}
-        {training.venue && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <MapPin className="h-4 w-4" />
-            <span className="line-clamp-1">{training.venue}</span>
-          </div>
-        )}
-
-        {/* Organizer */}
-        {training.organizer && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Building2 className="h-4 w-4" />
-            <span className="line-clamp-1">{training.organizer}</span>
+        {/* Venue & Organizer */}
+        {(training.venue || training.organizer) && (
+          <div className="space-y-2">
+            {training.venue && (
+              <div className="flex items-start gap-2 text-sm">
+                <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                <span className="text-muted-foreground line-clamp-2">{training.venue}</span>
+              </div>
+            )}
+            {training.organizer && (
+              <div className="flex items-start gap-2 text-sm">
+                <Building2 className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                <span className="text-muted-foreground line-clamp-2">{training.organizer}</span>
+              </div>
+            )}
           </div>
         )}
 
         {/* Certificate Badge */}
         {training.certificate_issued && (
-          <div className="flex items-center gap-2">
-            <Award className="h-4 w-4 text-yellow-600" />
-            <Badge variant="outline" className="text-yellow-700 border-yellow-300">
-              Certified
-            </Badge>
-            {training.certificate_number && (
-              <span className="text-xs text-muted-foreground">
-                #{training.certificate_number}
-              </span>
-            )}
+          <div className="bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-950/20 dark:to-amber-950/20 rounded-lg p-3 border border-yellow-200 dark:border-yellow-800">
+            <div className="flex items-center gap-2">
+              <Award className="h-5 w-5 text-yellow-600 dark:text-yellow-500" />
+              <div className="flex-1">
+                <Badge variant="outline" className="text-yellow-700 dark:text-yellow-400 border-yellow-300 dark:border-yellow-700 font-semibold">
+                  Certificate Issued
+                </Badge>
+                {training.certificate_number && (
+                  <p className="text-xs text-yellow-700 dark:text-yellow-500 mt-1 font-medium">
+                    Certificate #{training.certificate_number}
+                  </p>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
         {/* Actions */}
-        {!readOnly && (onEdit || onDelete || onView) && (
-          <div className="flex gap-2 pt-2 border-t">
+        {(onEdit || onDelete || onView) && (
+          <div className="flex gap-2 pt-3 mt-1">
             {onView && (
               <Button
-                variant="outline"
+                variant={readOnly ? "default" : "outline"}
                 size="sm"
                 onClick={onView}
-                className="flex items-center gap-2"
+                className={`flex-1 items-center gap-2 font-medium transition-all ${
+                  readOnly ? 'shadow-sm hover:shadow-md' : ''
+                }`}
               >
                 <Eye className="h-4 w-4" />
-                View
+                View Details
               </Button>
             )}
-            {onEdit && (
+            {!readOnly && onEdit && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={onEdit}
-                className="flex items-center gap-2"
+                className="flex-1 items-center gap-2 font-medium hover:bg-primary hover:text-primary-foreground transition-all"
               >
                 <Edit className="h-4 w-4" />
                 Edit
               </Button>
             )}
-            {onDelete && (
+            {!readOnly && onDelete && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={onDelete}
-                className="flex items-center gap-2 text-destructive hover:text-destructive"
+                className="flex-1 items-center gap-2 font-medium text-destructive hover:bg-destructive hover:text-destructive-foreground transition-all"
               >
                 <Trash2 className="h-4 w-4" />
                 Delete

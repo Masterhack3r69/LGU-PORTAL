@@ -144,10 +144,9 @@ class PayrollCalculationEngine {
         let totalAllowances = 0;
 
         try {
-            // Get active allowance types for Monthly frequency
+            // Get all allowance types (no frequency filter, but still exclude inactive)
             const allowanceTypesResult = await AllowanceType.findAll({ 
-                is_active: true, 
-                frequency: 'Monthly' 
+                is_active: true
             });
 
             if (!allowanceTypesResult.success) {
@@ -231,10 +230,9 @@ class PayrollCalculationEngine {
         let totalDeductions = 0;
 
         try {
-            // Get active deduction types for Monthly frequency
+            // Get all deduction types (no frequency filter, but still exclude inactive)
             const deductionTypesResult = await DeductionType.findAll({ 
-                is_active: true, 
-                frequency: 'Monthly' 
+                is_active: true
             });
 
             if (!deductionTypesResult.success) {

@@ -429,6 +429,73 @@ class PayrollService {
             };
         }
     }
+
+    /**
+     * Cancel payroll period and revert to Draft
+     * Deletes all processed payroll items and reverts period status
+     * Only works for periods with Processing status
+     * @param {number} periodId - Payroll period ID
+     * @param {number} userId - User ID performing the cancellation
+     * @returns {Promise<Object>} Cancellation result
+     */
+    async cancelPeriod(periodId, userId) {
+        try {
+            // Get period
+            const periodResult = await PayrollPeriod.findById(periodId);
+            if (!periodResult.success || !periodResult.data) {
+                return {
+                    success: false,
+                    error: 'Payroll period not found'
+                };
+            }
+
+            const period = periodResult.data;
+
+            // Cancel and revert the period
+            const cancelResult = await period.cancelAndRevert(userId);
+
+            if (cancelResult.success) {
+                console.log(`Payroll period ${periodId} cancelled by user ${userId}. Deleted ${cancelResult.data.deleted_items} items.`);
+            }
+
+            return cancelResult;
+        } catch (error) {
+            console.error('Error cancelling payroll period:', error);
+            return {
+                success: false,
+                error: 'Failed to cancel payroll period',
+                details: error.message
+            };
+        }
+    }
+
+    /**
+     * Soft delete a completed payroll period
+     * Marks the period as deleted without removing from database
+     * Only works for periods with Completed status
+     * @param {number} periodId - Payroll period ID
+     * @param {number} userId - User ID performing the deletion
+     * @returns {Promise<Object>} Deletion result
+     */
+    async softDeletePeriod(periodId, userId) {
+        try {
+            // Soft delete the period
+            const deleteResult = await PayrollPeriod.softDelete(periodId);
+
+            if (deleteResult.success) {
+                console.log(`Payroll period ${periodId} soft deleted by user ${userId}`);
+            }
+
+            return deleteResult;
+        } catch (error) {
+            console.error('Error soft deleting payroll period:', error);
+            return {
+                success: false,
+                error: 'Failed to soft delete payroll period',
+                details: error.message
+            };
+        }
+    }
 }
 
 module.exports = new PayrollService();

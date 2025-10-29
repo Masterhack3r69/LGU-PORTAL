@@ -179,6 +179,9 @@ class NotificationService {
       benefit_processed: "Benefit Processed",
       training_assigned: "Training Assigned",
       document_uploaded: "Document Uploaded",
+      document_approval_request: "Document Approval",
+      document_approved: "Document Approved",
+      document_rejected: "Document Rejected",
       system_announcement: "System Announcement",
       reminder: "Reminder",
     };
@@ -213,6 +216,9 @@ class NotificationService {
       benefit_processed: "🎁",
       training_assigned: "📚",
       document_uploaded: "📄",
+      document_approval_request: "📤",
+      document_approved: "✅",
+      document_rejected: "❌",
       system_announcement: "📢",
       reminder: "⏰",
     };
@@ -274,6 +280,21 @@ class NotificationService {
         bg: "bg-gray-50 dark:bg-gray-900/20",
         text: "text-gray-700 dark:text-gray-300",
         border: "border-gray-200 dark:border-gray-800",
+      },
+      document_approval_request: {
+        bg: "bg-orange-50 dark:bg-orange-900/20",
+        text: "text-orange-700 dark:text-orange-300",
+        border: "border-orange-200 dark:border-orange-800",
+      },
+      document_approved: {
+        bg: "bg-green-50 dark:bg-green-900/20",
+        text: "text-green-700 dark:text-green-300",
+        border: "border-green-200 dark:border-green-800",
+      },
+      document_rejected: {
+        bg: "bg-red-50 dark:bg-red-900/20",
+        text: "text-red-700 dark:text-red-300",
+        border: "border-red-200 dark:border-red-800",
       },
       system_announcement: {
         bg: "bg-yellow-50 dark:bg-yellow-900/20",

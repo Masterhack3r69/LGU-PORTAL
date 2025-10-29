@@ -38,6 +38,9 @@ import {
   Search,
   X,
   RotateCcw,
+  XCircle,
+  Trash2,
+  AlertTriangle,
 } from "lucide-react";
 import payrollService from "@/services/payrollService";
 import { PeriodDetailsDialog } from "@/components/payroll/PeriodDetailsDialog";
@@ -202,6 +205,66 @@ export function PayrollPeriodsPage() {
     } catch (error) {
       console.error("Failed to create payroll period:", error);
       showToast.error("Failed to create payroll period");
+    }
+  };
+
+  const handleCancelPeriod = async (period: PayrollPeriod) => {
+    if (period.status.toLowerCase() !== "processing") {
+      showToast.error("Can only cancel periods with Processing status");
+      return;
+    }
+
+    if (
+      !confirm(
+        `Are you sure you want to cancel this period and revert it to Draft? This will delete all ${
+          summaries.get(period.id)?.total_employees || 0
+        } processed payroll items.`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const response = await payrollService.cancelPeriod(period.id);
+      if (response.success) {
+        showToast.success(
+          `Period cancelled successfully. Deleted ${response.data.deleted_items} payroll items.`
+        );
+        loadPeriods();
+      } else {
+        showToast.error("Failed to cancel period");
+      }
+    } catch (error) {
+      console.error("Failed to cancel period:", error);
+      showToast.error("Failed to cancel period");
+    }
+  };
+
+  const handleSoftDeletePeriod = async (period: PayrollPeriod) => {
+    if (period.status.toLowerCase() !== "completed") {
+      showToast.error("Can only soft delete periods with Completed status");
+      return;
+    }
+
+    if (
+      !confirm(
+        `Are you sure you want to delete this completed period? This will hide it from the list but can be restored later.`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const response = await payrollService.softDeletePeriod(period.id);
+      if (response.success) {
+        showToast.success("Period deleted successfully");
+        loadPeriods();
+      } else {
+        showToast.error("Failed to delete period");
+      }
+    } catch (error) {
+      console.error("Failed to delete period:", error);
+      showToast.error("Failed to delete period");
     }
   };
 
@@ -746,6 +809,26 @@ export function PayrollPeriodsPage() {
                           }
                         />
                       </div>
+                      {period.status.toLowerCase() === "processing" && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleCancelPeriod(period)}
+                          title="Cancel and revert to Draft"
+                        >
+                          <XCircle className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {period.status.toLowerCase() === "completed" && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleSoftDeletePeriod(period)}
+                          title="Soft delete period"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </Card>
@@ -833,11 +916,34 @@ export function PayrollPeriodsPage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => setSelectedPeriod(period)}
+                                title="View details"
                               >
                                 <Eye className="h-4 w-4" />
                               </Button>
                             }
                           />
+                          {period.status.toLowerCase() === "processing" && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleCancelPeriod(period)}
+                              title="Cancel and revert to Draft"
+                              className="text-orange-600 hover:text-orange-700"
+                            >
+                              <XCircle className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {period.status.toLowerCase() === "completed" && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleSoftDeletePeriod(period)}
+                              title="Soft delete period"
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>

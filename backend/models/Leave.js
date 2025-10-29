@@ -76,8 +76,8 @@ class Leave {
 
             // Check for overlapping leave applications
             const overlappingCheck = await this.checkOverlappingLeave();
-            if (!overlappingCheck.success && overlappingCheck.hasOverlap) {
-                errors.push('Leave dates overlap with existing approved leave');
+            if (overlappingCheck.success && overlappingCheck.hasOverlap) {
+                errors.push('Leave dates overlap with existing approved or pending leave');
             }
 
             // Validate sufficient leave balance

@@ -37,6 +37,8 @@ class PayrollController {
             this.processPayrollWithDTR = this.processPayrollWithDTR.bind(this);
             this.validateDTRBeforeProcessing = this.validateDTRBeforeProcessing.bind(this);
             this.getPeriodSummaryWithDTR = this.getPeriodSummaryWithDTR.bind(this);
+            this.cancelPeriod = this.cancelPeriod.bind(this);
+            this.softDeletePeriod = this.softDeletePeriod.bind(this);
         } catch (error) {
             console.error('Error initializing PayrollController:', error);
             console.error('Stack trace:', error.stack);
@@ -1081,6 +1083,102 @@ class PayrollController {
 
         } catch (error) {
             console.error('Get period summary with DTR error:', error);
+            const response = ApiResponse.serverError('Internal server error');
+            return res.status(500).json(response);
+        }
+    }
+
+    /**
+     * Cancel payroll period and revert to Draft
+     * Deletes all processed payroll items and reverts period status to Draft
+     * Only works for periods with Processing status
+     */
+    async cancelPeriod(req, res) {
+        try {
+            const { id } = req.params;
+            const userId = req.session.user.id;
+
+            // Cancel the period
+            const cancelResult = await payrollService.cancelPeriod(id, userId);
+
+            if (!cancelResult.success) {
+                const response = ApiResponse.error(
+                    cancelResult.error,
+                    'CANCEL_ERROR',
+                    cancelResult.details,
+                    400
+                );
+                return res.status(400).json(response);
+            }
+
+            // Log audit
+            await logPayrollAudit({
+                userId: userId,
+                action: 'CANCEL_PAYROLL_PERIOD',
+                tableName: 'payroll_periods',
+                recordId: id,
+                newValues: {
+                    deleted_items: cancelResult.data.deleted_items,
+                    new_status: cancelResult.data.new_status
+                },
+                ipAddress: req.ip,
+                userAgent: req.get('User-Agent')
+            });
+
+            const response = ApiResponse.success(
+                cancelResult.data,
+                cancelResult.message || 'Payroll period cancelled and reverted to Draft successfully'
+            );
+            return res.status(200).json(response);
+
+        } catch (error) {
+            console.error('Cancel payroll period error:', error);
+            const response = ApiResponse.serverError('Internal server error');
+            return res.status(500).json(response);
+        }
+    }
+
+    /**
+     * Soft delete a completed payroll period
+     * Marks the period as deleted without removing from database
+     * Only works for periods with Completed status
+     */
+    async softDeletePeriod(req, res) {
+        try {
+            const { id } = req.params;
+            const userId = req.session.user.id;
+
+            // Soft delete the period
+            const deleteResult = await payrollService.softDeletePeriod(id, userId);
+
+            if (!deleteResult.success) {
+                const response = ApiResponse.error(
+                    deleteResult.error,
+                    'SOFT_DELETE_ERROR',
+                    deleteResult.details,
+                    400
+                );
+                return res.status(400).json(response);
+            }
+
+            // Log audit
+            await logPayrollAudit({
+                userId: userId,
+                action: 'SOFT_DELETE_PAYROLL_PERIOD',
+                tableName: 'payroll_periods',
+                recordId: id,
+                ipAddress: req.ip,
+                userAgent: req.get('User-Agent')
+            });
+
+            const response = ApiResponse.success(
+                null,
+                deleteResult.message || 'Payroll period soft deleted successfully'
+            );
+            return res.status(200).json(response);
+
+        } catch (error) {
+            console.error('Soft delete payroll period error:', error);
             const response = ApiResponse.serverError('Internal server error');
             return res.status(500).json(response);
         }

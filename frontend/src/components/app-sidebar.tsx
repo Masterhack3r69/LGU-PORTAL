@@ -112,16 +112,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               url: "/training/analytics",
             },
           ]
-        : [
-            {
-              title: "My Trainings",
-              url: "/training/my-trainings",
-            },
-            {
-              title: "My Certificates",
-              url: "/training/certificates",
-            },
-          ],
+        : [], // Employees only see main link, no dropdown items
   });
 
   // Payroll Management - Show for all users with dropdown

@@ -36,17 +36,17 @@ router.get('/trainings/statistics', trainingController.getTrainingStatistics);
 // GET /api/trainings - Get training records with advanced filtering
 router.get('/trainings', trainingController.getAllTrainings);
 
-// POST /api/trainings - Create new training record
-router.post('/trainings', ...trainingController.trainingValidationRules, trainingController.createTraining);
+// POST /api/trainings - Create new training record (admin only)
+router.post('/trainings', authMiddleware.requireAdmin, ...trainingController.trainingValidationRules, trainingController.createTraining);
 
 // GET /api/trainings/:id - Get training record by ID
 router.get('/trainings/:id', trainingController.getTrainingById);
 
-// PUT /api/trainings/:id - Update training record
-router.put('/trainings/:id', ...trainingController.trainingValidationRules, trainingController.updateTraining);
+// PUT /api/trainings/:id - Update training record (admin only)
+router.put('/trainings/:id', authMiddleware.requireAdmin, ...trainingController.trainingValidationRules, trainingController.updateTraining);
 
-// DELETE /api/trainings/:id - Delete training record
-router.delete('/trainings/:id', trainingController.deleteTraining);
+// DELETE /api/trainings/:id - Delete training record (admin only)
+router.delete('/trainings/:id', authMiddleware.requireAdmin, trainingController.deleteTraining);
 
 // GET /api/trainings/employee/:employeeId - Get employee training history
 router.get('/trainings/employee/:employeeId', trainingController.getEmployeeTrainings);

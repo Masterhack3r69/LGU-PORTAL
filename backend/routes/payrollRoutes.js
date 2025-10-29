@@ -67,6 +67,12 @@ router.post('/periods/:id/reopen', requireAdmin, validatePeriodAccess, checkPeri
 // POST /api/payroll/periods/:id/mark-paid - Mark period as paid
 router.post('/periods/:id/mark-paid', requireAdmin, validatePeriodAccess, logSensitiveOperation, auditLogger, payrollController.markPeriodAsPaid);
 
+// POST /api/payroll/periods/:id/cancel - Cancel period and revert to Draft (only for Processing status)
+router.post('/periods/:id/cancel', requireAdmin, validatePeriodAccess, logSensitiveOperation, auditLogger, payrollController.cancelPeriod);
+
+// DELETE /api/payroll/periods/:id/soft-delete - Soft delete period (only for Completed status)
+router.delete('/periods/:id/soft-delete', requireAdmin, validatePeriodAccess, logSensitiveOperation, auditLogger, payrollController.softDeletePeriod);
+
 // ===== DTR-INTEGRATED PAYROLL PROCESSING =====
 
 // POST /api/payroll/periods/:id/process-with-dtr - Process payroll using DTR data

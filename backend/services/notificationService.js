@@ -14,6 +14,9 @@ class NotificationService {
       BENEFIT_PROCESSED: "benefit_processed",
       TRAINING_ASSIGNED: "training_assigned",
       DOCUMENT_UPLOADED: "document_uploaded",
+      DOCUMENT_APPROVAL_REQUEST: "document_approval_request",
+      DOCUMENT_APPROVED: "document_approved",
+      DOCUMENT_REJECTED: "document_rejected",
       SYSTEM_ANNOUNCEMENT: "system_announcement",
       REMINDER: "reminder",
     };
@@ -29,9 +32,14 @@ class NotificationService {
   // Create a single notification
   async createNotification(notificationData) {
     try {
+      console.log('DEBUG: NotificationService.createNotification called with:', notificationData);
       const notification = new Notification(notificationData);
-      return await notification.create();
+      console.log('DEBUG: Notification instance created:', notification);
+      const result = await notification.create();
+      console.log('DEBUG: Notification.create() result:', result);
+      return result;
     } catch (error) {
+      console.error('DEBUG: NotificationService.createNotification error:', error);
       throw new Error(`Failed to create notification: ${error.message}`);
     }
   }

@@ -45,6 +45,14 @@ class PayrollService {
     return api.post<PayrollResponse<PayrollPeriod>>(`/payroll/periods/${id}/reopen`);
   }
 
+  async cancelPeriod(id: number): Promise<PayrollResponse<{ period_id: number; deleted_items: number; new_status: string }>> {
+    return api.post<PayrollResponse<{ period_id: number; deleted_items: number; new_status: string }>>(`/payroll/periods/${id}/cancel`);
+  }
+
+  async softDeletePeriod(id: number): Promise<PayrollResponse<void>> {
+    return api.delete<PayrollResponse<void>>(`/payroll/periods/${id}/soft-delete`);
+  }
+
   async deletePeriod(id: number): Promise<PayrollResponse<void>> {
     return api.delete<PayrollResponse<void>>(`/payroll/periods/${id}`);
   }

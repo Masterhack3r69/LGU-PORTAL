@@ -15,15 +15,7 @@ import {
   DialogTitle,
   DialogFooter
 } from '@/components/ui/dialog';
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from '@/components/ui/pagination';
+
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -514,22 +506,16 @@ export function EmployeeListPage() {
     position: '',
     status: '',
     page: 1,
-    limit: 10,
+    limit: 1000, // Fetch up to 1000 emp
   });
-  const [pagination, setPagination] = useState({
-    total: 0,
-    totalPages: 0,
-  });
+  const [total, setTotal] = useState(0);
 
   const fetchEmployees = useCallback(async () => {
     try {
       setIsLoading(true);
       const response = await employeeService.getEmployees(filters);
       setEmployees(response.employees);
-      setPagination({
-        total: response.total,
-        totalPages: response.totalPages,
-      });
+      setTotal(response.total);
     } catch (error) {
       console.error('Failed to fetch employees:', error);
       showToast.error('Failed to load employees');
@@ -610,90 +596,7 @@ export function EmployeeListPage() {
     setDocumentsDialogOpen(true);
   };
 
-  const renderPagination = () => {
-    if (pagination.totalPages <= 1) return null;
 
-    const maxVisiblePages = 5;
-    const startPage = Math.max(1, filters.page - Math.floor(maxVisiblePages / 2));
-    const endPage = Math.min(pagination.totalPages, startPage + maxVisiblePages - 1);
-
-    return (
-      <Pagination>
-        <PaginationContent>
-          {filters.page > 1 && (
-            <PaginationItem>
-              <PaginationPrevious 
-                onClick={() => handleFilterChange('page', filters.page - 1)}
-                className="cursor-pointer"
-                size="default"
-              />
-            </PaginationItem>
-          )}
-          
-          {startPage > 1 && (
-            <>
-              <PaginationItem>
-                <PaginationLink 
-                  onClick={() => handleFilterChange('page', 1)}
-                  className="cursor-pointer"
-                  size="default"
-                >
-                  1
-                </PaginationLink>
-              </PaginationItem>
-              {startPage > 2 && (
-                <PaginationItem>
-                  <PaginationEllipsis />
-                </PaginationItem>
-              )}
-            </>
-          )}
-          
-          {Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i).map((page) => (
-            <PaginationItem key={page}>
-              <PaginationLink
-                onClick={() => handleFilterChange('page', page)}
-                isActive={page === filters.page}
-                className="cursor-pointer"
-                size="default"
-              >
-                {page}
-              </PaginationLink>
-            </PaginationItem>
-          ))}
-          
-          {endPage < pagination.totalPages && (
-            <>
-              {endPage < pagination.totalPages - 1 && (
-                <PaginationItem>
-                  <PaginationEllipsis />
-                </PaginationItem>
-              )}
-              <PaginationItem>
-                <PaginationLink 
-                  onClick={() => handleFilterChange('page', pagination.totalPages)}
-                  className="cursor-pointer"
-                  size="default"
-                >
-                  {pagination.totalPages}
-                </PaginationLink>
-              </PaginationItem>
-            </>
-          )}
-          
-          {filters.page < pagination.totalPages && (
-            <PaginationItem>
-              <PaginationNext 
-                onClick={() => handleFilterChange('page', filters.page + 1)}
-                className="cursor-pointer"
-                size="default"
-              />
-            </PaginationItem>
-          )}
-        </PaginationContent>
-      </Pagination>
-    );
-  };
 
   if (isLoading) {
     return (
@@ -726,7 +629,7 @@ export function EmployeeListPage() {
         <CardHeader>
           <CardTitle>Employee Directory</CardTitle>
           <CardDescription>
-            Total: {pagination.total} employees
+            Total: {total} employees
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -896,12 +799,11 @@ export function EmployeeListPage() {
             </Table>
           </div>
 
-          {/* Pagination */}
-          <div className="flex items-center justify-between mt-4">
+          {/* Total Count */}
+          <div className="flex items-center justify-end mt-4">
             <div className="text-sm text-muted-foreground">
-              Showing {((filters.page - 1) * filters.limit) + 1} to {Math.min(filters.page * filters.limit, pagination.total)} of {pagination.total} results
+              Total: {total} employees
             </div>
-            {renderPagination()}
           </div>
         </CardContent>
       </Card>

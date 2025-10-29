@@ -11,6 +11,9 @@ import {
   Info,
   CheckCircle2,
   Zap,
+  FileCheck,
+  FileX,
+  Upload,
 } from "lucide-react";
 import notificationService, {
   type Notification,
@@ -245,7 +248,7 @@ function NotificationItem({
     }
   };
 
-  const getNotificationIcon = (type: string, priority: string) => {
+  const getNotificationIcon = (type: string) => {
     const iconMap: Record<string, JSX.Element> = {
       leave_submitted: <Clock className="h-4 w-4 text-orange-500" />,
       leave_approved: <CheckCircle2 className="h-4 w-4 text-green-500" />,
@@ -255,7 +258,10 @@ function NotificationItem({
       payroll_paid: <CheckCircle2 className="h-4 w-4 text-green-600" />,
       benefit_processed: <CheckCircle2 className="h-4 w-4 text-purple-500" />,
       training_assigned: <Info className="h-4 w-4 text-indigo-500" />,
-      document_uploaded: <Info className="h-4 w-4 text-gray-500" />,
+      document_uploaded: <Upload className="h-4 w-4 text-gray-500" />,
+      document_approval_request: <Upload className="h-4 w-4 text-orange-500" />,
+      document_approved: <FileCheck className="h-4 w-4 text-green-500" />,
+      document_rejected: <FileX className="h-4 w-4 text-red-500" />,
       system_announcement: <AlertCircle className="h-4 w-4 text-yellow-500" />,
       reminder: <Clock className="h-4 w-4 text-blue-500" />,
     };
@@ -293,72 +299,75 @@ function NotificationItem({
               : "bg-gray-100 dark:bg-gray-700"
           )}
         >
-          {getNotificationIcon(notification.type, notification.priority)}
+          {getNotificationIcon(notification.type)}
         </div>
 
         <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <p
-                  className={cn(
-                    "text-sm font-medium text-gray-900 dark:text-white",
-                    !notification.is_read && "font-semibold"
-                  )}
-                >
-                  {notification.title}
-                </p>
-                {!notification.is_read && (
-                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+          {/* Title and Delete Button Row */}
+          <div className="flex items-start justify-between gap-3 mb-2">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <p
+                className={cn(
+                  "text-sm font-medium text-gray-900 dark:text-white truncate",
+                  !notification.is_read && "font-semibold"
                 )}
-              </div>
-              <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 leading-relaxed">
-                {notification.message}
+              >
+                {notification.title}
               </p>
+              {!notification.is_read && (
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse flex-shrink-0" />
+              )}
             </div>
 
-            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete(notification.id);
-                }}
-                className="h-7 w-7 p-0 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900 dark:hover:text-red-400 transition-colors"
-              >
-                <Trash2 className="h-3 w-3" />
-              </Button>
-            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(notification.id);
+              }}
+              className="h-7 w-7 p-0 flex-shrink-0 opacity-0 group-hover:opacity-100 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900 dark:hover:text-red-400 transition-all"
+            >
+              <Trash2 className="h-3 w-3" />
+            </Button>
           </div>
 
-          <div className="flex items-center justify-between mt-3">
-            <div className="flex items-center gap-2">
-              <Badge
-                variant="outline"
-                className={cn(
-                  "text-xs font-medium px-2 py-1 rounded-full border-0",
-                  getPriorityStyles(notification.priority)
-                )}
-              >
-                {notification.priority}
-              </Badge>
-              <Badge
-                variant="outline"
-                className="text-xs bg-gray-50 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border-0"
-              >
-                {notificationService.getTypeDisplayName(notification.type)}
-              </Badge>
-            </div>
+          {/* Message */}
+          <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 leading-relaxed mb-3">
+            {notification.message}
+          </p>
 
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                {notificationService.formatRelativeTime(
-                  notification.created_at
-                )}
-              </span>
-            </div>
+          {/* Metadata Row - Balanced Layout */}
+          <div className="flex items-center gap-3 flex-wrap">
+            {/* Priority Badge */}
+            <Badge
+              variant="outline"
+              className={cn(
+                "text-xs font-medium px-2.5 py-0.5 rounded-full border-0",
+                getPriorityStyles(notification.priority)
+              )}
+            >
+              {notification.priority}
+            </Badge>
+
+            {/* Type Badge */}
+            <Badge
+              variant="outline"
+              className="text-xs px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 border-0"
+            >
+              {notificationService.getTypeDisplayName(notification.type)}
+            </Badge>
+
+            {/* Spacer */}
+            <div className="flex-1 min-w-[20px]" />
+
+            {/* Time */}
+            <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 flex-shrink-0">
+              <Clock className="h-3 w-3" />
+              {notificationService.formatRelativeTime(
+                notification.created_at
+              )}
+            </span>
           </div>
         </div>
       </div>

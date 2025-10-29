@@ -136,14 +136,14 @@ class EmployeeService {
     async getEmployees(filters: Partial<EmployeeFilters> = {}): Promise<EmployeeResponse> {                                     
       const params = {                                                                                                          
         page: filters.page || 1,                                                                                                
-        limit: filters.limit || 10,                                                                                             
+        limit: filters.limit || 999999,                                                                                             
         ...(filters.name && { search: filters.name }),                                                                          
         ...(filters.department && { department: filters.department }),                                                          
         ...(filters.position && { department: filters.position }),                                                                
         ...(filters.status && { employment_status: filters.status === 'active' ? 'Active' : filters.status }),                         
       };                                                                                                                        
                                                                                                                                 
-      const response = await apiService.get<BackendEmployeeResponse>('/employees', params);                                     
+      const response = await apiService.get<BackendEmployeeResponse>('/employees', { params });                                     
                                                                                                                                 
       // Transform backend response to match frontend interface                                                                 
       const transformedEmployees = response.data ? response.data.map(emp => this.transformEmployee(emp)) : [];                  

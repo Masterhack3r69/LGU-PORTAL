@@ -86,8 +86,8 @@
     department: string;
     position: string;
     status: 'active' | 'inactive' | 'pending' | '';
-    page: number;
-    limit: number;
+    page?: number;
+    limit?: number;
   }                                                                        
                                                                            
   export interface EmployeeResponse {

@@ -257,7 +257,7 @@ const getAllEmployees = asyncHandler(async (req, res) => {
 
     // Validate pagination parameters
     const pageNumber = Math.max(1, parseInt(page));
-    const pageSize = Math.min(100, Math.max(1, parseInt(limit))); // Max 100 items per page
+    const pageSize = Math.max(1, parseInt(limit)); // No max limit - fetch all
     const offset = (pageNumber - 1) * pageSize;
 
     // Build filters object

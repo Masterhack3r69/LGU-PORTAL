@@ -181,6 +181,11 @@ class PayrollPeriod {
         let query = 'SELECT * FROM payroll_periods WHERE 1=1';
         const params = [];
 
+        // Exclude soft-deleted periods by default
+        if (!filters.include_deleted) {
+            query += ' AND deleted_at IS NULL';
+        }
+
         // Add filters
         if (filters.year !== undefined && filters.year !== null && filters.year !== '') {
             query += ' AND year = ?';
@@ -299,6 +304,115 @@ class PayrollPeriod {
     static async delete(id) {
         const query = 'DELETE FROM payroll_periods WHERE id = ?';
         return await executeQuery(query, [id]);
+    }
+
+    // Soft delete period (only for Completed status)
+    static async softDelete(id) {
+        try {
+            // Check if period exists and is Completed
+            const periodResult = await this.findById(id);
+            if (!periodResult.success || !periodResult.data) {
+                return {
+                    success: false,
+                    error: 'Payroll period not found'
+                };
+            }
+
+            const period = periodResult.data;
+            if (period.status !== 'Completed') {
+                return {
+                    success: false,
+                    error: 'Can only soft delete completed periods'
+                };
+            }
+
+            // Add deleted_at column if it doesn't exist (migration should handle this)
+            const query = 'UPDATE payroll_periods SET deleted_at = NOW() WHERE id = ?';
+            const result = await executeQuery(query, [id]);
+
+            if (result.success) {
+                return {
+                    success: true,
+                    message: 'Payroll period soft deleted successfully'
+                };
+            }
+
+            return result;
+        } catch (error) {
+            return {
+                success: false,
+                error: 'Failed to soft delete payroll period',
+                details: error.message
+            };
+        }
+    }
+
+    // Cancel period and revert to Draft (only for Processing status)
+    async cancelAndRevert(userId) {
+        try {
+            // Check if period can be cancelled
+            if (this.status !== 'Processing') {
+                return {
+                    success: false,
+                    error: 'Can only cancel periods with Processing status'
+                };
+            }
+
+            return await executeTransaction(async (connection) => {
+                // First, get all payroll item IDs for this period
+                const getItemsQuery = 'SELECT id FROM payroll_items WHERE payroll_period_id = ?';
+                const itemsResult = await executeQuery(getItemsQuery, [this.id]);
+                
+                const itemIds = itemsResult.success && itemsResult.data.length > 0 
+                    ? itemsResult.data.map(item => item.id) 
+                    : [];
+
+                // Delete payroll item lines first (if any items exist)
+                if (itemIds.length > 0) {
+                    const deleteLinesQuery = `DELETE FROM payroll_item_lines WHERE payroll_item_id IN (${itemIds.join(',')})`;
+                    await executeQuery(deleteLinesQuery);
+                }
+
+                // Delete all payroll items for this period
+                const deleteItemsQuery = 'DELETE FROM payroll_items WHERE payroll_period_id = ?';
+                const deleteResult = await executeQuery(deleteItemsQuery, [this.id]);
+
+                if (!deleteResult.success) {
+                    throw new Error('Failed to delete payroll items');
+                }
+
+                // Delete DTR records for this period (so they can be re-imported)
+                const deleteDTRQuery = 'DELETE FROM dtr_records WHERE payroll_period_id = ?';
+                const dtrDeleteResult = await executeQuery(deleteDTRQuery, [this.id]);
+
+                // Revert period status to Draft
+                this.status = 'Draft';
+                this.finalized_by = null;
+                this.finalized_at = null;
+
+                const updateResult = await this.update();
+                if (!updateResult.success) {
+                    throw new Error('Failed to update period status');
+                }
+
+                return {
+                    success: true,
+                    data: {
+                        period_id: this.id,
+                        deleted_items: deleteResult.data.affectedRows || 0,
+                        deleted_dtr_records: dtrDeleteResult.success ? (dtrDeleteResult.data.affectedRows || 0) : 0,
+                        new_status: this.status
+                    },
+                    message: 'Payroll period cancelled and reverted to Draft successfully'
+                };
+            });
+        } catch (error) {
+            return {
+                success: false,
+                error: 'Failed to cancel and revert payroll period',
+                details: error.message
+            };
+        }
     }
 
     static async getStatistics() {
