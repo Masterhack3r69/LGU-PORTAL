@@ -1,44 +1,85 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogHeader, 
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
   DialogTitle,
-  DialogFooter
-} from '@/components/ui/dialog';
-import { DatePicker } from '@/components/ui/date-picker';
-import { employeeService } from '@/services/employeeService';
-import { examCertificateService } from '@/services/examCertificateService';
-import type { CreateEmployeeDTO, ExamCertificate } from '@/types/employee';
-import { ArrowLeft, Save, Copy, Eye, EyeOff, User, MapPin, Briefcase, FileText, GraduationCap, Award, Building2 } from 'lucide-react';
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { DatePicker } from "@/components/ui/date-picker";
+import { employeeService } from "@/services/employeeService";
+import { examCertificateService } from "@/services/examCertificateService";
+import type { CreateEmployeeDTO, ExamCertificate } from "@/types/employee";
+import {
+  ArrowLeft,
+  Save,
+  Copy,
+  Eye,
+  EyeOff,
+  User,
+  MapPin,
+  Briefcase,
+  FileText,
+  GraduationCap,
+  Award,
+  Building2,
+} from "lucide-react";
 import { showToast } from "@/lib/toast";
-import { dateStringToDateObject, dateObjectToDateString } from '@/utils/helpers';
-import { ExamCertificateManager } from '@/components/admin/ExamCertificateManager';
-import { WorkExperienceManager } from '@/components/admin/WorkExperienceManager';
-import { TrainingProgramMiniManager } from '@/components/admin/TrainingProgramMiniManager';
+import {
+  dateStringToDateObject,
+  dateObjectToDateString,
+} from "@/utils/helpers";
+import { ExamCertificateManager } from "@/components/admin/ExamCertificateManager";
+import { WorkExperienceManager } from "@/components/admin/WorkExperienceManager";
+import { TrainingProgramMiniManager } from "@/components/admin/TrainingProgramMiniManager";
 
 const employeeSchema = z.object({
-  employee_number: z.string().min(1, 'Employee number is required'),
-  first_name: z.string().min(1, 'First name is required'),
+  employee_number: z.string().min(1, "Employee number is required"),
+  first_name: z.string().min(1, "First name is required"),
   middle_name: z.string().optional(),
-  last_name: z.string().min(1, 'Last name is required'),
+  last_name: z.string().min(1, "Last name is required"),
   suffix: z.string().optional(),
-  sex: z.enum(['Male', 'Female']).optional(),
+  sex: z.enum(["Male", "Female"]).optional(),
   birth_date: z.string().optional(),
   birth_place: z.string().optional(),
-  civil_status: z.enum(['Single', 'Married', 'Widowed', 'Separated', 'Divorced']).optional(),
+  civil_status: z
+    .enum(["Single", "Married", "Widowed", "Separated", "Divorced"])
+    .optional(),
   contact_number: z.string().optional(),
-  email_address: z.string().email('Invalid email address').optional().or(z.literal('')),
+  email_address: z
+    .string()
+    .email("Invalid email address")
+    .optional()
+    .or(z.literal("")),
   current_address: z.string().optional(),
   permanent_address: z.string().optional(),
   tin: z.string().optional(),
@@ -46,17 +87,19 @@ const employeeSchema = z.object({
   pagibig_number: z.string().optional(),
   philhealth_number: z.string().optional(),
   sss_number: z.string().optional(),
-  appointment_date: z.string().min(1, 'Appointment date is required'),
+  appointment_date: z.string().min(1, "Appointment date is required"),
   plantilla_position: z.string().optional(),
   department: z.string().optional(),
   plantilla_number: z.string().optional(),
   salary_grade: z.number().min(1).max(33).optional(),
   step_increment: z.number().min(1).max(8).optional(),
   current_daily_rate: z.number().min(0).optional(),
-  employment_status: z.enum(['Active', 'Resigned', 'Retired', 'Terminated', 'AWOL']).optional(),
+  employment_status: z
+    .enum(["Active", "Resigned", "Retired", "Terminated", "AWOL"])
+    .optional(),
   separation_date: z.string().optional(),
   separation_reason: z.string().optional(),
-  
+
   // Additional PDS fields
   height: z.number().min(0).optional(),
   weight: z.number().min(0).optional(),
@@ -66,7 +109,7 @@ const employeeSchema = z.object({
   agency_employee_no: z.string().optional(),
   citizenship: z.string().optional(),
   dual_citizenship_country: z.string().optional(),
-  
+
   // Residential Address
   residential_house_no: z.string().optional(),
   residential_street: z.string().optional(),
@@ -75,7 +118,7 @@ const employeeSchema = z.object({
   residential_city: z.string().optional(),
   residential_province: z.string().optional(),
   residential_zipcode: z.string().optional(),
-  
+
   // Permanent Address
   permanent_house_no: z.string().optional(),
   permanent_street: z.string().optional(),
@@ -84,7 +127,7 @@ const employeeSchema = z.object({
   permanent_city: z.string().optional(),
   permanent_province: z.string().optional(),
   permanent_zipcode: z.string().optional(),
-  
+
   telephone_no: z.string().optional(),
   mobile_no: z.string().optional(),
 });
@@ -95,87 +138,99 @@ export function EmployeeCreatePage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [showCredentialsDialog, setShowCredentialsDialog] = useState(false);
-  const [generatedCredentials, setGeneratedCredentials] = useState<{ username: string; password: string } | null>(null);
+  const [generatedCredentials, setGeneratedCredentials] = useState<{
+    username: string;
+    password: string;
+  } | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-  const [examCertificates, setExamCertificates] = useState<ExamCertificate[]>([]);
+  const [examCertificates, setExamCertificates] = useState<ExamCertificate[]>(
+    []
+  );
   const [workExperiences, setWorkExperiences] = useState<any[]>([]);
   const [trainings, setTrainings] = useState<any[]>([]);
 
   const form = useForm<EmployeeFormData>({
     resolver: zodResolver(employeeSchema),
     defaultValues: {
-      employee_number: '',
-      first_name: '',
-      middle_name: '',
-      last_name: '',
-      suffix: '',
-      birth_date: '',
-      birth_place: '',
-      contact_number: '',
-      email_address: '',
-      current_address: '',
-      permanent_address: '',
-      tin: '',
-      gsis_number: '',
-      pagibig_number: '',
-      philhealth_number: '',
-      sss_number: '',
-      appointment_date: '',
-      plantilla_position: '',
-      department: '',
-      plantilla_number: '',
-      separation_date: '',
-      separation_reason: '',
-      employment_status: 'Active',
-      sex: 'Male',
-      civil_status: 'Single',
-      citizenship: 'Filipino',
-      blood_type: '',
-      telephone_no: '',
-      mobile_no: '',
+      employee_number: "",
+      first_name: "",
+      middle_name: "",
+      last_name: "",
+      suffix: "",
+      birth_date: "",
+      birth_place: "",
+      contact_number: "",
+      email_address: "",
+      current_address: "",
+      permanent_address: "",
+      tin: "",
+      gsis_number: "",
+      pagibig_number: "",
+      philhealth_number: "",
+      sss_number: "",
+      appointment_date: "",
+      plantilla_position: "",
+      department: "",
+      plantilla_number: "",
+      separation_date: "",
+      separation_reason: "",
+      employment_status: "Active",
+      sex: "Male",
+      civil_status: "Single",
+      citizenship: "Filipino",
+      blood_type: "",
+      telephone_no: "",
+      mobile_no: "",
     },
   });
 
-  const generateCredentials = (firstName: string, lastName: string, employeeNumber: string) => {
+  const generateCredentials = (
+    firstName: string,
+    lastName: string,
+    employeeNumber: string
+  ) => {
     // Generate username: first name + last name + last 3 digits of employee number
-    const username = `${firstName.toLowerCase()}${lastName.toLowerCase()}${employeeNumber.slice(-3)}`;
-    
+    const username = `${firstName.toLowerCase()}${lastName.toLowerCase()}${employeeNumber.slice(
+      -3
+    )}`;
+
     // Generate a random password
     const generatePassword = () => {
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
-      let password = '';
+      const chars =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
+      let password = "";
       for (let i = 0; i < 12; i++) {
         password += chars.charAt(Math.floor(Math.random() * chars.length));
       }
       return password;
     };
-    
+
     return {
       username,
-      password: generatePassword()
+      password: generatePassword(),
     };
   };
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    showToast.success('Copied to clipboard!');
+    showToast.success("Copied to clipboard!");
   };
 
   const onSubmit = async (data: EmployeeFormData) => {
     try {
       setIsLoading(true);
-      
+
       // Convert date fields from ISO format to yyyy-MM-dd format
       const formatDate = (dateString: string | undefined) => {
         if (!dateString) return undefined;
-        if (dateString.includes('T')) {
+        if (dateString.includes("T")) {
           // ISO format - extract date part
-          return dateString.split('T')[0];
+          return dateString.split("T")[0];
         }
         // Already in correct format
         return dateString;
       };
-      
+
       const createData: CreateEmployeeDTO = {
         employee_number: data.employee_number,
         first_name: data.first_name,
@@ -195,7 +250,9 @@ export function EmployeeCreatePage() {
         pagibig_number: data.pagibig_number || undefined,
         philhealth_number: data.philhealth_number || undefined,
         sss_number: data.sss_number || undefined,
-        appointment_date: data.appointment_date ? formatDate(data.appointment_date)! : data.appointment_date,
+        appointment_date: data.appointment_date
+          ? formatDate(data.appointment_date)!
+          : data.appointment_date,
         plantilla_position: data.plantilla_position || undefined,
         department: data.department || undefined,
         plantilla_number: data.plantilla_number || undefined,
@@ -206,54 +263,58 @@ export function EmployeeCreatePage() {
         separation_date: formatDate(data.separation_date),
         separation_reason: data.separation_reason || undefined,
       };
-      
+
       const result = await employeeService.createEmployee(createData);
-      
+
       // Save exam certificates if any
       if (examCertificates.length > 0 && result.employee?.id) {
         try {
           await Promise.all(
-            examCertificates.map(cert =>
+            examCertificates.map((cert) =>
               examCertificateService.createExamCertificate({
                 ...cert,
-                employee_id: result.employee.id
+                employee_id: result.employee.id,
               })
             )
           );
         } catch (certError) {
-          console.error('Failed to save exam certificates:', certError);
-          showToast.error('Employee created but some exam certificates failed to save');
+          console.error("Failed to save exam certificates:", certError);
+          showToast.error(
+            "Employee created but some exam certificates failed to save"
+          );
         }
       }
-      
+
       // Save trainings if any
       if (trainings.length > 0 && result.employee?.id) {
         try {
-          const { trainingService } = await import('@/services/trainingService');
+          const { trainingService } = await import(
+            "@/services/trainingService"
+          );
           await Promise.all(
-            trainings.map(training =>
+            trainings.map((training) =>
               trainingService.createTraining({
                 ...training,
-                employee_id: result.employee.id
+                employee_id: result.employee.id,
               })
             )
           );
         } catch (trainingError) {
-          console.error('Failed to save trainings:', trainingError);
-          showToast.error('Employee created but some trainings failed to save');
+          console.error("Failed to save trainings:", trainingError);
+          showToast.error("Employee created but some trainings failed to save");
         }
       }
-      
+
       // Use credentials from backend if user account was created
       if (result.userAccount) {
         setGeneratedCredentials(result.userAccount);
         setShowCredentialsDialog(true);
       }
-      
-      showToast.success('Employee created successfully');
+
+      showToast.success("Employee created successfully");
     } catch (error) {
-      console.error('Failed to create employee:', error);
-      showToast.error('Failed to create employee');
+      console.error("Failed to create employee:", error);
+      showToast.error("Failed to create employee");
     } finally {
       setIsLoading(false);
     }
@@ -264,11 +325,14 @@ export function EmployeeCreatePage() {
       <div className="sticky top-0 z-10 bg-background pb-4 pt-2 border-b border-border">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-semibold tracking-tight">Add New Employee</h1>
+            <h1 className="text-xl font-semibold tracking-tight">
+              Add New Employee
+            </h1>
           </div>
-          <Button variant="outline" onClick={() => navigate('/employees')}>
+          <Button variant="outline" onClick={() => navigate("/employees")}>
             <ArrowLeft className="mr-2 h-4 w-4" />
-            <span>Back</span><span className='hidden sm:inline'>to Employees</span>
+            <span>Back</span>
+            <span className="hidden sm:inline">to Employees</span>
           </Button>
         </div>
       </div>
@@ -279,7 +343,9 @@ export function EmployeeCreatePage() {
           <Card>
             <CardHeader>
               <CardTitle>Personal Information</CardTitle>
-              <CardDescription>Basic personal details of the employee</CardDescription>
+              <CardDescription>
+                Basic personal details of the employee
+              </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-6">
               {/* First Row: 5 fields - Employee ID, First Name, Middle Name, Last Name, Suffix */}
@@ -288,7 +354,7 @@ export function EmployeeCreatePage() {
                   control={form.control}
                   name="employee_number"
                   render={({ field }) => (
-                    <FormItem >
+                    <FormItem>
                       <FormLabel>Employee Number *</FormLabel>
                       <FormControl>
                         <Input placeholder="EMP-001" {...field} />
@@ -301,7 +367,7 @@ export function EmployeeCreatePage() {
                   control={form.control}
                   name="first_name"
                   render={({ field }) => (
-                    <FormItem >
+                    <FormItem>
                       <FormLabel>First Name *</FormLabel>
                       <FormControl>
                         <Input placeholder="John" {...field} />
@@ -337,11 +403,10 @@ export function EmployeeCreatePage() {
                   )}
                 />
                 <FormField
-                
                   control={form.control}
                   name="suffix"
                   render={({ field }) => (
-                    <FormItem >
+                    <FormItem>
                       <FormLabel>Suffix</FormLabel>
                       <FormControl>
                         <Input placeholder="Jr., Sr., III" {...field} />
@@ -364,7 +429,9 @@ export function EmployeeCreatePage() {
                         label="Birth Date"
                         placeholder="Select birth date"
                         value={dateStringToDateObject(field.value)}
-                        onChange={(date) => field.onChange(dateObjectToDateString(date))}
+                        onChange={(date) =>
+                          field.onChange(dateObjectToDateString(date))
+                        }
                       />
                       <FormMessage />
                     </FormItem>
@@ -374,11 +441,14 @@ export function EmployeeCreatePage() {
                   control={form.control}
                   name="sex"
                   render={({ field }) => (
-                    <FormItem >
+                    <FormItem>
                       <FormLabel>Gender</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
                         <FormControl>
-                          <SelectTrigger className='w-full'>
+                          <SelectTrigger className="w-full">
                             <SelectValue placeholder="Select gender" />
                           </SelectTrigger>
                         </FormControl>
@@ -395,11 +465,14 @@ export function EmployeeCreatePage() {
                   control={form.control}
                   name="civil_status"
                   render={({ field }) => (
-                    <FormItem >
+                    <FormItem>
                       <FormLabel>Civil Status</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
                         <FormControl>
-                          <SelectTrigger className='w-full'>
+                          <SelectTrigger className="w-full">
                             <SelectValue placeholder="Select civil status" />
                           </SelectTrigger>
                         </FormControl>
@@ -422,7 +495,11 @@ export function EmployeeCreatePage() {
                     <FormItem className="md:col-span-2">
                       <FormLabel>Email Address</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="john.doe@company.com" {...field} />
+                        <Input
+                          type="email"
+                          placeholder="john.doe@company.com"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -453,7 +530,9 @@ export function EmployeeCreatePage() {
           <Card>
             <CardHeader>
               <CardTitle>Additional Personal Details</CardTitle>
-              <CardDescription>Physical attributes and additional IDs</CardDescription>
+              <CardDescription>
+                Physical attributes and additional IDs
+              </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-6">
               {/* Row 1: Height, Weight, Blood Type */}
@@ -470,8 +549,14 @@ export function EmployeeCreatePage() {
                           step="0.01"
                           placeholder="1.75"
                           {...field}
-                          value={field.value ?? ''}
-                          onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                          value={field.value ?? ""}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value
+                                ? parseFloat(e.target.value)
+                                : undefined
+                            )
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -490,8 +575,14 @@ export function EmployeeCreatePage() {
                           step="0.01"
                           placeholder="70.5"
                           {...field}
-                          value={field.value ?? ''}
-                          onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                          value={field.value ?? ""}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value
+                                ? parseFloat(e.target.value)
+                                : undefined
+                            )
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -504,7 +595,10 @@ export function EmployeeCreatePage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Blood Type</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select blood type" />
@@ -571,9 +665,7 @@ export function EmployeeCreatePage() {
               </div>
 
               {/* Row 3: Citizenship */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                
-              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
 
               {/* Row 4: Contact Numbers */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -583,7 +675,10 @@ export function EmployeeCreatePage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Citizenship</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger className="w-full">
                             <SelectValue placeholder="Select citizenship" />
@@ -591,14 +686,16 @@ export function EmployeeCreatePage() {
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="Filipino">Filipino</SelectItem>
-                          <SelectItem value="Dual Citizenship">Dual Citizenship</SelectItem>
+                          <SelectItem value="Dual Citizenship">
+                            Dual Citizenship
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                {form.watch('citizenship') === 'Dual Citizenship' && (
+                {form.watch("citizenship") === "Dual Citizenship" && (
                   <FormField
                     control={form.control}
                     name="dual_citizenship_country"
@@ -647,7 +744,9 @@ export function EmployeeCreatePage() {
           <Card>
             <CardHeader>
               <CardTitle>Residential Address</CardTitle>
-              <CardDescription>Complete residential address details</CardDescription>
+              <CardDescription>
+                Complete residential address details
+              </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -752,7 +851,9 @@ export function EmployeeCreatePage() {
           <Card>
             <CardHeader>
               <CardTitle>Permanent Address</CardTitle>
-              <CardDescription>Complete permanent address details</CardDescription>
+              <CardDescription>
+                Complete permanent address details
+              </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -853,7 +954,7 @@ export function EmployeeCreatePage() {
             </CardContent>
           </Card>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Employment Information Card */}
             <Card>
               <CardHeader>
@@ -873,7 +974,10 @@ export function EmployeeCreatePage() {
                         <FormItem>
                           <FormLabel>Position</FormLabel>
                           <FormControl>
-                            <Input placeholder="Software Developer" {...field} />
+                            <Input
+                              placeholder="Software Developer"
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -919,7 +1023,9 @@ export function EmployeeCreatePage() {
                             label="Appointment Date"
                             placeholder="Select appointment date"
                             value={dateStringToDateObject(field.value)}
-                            onChange={(date) => field.onChange(dateObjectToDateString(date))}
+                            onChange={(date) =>
+                              field.onChange(dateObjectToDateString(date))
+                            }
                             required
                           />
                           <FormMessage />
@@ -943,8 +1049,14 @@ export function EmployeeCreatePage() {
                               step="0.01"
                               placeholder="1200.00"
                               {...field}
-                              value={field.value ?? ''}
-                              onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                              value={field.value ?? ""}
+                              onChange={(e) =>
+                                field.onChange(
+                                  e.target.value
+                                    ? parseFloat(e.target.value)
+                                    : undefined
+                                )
+                              }
                             />
                           </FormControl>
                           <FormMessage />
@@ -964,8 +1076,14 @@ export function EmployeeCreatePage() {
                               max="33"
                               placeholder="(1-33)"
                               {...field}
-                              value={field.value ?? ''}
-                              onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                              value={field.value ?? ""}
+                              onChange={(e) =>
+                                field.onChange(
+                                  e.target.value
+                                    ? parseInt(e.target.value)
+                                    : undefined
+                                )
+                              }
                             />
                           </FormControl>
                           <FormMessage />
@@ -985,15 +1103,20 @@ export function EmployeeCreatePage() {
                               max="8"
                               placeholder="(1-8)"
                               {...field}
-                              value={field.value ?? ''}
-                              onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                              value={field.value ?? ""}
+                              onChange={(e) =>
+                                field.onChange(
+                                  e.target.value
+                                    ? parseInt(e.target.value)
+                                    : undefined
+                                )
+                              }
                             />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    
                   </div>
                   {/* Row 4: Status */}
                   <div className="grid grid-cols-1">
@@ -1003,7 +1126,10 @@ export function EmployeeCreatePage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Employment Status</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value}
+                          >
                             <FormControl>
                               <SelectTrigger className="w-full">
                                 <SelectValue placeholder="Select status" />
@@ -1013,7 +1139,9 @@ export function EmployeeCreatePage() {
                               <SelectItem value="Active">Active</SelectItem>
                               <SelectItem value="Resigned">Resigned</SelectItem>
                               <SelectItem value="Retired">Retired</SelectItem>
-                              <SelectItem value="Terminated">Terminated</SelectItem>
+                              <SelectItem value="Terminated">
+                                Terminated
+                              </SelectItem>
                               <SelectItem value="AWOL">AWOL</SelectItem>
                             </SelectContent>
                           </Select>
@@ -1024,40 +1152,47 @@ export function EmployeeCreatePage() {
                   </div>
 
                   {/* Row 5: Separation Date and Reason - Show only when status is not Active */}
-                  {form.watch('employment_status') && 
-                   ['Resigned', 'Retired', 'Terminated', 'AWOL'].includes(form.watch('employment_status') || '') && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="separation_date"
-                        render={({ field }) => (
-                          <FormItem>
-                            <DatePicker
-                              id="separation_date"
-                              label="Separation Date"
-                              placeholder="Select separation date"
-                              value={dateStringToDateObject(field.value)}
-                              onChange={(date) => field.onChange(dateObjectToDateString(date))}
-                            />
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="separation_reason"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Separation Reason</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Reason for separation" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  )}
+                  {form.watch("employment_status") &&
+                    ["Resigned", "Retired", "Terminated", "AWOL"].includes(
+                      form.watch("employment_status") || ""
+                    ) && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="separation_date"
+                          render={({ field }) => (
+                            <FormItem>
+                              <DatePicker
+                                id="separation_date"
+                                label="Separation Date"
+                                placeholder="Select separation date"
+                                value={dateStringToDateObject(field.value)}
+                                onChange={(date) =>
+                                  field.onChange(dateObjectToDateString(date))
+                                }
+                              />
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="separation_reason"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Separation Reason</FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder="Reason for separation"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    )}
                 </div>
               </CardContent>
             </Card>
@@ -1155,7 +1290,8 @@ export function EmployeeCreatePage() {
             <CardHeader>
               <CardTitle>IV. Civil Service Eligibility</CardTitle>
               <CardDescription>
-                Career service, RA 1080 (Board/Bar) eligibility, and professional licenses
+                Career service, RA 1080 (Board/Bar) eligibility, and
+                professional licenses
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -1171,7 +1307,8 @@ export function EmployeeCreatePage() {
             <CardHeader>
               <CardTitle>V. Work Experience</CardTitle>
               <CardDescription>
-                Include all work experience starting from most recent (write in full)
+                Include all work experience starting from most recent (write in
+                full)
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -1200,12 +1337,16 @@ export function EmployeeCreatePage() {
 
           {/* Form Actions */}
           <div className="flex justify-end gap-4">
-            <Button type="button" variant="outline" onClick={() => navigate('/employees')}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => navigate("/employees")}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={isLoading}>
               {isLoading ? (
-                'Creating...'
+                "Creating..."
               ) : (
                 <>
                   <Save className="mr-2 h-4 w-4" />
@@ -1218,75 +1359,92 @@ export function EmployeeCreatePage() {
       </Form>
 
       {/* Credentials Dialog */}
-      <Dialog open={showCredentialsDialog} onOpenChange={setShowCredentialsDialog}>
+      <Dialog
+        open={showCredentialsDialog}
+        onOpenChange={setShowCredentialsDialog}
+      >
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Employee Credentials Generated</DialogTitle>
             <DialogDescription>
-              Login credentials have been generated for the new employee. Please share these securely.
+              Login credentials have been generated for the new employee. Please
+              share these securely.
             </DialogDescription>
           </DialogHeader>
-          
+
           {generatedCredentials && (
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Username</label>
+                <label className="text-sm font-medium text-gray-700">
+                  Username
+                </label>
                 <div className="flex items-center gap-2">
-                  <Input 
-                    value={generatedCredentials.username} 
-                    readOnly 
+                  <Input
+                    value={generatedCredentials.username}
+                    readOnly
                     className="bg-gray-50"
                   />
-                  <Button 
-                    size="sm" 
+                  <Button
+                    size="sm"
                     variant="outline"
-                    onClick={() => copyToClipboard(generatedCredentials.username)}
+                    onClick={() =>
+                      copyToClipboard(generatedCredentials.username)
+                    }
                   >
                     <Copy className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
-              
+
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Password</label>
+                <label className="text-sm font-medium text-gray-700">
+                  Password
+                </label>
                 <div className="flex items-center gap-2">
-                  <Input 
-                    type={showPassword ? 'text' : 'password'}
-                    value={generatedCredentials.password} 
-                    readOnly 
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    value={generatedCredentials.password}
+                    readOnly
                     className="bg-gray-50"
                   />
-                  <Button 
-                    size="sm" 
+                  <Button
+                    size="sm"
                     variant="outline"
                     onClick={() => setShowPassword(!showPassword)}
                   >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
                   </Button>
-                  <Button 
-                    size="sm" 
+                  <Button
+                    size="sm"
                     variant="outline"
-                    onClick={() => copyToClipboard(generatedCredentials.password)}
+                    onClick={() =>
+                      copyToClipboard(generatedCredentials.password)
+                    }
                   >
                     <Copy className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
-              
+
               <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
                 <p className="text-sm text-yellow-800">
-                  <strong>Important:</strong> Please save these credentials securely. The password will not be shown again.
+                  <strong>Important:</strong> Please save these credentials
+                  securely. The password will not be shown again.
                 </p>
               </div>
             </div>
           )}
-          
+
           <DialogFooter>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => {
                 setShowCredentialsDialog(false);
-                navigate('/employees');
+                navigate("/employees");
               }}
             >
               Close & Continue
