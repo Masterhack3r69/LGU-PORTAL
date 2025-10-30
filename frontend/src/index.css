@@ -94,7 +94,7 @@
   --chart-4: oklch(0.7686 0.1647 70.0804);
   --chart-5: oklch(0.6959 0.1491 162.4796);
   --sidebar: oklch(0.9911 0 0);
-  --sidebar-foreground: oklch(0.5452 0 0);
+  --sidebar-foreground: oklch(0.2478 0 0);
   --sidebar-primary: oklch(0.8348 0.1302 160.9080);
   --sidebar-primary-foreground: oklch(0.2626 0.0147 166.4589);
   --sidebar-accent: oklch(0.9461 0 0);
@@ -186,6 +186,42 @@
   body {
     @apply bg-background text-foreground;
     letter-spacing: var(--tracking-normal);
+  }
+  
+  /* Enhanced Input Visibility */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="search"],
+  input[type="date"],
+  textarea,
+  select {
+    @apply text-foreground font-medium;
+    color: hsl(var(--foreground)) !important;
+  }
+  
+  input::placeholder,
+  textarea::placeholder {
+    @apply text-muted-foreground/60;
+    opacity: 0.6 !important;
+  }
+  
+  /* Ensure input text is always visible */
+  input:not(:placeholder-shown),
+  textarea:not(:placeholder-shown) {
+    @apply text-foreground;
+    font-weight: 500;
+  }
+  
+  /* Focus state for better visibility */
+  input:focus,
+  textarea:focus,
+  select:focus {
+    @apply text-foreground ring-2 ring-ring;
+    font-weight: 500;
   }
 }
 

@@ -122,31 +122,32 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     title: "Leave Management",
     url: user?.role === "admin" ? "/leaves/applications" : "/leaves/employee",
     icon: CalendarDays,
-    items: user?.role === "admin" 
-      ? [
-          {
-            title: "Applications",
-            url: "/leaves/applications",
-          },
-          {
-            title: "Balances",
-            url: "/leaves/balances",
-          },
-          {
-            title: "Leave Types",
-            url: "/leaves/types",
-          },
-        ]
-      : [
-          {
-            title: "My Applications",
-            url: "/leaves/employee",
-          },
-          {
-            title: "My Balances",
-            url: "/leaves/balances",
-          },
-        ],
+    items:
+      user?.role === "admin"
+        ? [
+            {
+              title: "Applications",
+              url: "/leaves/applications",
+            },
+            {
+              title: "Balances",
+              url: "/leaves/balances",
+            },
+            {
+              title: "Leave Types",
+              url: "/leaves/types",
+            },
+          ]
+        : [
+            {
+              title: "My Applications",
+              url: "/leaves/employee",
+            },
+            {
+              title: "My Balances",
+              url: "/leaves/balances",
+            },
+          ],
   });
 
   // Training Management - Show for all users with dropdown

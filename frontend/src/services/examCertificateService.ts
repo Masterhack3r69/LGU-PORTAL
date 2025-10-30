@@ -23,15 +23,59 @@ export const examCertificateService = {
     return response.data.data;
   },
 
+  // Helper function to format dates to YYYY-MM-DD
+  formatDateForDB(dateString: string | undefined): string | undefined {
+    if (!dateString) return undefined;
+    
+    // If already in YYYY-MM-DD format, return as is
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      return dateString;
+    }
+    
+    // If ISO format, extract date part
+    if (dateString.includes('T')) {
+      return dateString.split('T')[0];
+    }
+    
+    // Try to parse and format
+    try {
+      const date = new Date(dateString);
+      if (!isNaN(date.getTime())) {
+        const year = date.getUTCFullYear();
+        const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+        const day = String(date.getUTCDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      }
+    } catch (e) {
+      console.error('Error formatting date:', e);
+    }
+    
+    return undefined;
+  },
+
   // Create new exam certificate
   async createExamCertificate(data: CreateExamCertificateDTO): Promise<ExamCertificate> {
-    const response = await api.post('/exam-certificates', data);
+    // Format dates before sending
+    const formattedData = {
+      ...data,
+      date_taken: this.formatDateForDB(data.date_taken),
+      validity_date: this.formatDateForDB(data.validity_date)
+    };
+    
+    const response = await api.post('/exam-certificates', formattedData);
     return response.data.data;
   },
 
   // Update exam certificate
   async updateExamCertificate(id: number, data: UpdateExamCertificateDTO): Promise<ExamCertificate> {
-    const response = await api.put(`/exam-certificates/${id}`, data);
+    // Format dates before sending
+    const formattedData = {
+      ...data,
+      date_taken: this.formatDateForDB(data.date_taken),
+      validity_date: this.formatDateForDB(data.validity_date)
+    };
+    
+    const response = await api.put(`/exam-certificates/${id}`, formattedData);
     return response.data.data;
   },
 

@@ -14,12 +14,15 @@ const trainingValidationRules = [
         .isLength({ min: 1, max: 255 })
         .withMessage('Training title is required and must be less than 255 characters'),
     body('start_date')
+        .optional({ checkFalsy: true })
         .isISO8601()
         .withMessage('Valid start date is required'),
     body('end_date')
+        .optional({ checkFalsy: true })
         .isISO8601()
         .withMessage('Valid end date is required')
         .custom((value, { req }) => {
+            if (!value || !req.body.start_date) return true;
             const endDate = new Date(value);
             const startDate = new Date(req.body.start_date);
             if (endDate < startDate) {
@@ -45,6 +48,10 @@ const trainingValidationRules = [
         .trim()
         .isLength({ max: 255 })
         .withMessage('Organizer must be less than 255 characters'),
+    body('training_type')
+        .optional()
+        .isIn(['Internal', 'External', 'Online', 'Seminar', 'Workshop'])
+        .withMessage('Valid training type is required (Internal, External, Online, Seminar, Workshop)'),
     body('certificate_issued')
         .optional()
         .isBoolean()
@@ -236,6 +243,7 @@ const createTraining = asyncHandler(async (req, res) => {
         employee_id: req.body.employee_id,
         training_program_id: req.body.training_program_id,
         training_title: req.body.training_title,
+        training_type: req.body.training_type,
         start_date: req.body.start_date,
         end_date: req.body.end_date,
         duration_hours: req.body.duration_hours,

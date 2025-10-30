@@ -20,11 +20,12 @@ import { DatePicker } from '@/components/ui/date-picker';
 import { employeeService } from '@/services/employeeService';
 import { examCertificateService } from '@/services/examCertificateService';
 import type { CreateEmployeeDTO, ExamCertificate } from '@/types/employee';
-import { ArrowLeft, Save, Copy, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Save, Copy, Eye, EyeOff, User, MapPin, Briefcase, FileText, GraduationCap, Award, Building2 } from 'lucide-react';
 import { showToast } from "@/lib/toast";
 import { dateStringToDateObject, dateObjectToDateString } from '@/utils/helpers';
 import { ExamCertificateManager } from '@/components/admin/ExamCertificateManager';
 import { WorkExperienceManager } from '@/components/admin/WorkExperienceManager';
+import { TrainingProgramMiniManager } from '@/components/admin/TrainingProgramMiniManager';
 
 const employeeSchema = z.object({
   employee_number: z.string().min(1, 'Employee number is required'),
@@ -98,6 +99,7 @@ export function EmployeeCreatePage() {
   const [showPassword, setShowPassword] = useState(false);
   const [examCertificates, setExamCertificates] = useState<ExamCertificate[]>([]);
   const [workExperiences, setWorkExperiences] = useState<any[]>([]);
+  const [trainings, setTrainings] = useState<any[]>([]);
 
   const form = useForm<EmployeeFormData>({
     resolver: zodResolver(employeeSchema),
@@ -221,6 +223,24 @@ export function EmployeeCreatePage() {
         } catch (certError) {
           console.error('Failed to save exam certificates:', certError);
           showToast.error('Employee created but some exam certificates failed to save');
+        }
+      }
+      
+      // Save trainings if any
+      if (trainings.length > 0 && result.employee?.id) {
+        try {
+          const { trainingService } = await import('@/services/trainingService');
+          await Promise.all(
+            trainings.map(training =>
+              trainingService.createTraining({
+                ...training,
+                employee_id: result.employee.id
+              })
+            )
+          );
+        } catch (trainingError) {
+          console.error('Failed to save trainings:', trainingError);
+          showToast.error('Employee created but some trainings failed to save');
         }
       }
       
@@ -1167,18 +1187,14 @@ export function EmployeeCreatePage() {
             <CardHeader>
               <CardTitle>VII. Learning and Development (L&D)</CardTitle>
               <CardDescription>
-                Training programs and interventions attended (managed in Training Management section)
+                Training programs and interventions attended
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 bg-muted/30 rounded-lg border-2 border-dashed">
-                <p className="text-muted-foreground mb-2">
-                  Training programs are managed separately in the Training Management section
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  After creating the employee, you can add training records from the Training menu
-                </p>
-              </div>
+              <TrainingProgramMiniManager
+                trainings={trainings}
+                onChange={setTrainings}
+              />
             </CardContent>
           </Card>
 

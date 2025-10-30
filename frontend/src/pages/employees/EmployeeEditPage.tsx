@@ -36,6 +36,7 @@ import { showToast } from "@/lib/toast";
 import { dateStringToDateObject, dateObjectToDateString } from "@/utils/helpers";
 import { ExamCertificateManager } from "@/components/admin/ExamCertificateManager";
 import { WorkExperienceManager } from "@/components/admin/WorkExperienceManager";
+import { TrainingProgramMiniManager } from "@/components/admin/TrainingProgramMiniManager";
 
 const employeeSchema = z.object({
   employee_number: z.string().min(1, "Employee number is required"),
@@ -143,6 +144,8 @@ export function EmployeeEditPage() {
   const [examCertificates, setExamCertificates] = useState<ExamCertificate[]>([]);
   const [originalCertificates, setOriginalCertificates] = useState<ExamCertificate[]>([]);
   const [workExperiences, setWorkExperiences] = useState<any[]>([]);
+  const [trainings, setTrainings] = useState<any[]>([]);
+  const [originalTrainings, setOriginalTrainings] = useState<any[]>([]);
 
   const form = useForm<EmployeeFormData>({
     resolver: zodResolver(employeeSchema) as any,
@@ -190,6 +193,18 @@ export function EmployeeEditPage() {
           console.error('Failed to fetch exam certificates:', certError);
           setExamCertificates([]);
           setOriginalCertificates([]);
+        }
+
+        // Fetch trainings
+        try {
+          const { trainingService } = await import('@/services/trainingService');
+          const trainingHistory = await trainingService.getEmployeeTrainingHistory(parseInt(id));
+          setTrainings(trainingHistory.trainings || []);
+          setOriginalTrainings(trainingHistory.trainings || []);
+        } catch (trainingError) {
+          console.error('Failed to fetch trainings:', trainingError);
+          setTrainings([]);
+          setOriginalTrainings([]);
         }
 
         // Helper function to format dates for form inputs - same as ProfilePage
@@ -429,6 +444,52 @@ export function EmployeeEditPage() {
       } catch (certError) {
         console.error('Failed to update exam certificates:', certError);
         showToast.error('Employee updated but some exam certificates failed to save');
+      }
+
+      // Handle trainings
+      try {
+        const { trainingService } = await import('@/services/trainingService');
+        const currentTrainings = trainings || [];
+        const origTrainings = originalTrainings || [];
+
+        // Find trainings to delete (in original but not in current)
+        const trainingsToDelete = origTrainings.filter(
+          orig => !currentTrainings.find(curr => curr.id === orig.id)
+        );
+
+        // Find trainings to add (no id)
+        const trainingsToAdd = currentTrainings.filter(training => !training.id);
+
+        // Find trainings to update (has id and exists in both)
+        const trainingsToUpdate = currentTrainings.filter(training => 
+          training.id && origTrainings.find(orig => orig.id === training.id)
+        );
+
+        // Execute operations
+        const trainingOperations = [
+          ...trainingsToDelete.filter(training => training.id).map(training => 
+            trainingService.deleteTraining(training.id!)
+          ),
+          ...trainingsToAdd.map(training => 
+            trainingService.createTraining({
+              ...training,
+              employee_id: employee.id
+            })
+          ),
+          ...trainingsToUpdate.filter(training => training.id).map(training => 
+            trainingService.updateTraining(training.id!, {
+              ...training,
+              id: training.id!
+            })
+          )
+        ];
+
+        if (trainingOperations.length > 0) {
+          await Promise.all(trainingOperations);
+        }
+      } catch (trainingError) {
+        console.error('Failed to update trainings:', trainingError);
+        showToast.error('Employee updated but some trainings failed to save');
       }
 
       showToast.success("Employee updated successfully");
@@ -1453,18 +1514,14 @@ export function EmployeeEditPage() {
             <CardHeader>
               <CardTitle>VII. Learning and Development (L&D)</CardTitle>
               <CardDescription>
-                Training programs and interventions attended (managed in Training Management section)
+                Training programs and interventions attended
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 bg-muted/30 rounded-lg border-2 border-dashed">
-                <p className="text-muted-foreground mb-2">
-                  Training programs are managed separately in the Training Management section
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  You can view and manage training records from the Training menu
-                </p>
-              </div>
+              <TrainingProgramMiniManager
+                trainings={trainings}
+                onChange={setTrainings}
+              />
             </CardContent>
           </Card>
 
