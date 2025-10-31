@@ -27,104 +27,15 @@ export function DashboardPage() {
         setError(null);
 
         if (user?.role === 'admin') {
-          // Try to fetch admin dashboard data, fallback to mock data
-          try {
-            const stats = await dashboardService.getAdminDashboardStats();
-            setAdminStats(stats);
-          } catch (err) {
-            console.warn('Admin dashboard API not available, using mock data:', err);
-            // Fallback to mock data with employee count
-            const [employeesResponse] = await Promise.all([
-              employeeService.getEmployees({ limit: 1 }), // Just get count
-            ]);
-
-            setAdminStats({
-              totalEmployees: employeesResponse.total,
-              activeEmployees: employeesResponse.total,
-              pendingLeaveApplications: 0,
-              pendingDocuments: 0,
-              monthlyPayrollStatus: 'completed',
-              systemHealth: 'good',
-              employmentStatusBreakdown: {
-                active: employeesResponse.total,
-                retired: 0,
-                resigned: 0,
-                terminated: 0,
-                awol: 0
-              },
-              recentActivities: [
-                {
-                  id: '1',
-                  type: 'employee',
-                  title: 'New Employee Added',
-                  description: 'New employee John Doe was added to the system',
-                  timestamp: '2 hours ago',
-                  user: 'HR Admin'
-                },
-                {
-                  id: '2',
-                  type: 'leave',
-                  title: 'Leave Applications',
-                  description: '5 leave applications are pending approval',
-                  timestamp: '4 hours ago'
-                },
-                {
-                  id: '3',
-                  type: 'payroll',
-                  title: 'Payroll Completed',
-                  description: 'Monthly payroll processing completed',
-                  timestamp: '1 day ago'
-                }
-              ],
-              monthlyStats: {
-                newEmployees: 3,
-                leaveApplications: 12,
-                completedTrainings: 25,
-                payrollProcessed: true
-              }
-            });
-          }
+          // Fetch admin dashboard data
+          const stats = await dashboardService.getAdminDashboardStats();
+          console.log('Admin dashboard stats:', stats);
+          setAdminStats(stats);
         } else {
-          // Try to fetch employee dashboard data, fallback to mock data
-          try {
-            const stats = await dashboardService.getEmployeeDashboardStats(user?.id);
-            setEmployeeStats(stats);
-          } catch (err) {
-            console.warn('Employee dashboard API not available, using mock data:', err);
-            // Fallback to mock data
-            setEmployeeStats({
-              totalLeaveBalance: 15,
-              pendingApplications: 1,
-              completedTrainings: 8,
-              totalTrainings: 12,
-              profileCompletion: 85,
-              recentActivities: [
-                {
-                  id: '1',
-                  type: 'leave',
-                  title: 'Leave Application Approved',
-                  description: 'Your vacation leave for next week has been approved',
-                  timestamp: '2 hours ago',
-                  status: 'approved'
-                },
-                {
-                  id: '2',
-                  type: 'training',
-                  title: 'Training Completed',
-                  description: 'Workplace Safety training has been completed',
-                  timestamp: '1 day ago',
-                  status: 'completed'
-                },
-                {
-                  id: '3',
-                  type: 'payroll',
-                  title: 'Payslip Available',
-                  description: 'Your payslip for this month is now available',
-                  timestamp: '3 days ago'
-                }
-              ]
-            });
-          }
+          // Fetch employee dashboard data
+          const stats = await dashboardService.getEmployeeDashboardStats(user?.employee_id);
+          console.log('Employee dashboard stats:', stats);
+          setEmployeeStats(stats);
         }
       } catch (err) {
         console.error('Failed to fetch dashboard data:', err);

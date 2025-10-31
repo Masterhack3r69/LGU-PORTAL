@@ -49,13 +49,15 @@ export function EmployeeDashboard({
       : 0;
 
   // Chart data
-  const trainingData = [
+  const trainingData = stats.totalTrainings > 0 ? [
     { name: "Completed", value: stats.completedTrainings, color: "#10b981" },
     {
       name: "Remaining",
       value: stats.totalTrainings - stats.completedTrainings,
       color: "#e5e7eb",
     },
+  ] : [
+    { name: "No trainings", value: 1, color: "#e5e7eb" }
   ];
 
   const leaveData = [
@@ -178,17 +180,23 @@ export function EmployeeDashboard({
               </PieChart>
             </ResponsiveContainer>
             <div className="flex justify-center space-x-4 mt-4">
-              {trainingData.map((entry, index) => (
-                <div key={entry.name} className="flex items-center space-x-2">
-                  <div
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                  />
-                  <span className="text-sm">
-                    {entry.name}: {entry.value}
-                  </span>
+              {stats.totalTrainings > 0 ? (
+                trainingData.map((entry, index) => (
+                  <div key={entry.name} className="flex items-center space-x-2">
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                    />
+                    <span className="text-sm">
+                      {entry.name}: {entry.value}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <div className="text-sm text-muted-foreground">
+                  No training records yet
                 </div>
-              ))}
+              )}
             </div>
           </CardContent>
         </Card>

@@ -48,11 +48,11 @@ export interface AdminDashboardStats {
 
 class DashboardService {
   async getEmployeeDashboardStats(employeeId?: number): Promise<EmployeeDashboardStats> {
-    const params = employeeId ? { employee_id: employeeId } : {};
+    const config = employeeId ? { params: { employee_id: employeeId } } : {};
     const response = await apiService.get<{ 
       success: boolean; 
       data: EmployeeDashboardStats 
-    }>('/dashboard/employee', params);
+    }>('/dashboard/employee', config);
     return response.data;
   }
 

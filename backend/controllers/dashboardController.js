@@ -187,7 +187,9 @@ class DashboardController {
         WHERE employee_id = ?
       `, [employeeId]);
       
-      const trainingStats = trainingStatsResult.success ? trainingStatsResult.data[0] : { total_trainings: 0, completed_trainings: 0 };
+      const trainingStats = trainingStatsResult.success && trainingStatsResult.data.length > 0 
+        ? trainingStatsResult.data[0] 
+        : { total_trainings: 0, completed_trainings: 0 };
 
       // Get recent activities for the employee
       const recentActivitiesResult = await executeQuery(`
@@ -270,10 +272,10 @@ class DashboardController {
       }));
 
       const employeeStats = {
-        totalLeaveBalance: leaveBalance.total_balance,
-        pendingApplications: pendingApplications.pending_count,
-        completedTrainings: trainingStats.completed_trainings || 0,
-        totalTrainings: trainingStats.total_trainings || 0,
+        totalLeaveBalance: parseInt(leaveBalance.total_balance) || 0,
+        pendingApplications: parseInt(pendingApplications.pending_count) || 0,
+        completedTrainings: parseInt(trainingStats.completed_trainings) || 0,
+        totalTrainings: parseInt(trainingStats.total_trainings) || 0,
         profileCompletion: profileCompletion,
         recentActivities: formattedActivities
       };

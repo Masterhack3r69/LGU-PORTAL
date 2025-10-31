@@ -15,6 +15,7 @@ class Leave {
         this.reviewed_by = data.reviewed_by || null;
         this.reviewed_at = data.reviewed_at || null;
         this.review_notes = data.review_notes || null;
+        this.medical_certificate_path = data.medical_certificate_path || null;
         
         // Additional properties for enhanced functionality
         this.leave_type_name = data.leave_type_name || null;
@@ -60,12 +61,14 @@ class Leave {
         if (this.start_date && this.end_date && this.employee_id && this.leave_type_id) {
             // Date validation
             const today = new Date();
+            today.setHours(0, 0, 0, 0);
             const startDate = new Date(this.start_date);
+            startDate.setHours(0, 0, 0, 0);
             const endDate = new Date(this.end_date);
             
-            // Future date validation
-            if (startDate <= today && this.status === 'Pending') {
-                errors.push('Leave must be applied at least 1 day in advance');
+            // Past date warning (allow but warn)
+            if (startDate < today && this.status === 'Pending') {
+                warnings.push('Leave is being applied for a past date. This may require special approval.');
             }
 
             // Maximum leave duration validation
@@ -351,13 +354,14 @@ class Leave {
         const query = `
             INSERT INTO leave_applications (
                 employee_id, leave_type_id, start_date, end_date, 
-                days_requested, reason, status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                days_requested, reason, status, medical_certificate_path
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
         const params = [
             this.employee_id, this.leave_type_id, this.start_date,
-            this.end_date, this.days_requested, this.reason, this.status
+            this.end_date, this.days_requested, this.reason, this.status,
+            this.medical_certificate_path
         ];
 
         const result = await executeQuery(query, params);
@@ -379,14 +383,14 @@ class Leave {
             UPDATE leave_applications SET
                 employee_id = ?, leave_type_id = ?, start_date = ?, end_date = ?,
                 days_requested = ?, reason = ?, status = ?, reviewed_by = ?,
-                reviewed_at = ?, review_notes = ?
+                reviewed_at = ?, review_notes = ?, medical_certificate_path = ?
             WHERE id = ?
         `;
 
         const params = [
             this.employee_id, this.leave_type_id, this.start_date, this.end_date,
             this.days_requested, this.reason, this.status, this.reviewed_by,
-            this.reviewed_at, this.review_notes, this.id
+            this.reviewed_at, this.review_notes, this.medical_certificate_path, this.id
         ];
 
         const result = await executeQuery(query, params);
@@ -537,6 +541,7 @@ class Leave {
     static async findById(id) {
         const query = `
             SELECT la.*, lt.name as leave_type_name, lt.code as leave_type_code,
+                   lt.requires_medical_certificate,
                    CONCAT(e.first_name, ' ', e.last_name) as employee_name,
                    e.employee_number,
                    e.plantilla_position as employee_position,
@@ -566,6 +571,7 @@ class Leave {
     static async findAll(filters = {}) {
         let query = `
             SELECT la.*, lt.name as leave_type_name, lt.code as leave_type_code,
+                   lt.requires_medical_certificate,
                    CONCAT(e.first_name, ' ', IFNULL(e.middle_name, ''), ' ', e.last_name) as employee_name,
                    e.employee_number,
                    e.plantilla_position as employee_position,

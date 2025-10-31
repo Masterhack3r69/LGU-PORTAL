@@ -8,6 +8,22 @@ const router = express.Router();
 // All routes require authentication
 router.use(authMiddleware.requireAuth);
 
+// Serve medical certificate files
+router.get('/medical-certificates/:filename', (req, res) => {
+  const path = require('path');
+  const fs = require('fs');
+  const filename = req.params.filename;
+  const filePath = path.join(__dirname, '..', 'uploads', 'medical_certificates', filename);
+  
+  // Check if file exists
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ success: false, error: 'File not found' });
+  }
+  
+  // Send file
+  res.sendFile(filePath);
+});
+
 // ========================================
 // LEAVE TYPE MANAGEMENT ROUTES (MOVED TO THE TOP)
 // ========================================

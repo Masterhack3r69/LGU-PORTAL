@@ -310,7 +310,7 @@ const EmployeeLeaveApplications: React.FC<EmployeeLeaveApplicationsProps> = ({
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4">
+        <div className="grid gap-4 md:grid-cols-2">
           {filteredApplications.map((application) => (
             <LeaveCard
               key={application.id}

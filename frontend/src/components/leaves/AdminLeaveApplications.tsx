@@ -19,6 +19,7 @@ import {
   CheckSquare,
   AlertCircle,
   Printer,
+  ShieldCheck,
 } from "lucide-react";
 import leaveService from "@/services/leaveService";
 import employeeService from "@/services/employeeService";
@@ -123,16 +124,21 @@ const AdminLeaveApplications: React.FC = () => {
     // Fetch employee details to get position and salary
     let employeePosition = "";
     let employeeSalary = 0;
-    
+
     try {
-      const employee = await employeeService.getEmployee(application.employee_id);
+      const employee = await employeeService.getEmployee(
+        application.employee_id
+      );
       employeePosition = employee.position || "";
       employeeSalary = employee.salary || 0;
     } catch (error) {
       console.error("Error fetching employee details:", error);
       // Continue with printing even if employee fetch fails
     }
-    
+
+    // Load the logo image
+    const logoUrl = new URL("/src/assets/logo.png", import.meta.url).href;
+
     const formatDateRange = () => {
       const start = new Date(application.start_date);
       const end = new Date(application.end_date);
@@ -166,7 +172,7 @@ const AdminLeaveApplications: React.FC = () => {
         maximumFractionDigits: 2,
       })}`;
     };
-    
+
     // Use fetched employee data
     const position = employeePosition;
     const salary = formatSalary(employeeSalary);
@@ -230,18 +236,19 @@ const AdminLeaveApplications: React.FC = () => {
           height: 40px;
         }
         .print-logo {
-          border: 1px solid #000;
           width: 50px;
           height: 50px;
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 8px;
-          font-weight: bold;
-          background-color: #4a90e2;
-          color: white;
           flex-shrink: 0;
+          overflow: hidden;
+        }
+        .print-logo img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
         }
         .print-form-title {
           font-size: 12px;
@@ -312,12 +319,14 @@ const AdminLeaveApplications: React.FC = () => {
           <div class="print-header-right">
             Stamp of Date of Receipt
           </div>
-          <div style="display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 15px; padding-top: 45px;">
-            <div class="print-logo">AGENCY<br>LOGO</div>
+          <div style="display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 15px; padding-top: 30px;">
+            <div class="print-logo">
+              <img src="${logoUrl}" alt="Agency Logo" />
+            </div>
             <div style="text-align: center; font-size: 9px;">
               Republic of the Philippines<br>
-              <strong>(Agency Name)</strong><br>
-              (Agency Address)
+              <strong>Municipality of San Jose</strong><br>
+              San Jose, Dinagat Islands<br>
             </div>
           </div>
         </div>
@@ -454,7 +463,7 @@ const AdminLeaveApplications: React.FC = () => {
                 <div style="padding: 5px;">
                   <strong>6.B DETAILS OF LEAVE</strong>
 
-                  <div style="border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 5px;">
+                  <div style="padding-bottom: 2px; margin-bottom: 2px;">
                     In case of Vacation/Special Privilege Leave:
                     <label class="print-checkbox-label" style="margin-left: 10px; margin-top: 5px;">
                       <input type="checkbox" ${
@@ -470,7 +479,7 @@ const AdminLeaveApplications: React.FC = () => {
                     <div style="border-bottom: 1px solid #000; margin-left: 32px; min-height: 14px;"></div>
                   </div>
 
-                  <div style="border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 5px;">
+                  <div style="padding-bottom: 2px; margin-bottom: 2px;">
                     In case of Sick Leave:
                     <label class="print-checkbox-label" style="margin-left: 10px; margin-top: 5px;">
                       <input type="checkbox">
@@ -488,7 +497,7 @@ const AdminLeaveApplications: React.FC = () => {
                     <div style="border-bottom: 1px solid #000; margin-left: 32px; min-height: 14px;"></div>
                   </div>
 
-                  <div style="border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 5px;">
+                  <div style="padding-bottom: 2px; margin-bottom: 2px;">
                     In case of Special Leave Benefits for Women:<br>
                     <label style="display: block; margin-left: 22px; font-size: 9px;">(Specify Illness)</label>
                     <div style="border-bottom: 1px solid #000; margin-left: 22px; min-height: 14px;"></div>
@@ -520,14 +529,16 @@ const AdminLeaveApplications: React.FC = () => {
 
                 <div style="padding: 5px;">
                   <strong>6.D COMMUTATION</strong>
-                  <label class="print-checkbox-label" style="margin-left: 10px; margin-top: 5px;">
-                    <input type="checkbox" checked>
-                    Not Requested
-                  </label>
-                  <label class="print-checkbox-label" style="margin-left: 10px; margin-top: 5px;">
-                    <input type="checkbox">
-                    Requested
-                  </label>
+                  <div style="display: flex; gap: 20px; margin-top: 5px; margin-left: 10px;">
+                    <label class="print-checkbox-label">
+                      <input type="checkbox" checked>
+                      Not Requested
+                    </label>
+                    <label class="print-checkbox-label">
+                      <input type="checkbox">
+                      Requested
+                    </label>
+                  </div>
                 </div>
                 
                 <div class="print-signature-box">
@@ -580,7 +591,9 @@ const AdminLeaveApplications: React.FC = () => {
                     </tbody>
                   </table>
                   <div class="print-signature-box" style="padding-top: 20px;">
-                    <div class="print-signature-line">(Authorized Officer)</div>
+                    <div style="font-weight: bold; font-size: 9px; margin-bottom: 2px;">MARJORY C. ROFLO</div>
+                    <div class="print-signature-line" style="width: 200px;"></div>
+                    <div style="margin-top: 2px; font-size: 8px;">Authorized Officer</div>
                   </div>
                 </div>
                 
@@ -629,9 +642,9 @@ const AdminLeaveApplications: React.FC = () => {
                   }</div>
                   
                   <div class="print-signature-box" style="padding-top: 61px;">
-                    <div class="print-signature-line">${
-                      application.reviewed_by_name || "(Authorized Officer)"
-                    }</div>
+                    <div style="font-weight: bold; font-size: 9px; margin-bottom: 2px;">JO-ANN M. GONZALES</div>
+                    <div class="print-signature-line" style="width: 200px;"></div>
+                    <div style="margin-top: 2px; font-size: 8px;">Authorized Officer</div>
                   </div>
                 </div>
 
@@ -654,16 +667,21 @@ const AdminLeaveApplications: React.FC = () => {
         
         <div style="display: flex; justify-content: space-between; padding-top: 25px; gap: 30px;">
           <div style="flex: 1; text-align: center;">
-            <div class="print-signature-line" style="width: 100%;">(Authorized Official)</div>
-            <div style="margin-top: 3px; font-size: 8px;">Name and Signature</div>
+            <div style="font-weight: bold; font-size: 9px; margin-bottom: 2px;">${(
+              application.employee_name || "N/A"
+            ).toUpperCase()}</div>
+            <div class="print-signature-line" style="width: 100%;"></div>
+            <div style="margin-top: 2px; font-size: 8px;">Employee Name and Signature</div>
           </div>
           <div style="flex: 1; text-align: center;">
-            <div class="print-signature-line" style="width: 100%;">(Authorized Official)</div>
-            <div style="margin-top: 3px; font-size: 8px;">Name and Signature</div>
+            <div style="font-weight: bold; font-size: 9px; margin-bottom: 2px;">RUBEN J. D. ZUNIEGA</div>
+            <div class="print-signature-line" style="width: 100%;"></div>
+            <div style="margin-top: 2px; font-size: 8px;">Municipal Mayor</div>
           </div>
            <div style="flex: 1; text-align: center;">
-            <div class="print-signature-line" style="width: 100%;">(Authorized Official)</div>
-            <div style="margin-top: 3px; font-size: 8px;">Name and Signature</div>
+            <div style="font-weight: bold; font-size: 9px; margin-bottom: 2px;">FROILYN T. FUENTES</div>
+            <div class="print-signature-line" style="width: 100%;"></div>
+            <div style="margin-top: 2px; font-size: 8px;">Human Resource Officer</div>
           </div>
         </div>
       </div>
@@ -855,7 +873,7 @@ const AdminLeaveApplications: React.FC = () => {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4">
+        <div className="grid gap-4 md:grid-cols-2">
           {filteredApplications.map((application) => (
             <LeaveCard
               key={application.id}
@@ -872,6 +890,26 @@ const AdminLeaveApplications: React.FC = () => {
                     <Printer className="h-4 w-4 mr-1" />
                     Print
                   </Button>
+                  {application.medical_certificate_path && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        const baseUrl =
+                          import.meta.env.VITE_API_BASE_URL?.replace(
+                            "/api",
+                            ""
+                          ) || "http://localhost:3000";
+                        window.open(
+                          `${baseUrl}/${application.medical_certificate_path}`,
+                          "_blank"
+                        );
+                      }}
+                      className="border-purple-300 hover:bg-purple-50"
+                    >
+                      <ShieldCheck className="h-4 w-4 mr-1" />
+                    </Button>
+                  )}
                   {application.status === "Pending" && (
                     <>
                       <Button

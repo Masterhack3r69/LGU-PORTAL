@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -23,6 +24,7 @@ const leaveApplicationSchema = z.object({
   start_date: z.date(),
   end_date: z.date(),
   reason: z.string().min(1, 'Reason is required'),
+  medical_certificate: z.any().optional(),
 }).refine((data) => data.end_date >= data.start_date, {
   message: "End date must be after or equal to start date",
   path: ["end_date"],
@@ -45,6 +47,8 @@ const LeaveApplicationForm: React.FC<LeaveApplicationFormProps> = ({
   const [validation, setValidation] = useState<LeaveValidationResult | null>(null);
   const [isValidating, setIsValidating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [medicalCertificateFile, setMedicalCertificateFile] = useState<File | null>(null);
+  const [pastDateWarning, setPastDateWarning] = useState<string | null>(null);
 
   const form = useForm<LeaveApplicationFormData>({
     resolver: zodResolver(leaveApplicationSchema),
@@ -69,6 +73,22 @@ const LeaveApplicationForm: React.FC<LeaveApplicationFormProps> = ({
     };
     loadLeaveTypes();
   }, []);
+
+  // Check for past date warning
+  useEffect(() => {
+    if (startDate) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const selectedDate = new Date(startDate);
+      selectedDate.setHours(0, 0, 0, 0);
+      
+      if (selectedDate < today) {
+        setPastDateWarning('You are applying for leave on a past date. This may require special approval.');
+      } else {
+        setPastDateWarning(null);
+      }
+    }
+  }, [startDate]);
 
   // Auto-calculate end date for Maternity and Paternity leave
   useEffect(() => {
@@ -126,20 +146,35 @@ const LeaveApplicationForm: React.FC<LeaveApplicationFormProps> = ({
       return;
     }
 
+    // Check if medical certificate is required
+    const selectedLeaveType = leaveTypes.find(type => type.id === data.leave_type_id);
+    if (selectedLeaveType?.requires_medical_certificate && !medicalCertificateFile) {
+      toastError(`Medical certificate is required for ${selectedLeaveType.name}`);
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      await leaveService.createLeaveApplication({
-        employee_id: employeeId,
-        leave_type_id: data.leave_type_id,
-        start_date: dateObjectToDateString(data.start_date),
-        end_date: dateObjectToDateString(data.end_date),
-        reason: data.reason,
-        days_requested: validation?.calculatedDays
-      });
+      const formData = new FormData();
+      formData.append('employee_id', employeeId.toString());
+      formData.append('leave_type_id', data.leave_type_id.toString());
+      formData.append('start_date', dateObjectToDateString(data.start_date));
+      formData.append('end_date', dateObjectToDateString(data.end_date));
+      formData.append('reason', data.reason);
+      if (validation?.calculatedDays) {
+        formData.append('days_requested', validation.calculatedDays.toString());
+      }
+      if (medicalCertificateFile) {
+        formData.append('medical_certificate', medicalCertificateFile);
+      }
+
+      await leaveService.createLeaveApplicationWithFile(formData);
 
       toastSuccess('Leave application submitted successfully');
       form.reset();
       setValidation(null);
+      setMedicalCertificateFile(null);
+      setPastDateWarning(null);
       onSuccess?.();
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to submit leave application';
@@ -213,7 +248,6 @@ const LeaveApplicationForm: React.FC<LeaveApplicationFormProps> = ({
                     mode="single"
                     selected={startDate}
                     onSelect={(date) => form.setValue('start_date', date!)}
-                    disabled={(date) => date < new Date()}
                     initialFocus
                   />
                 </PopoverContent>
@@ -279,21 +313,85 @@ const LeaveApplicationForm: React.FC<LeaveApplicationFormProps> = ({
             </div>
           )}
 
+          {/* Past Date Warning */}
+          {pastDateWarning && (
+            <div className="flex items-center space-x-2 text-yellow-600 text-sm bg-yellow-50 p-3 rounded-md border border-yellow-200">
+              <AlertCircle className="h-4 w-4 flex-shrink-0" />
+              <span>{pastDateWarning}</span>
+            </div>
+          )}
+
           {/* Validation Results */}
-          {validation && (
+          {validation && (validation.warnings.length > 0 || validation.errors.length > 0) && (
             <div className="space-y-2">
               {validation.warnings.map((warning, index) => (
-                <div key={index} className="flex items-center space-x-2 text-yellow-600 text-sm">
-                  <AlertCircle className="h-4 w-4" />
-                  <span>{warning.message}</span>
-                </div>
+                warning.message && (
+                  <div key={`warning-${index}`} className="flex items-start space-x-2 text-yellow-600 text-sm bg-yellow-50 p-3 rounded-md border border-yellow-200">
+                    <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                    <span>{warning.message}</span>
+                  </div>
+                )
               ))}
               {validation.errors.map((error, index) => (
-                <div key={index} className="flex items-center space-x-2 text-red-600 text-sm">
-                  <AlertCircle className="h-4 w-4" />
-                  <span>{error}</span>
-                </div>
+                error && (
+                  <div key={`error-${index}`} className="flex items-start space-x-2 text-red-600 text-sm bg-red-50 p-3 rounded-md border border-red-200">
+                    <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                    <span>{error}</span>
+                  </div>
+                )
               ))}
+            </div>
+          )}
+
+          {/* Medical Certificate Upload */}
+          {selectedLeaveTypeId && leaveTypes.find(type => type.id === selectedLeaveTypeId)?.requires_medical_certificate && (
+            <div className="space-y-2">
+              <Label htmlFor="medical_certificate">
+                Medical Certificate * 
+                <span className="text-sm text-muted-foreground ml-2">(Required for this leave type)</span>
+              </Label>
+              <div className="flex items-center space-x-2">
+                <Input
+                  id="medical_certificate"
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      // Check file size (max 5MB)
+                      if (file.size > 5 * 1024 * 1024) {
+                        toastError('File size must be less than 5MB');
+                        e.target.value = '';
+                        return;
+                      }
+                      setMedicalCertificateFile(file);
+                    }
+                  }}
+                  className="flex-1"
+                />
+                {medicalCertificateFile && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setMedicalCertificateFile(null);
+                      const input = document.getElementById('medical_certificate') as HTMLInputElement;
+                      if (input) input.value = '';
+                    }}
+                  >
+                    Clear
+                  </Button>
+                )}
+              </div>
+              {medicalCertificateFile && (
+                <p className="text-sm text-green-600">
+                  File selected: {medicalCertificateFile.name}
+                </p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Accepted formats: PDF, JPG, PNG (Max 5MB)
+              </p>
             </div>
           )}
 

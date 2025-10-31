@@ -95,6 +95,11 @@ class ApiService {
     const response = await this.api.post(url, formData);
     return response.data;
   }
+
+  public async postFormData<T>(url: string, formData: FormData): Promise<T> {
+    const response = await this.api.post(url, formData);
+    return response.data;
+  }
 }
 
 export const apiService = new ApiService();

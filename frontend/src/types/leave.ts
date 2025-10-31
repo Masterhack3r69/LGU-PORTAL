@@ -45,6 +45,7 @@ export interface LeaveApplication {
   reviewed_by?: number;
   reviewed_at?: string;
   review_notes?: string;
+  medical_certificate_path?: string;
   created_at: string;
   updated_at: string;
   
@@ -55,6 +56,7 @@ export interface LeaveApplication {
   employee_salary?: number;
   leave_type_name?: string;
   leave_type_code?: string;
+  requires_medical_certificate?: boolean;
   reviewer_name?: string;
   reviewed_by_name?: string;
 }

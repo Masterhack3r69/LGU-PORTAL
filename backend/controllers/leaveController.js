@@ -28,16 +28,7 @@ const leaveValidationRules = [
     }),
   body("start_date")
     .isISO8601()
-    .withMessage("Valid start date is required")
-    .custom((value) => {
-      const startDate = new Date(value);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      if (startDate <= today) {
-        throw new Error("Start date must be in the future");
-      }
-      return true;
-    }),
+    .withMessage("Valid start date is required"),
   body("end_date")
     .isISO8601()
     .withMessage("Valid end date is required")
@@ -212,6 +203,31 @@ const createLeave = asyncHandler(async (req, res) => {
     req.body.employee_id = currentUser.employee_id;
   }
 
+  // Handle file upload for medical certificate
+  let medicalCertificatePath = null;
+  if (req.files && req.files.medical_certificate) {
+    const file = req.files.medical_certificate;
+    const uploadDir = 'uploads/medical_certificates';
+    const fs = require('fs');
+    const path = require('path');
+    
+    // Create directory if it doesn't exist
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    
+    // Generate unique filename
+    const timestamp = Date.now();
+    const fileExt = path.extname(file.name);
+    const fileName = `medical_cert_${req.body.employee_id}_${timestamp}${fileExt}`;
+    const filePath = path.join(uploadDir, fileName);
+    
+    // Move file to upload directory
+    await file.mv(filePath);
+    medicalCertificatePath = filePath;
+    req.body.medical_certificate_path = medicalCertificatePath;
+  }
+
   // Calculate working days if not provided
   if (!req.body.days_requested || req.body.days_requested === 0) {
     const workingDays = Leave.calculateWorkingDays(
@@ -225,6 +241,13 @@ const createLeave = asyncHandler(async (req, res) => {
   const leaveType = await LeaveType.findById(req.body.leave_type_id);
   if (!leaveType.success || !leaveType.data) {
     throw new ValidationError("Invalid leave type");
+  }
+
+  // Check if medical certificate is required but not provided
+  if (leaveType.data.requires_medical_certificate && !medicalCertificatePath) {
+    throw new ValidationError(
+      `Medical certificate is required for ${leaveType.data.name}`
+    );
   }
 
   const leave = new Leave(req.body);

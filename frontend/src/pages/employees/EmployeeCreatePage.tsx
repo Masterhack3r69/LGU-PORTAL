@@ -45,13 +45,6 @@ import {
   Copy,
   Eye,
   EyeOff,
-  User,
-  MapPin,
-  Briefcase,
-  FileText,
-  GraduationCap,
-  Award,
-  Building2,
 } from "lucide-react";
 import { showToast } from "@/lib/toast";
 import {
@@ -63,23 +56,18 @@ import { WorkExperienceManager } from "@/components/admin/WorkExperienceManager"
 import { TrainingProgramMiniManager } from "@/components/admin/TrainingProgramMiniManager";
 
 const employeeSchema = z.object({
+  // Personal Information - Required except middle_name and suffix
   employee_number: z.string().min(1, "Employee number is required"),
   first_name: z.string().min(1, "First name is required"),
   middle_name: z.string().optional(),
   last_name: z.string().min(1, "Last name is required"),
   suffix: z.string().optional(),
-  sex: z.enum(["Male", "Female"]).optional(),
-  birth_date: z.string().optional(),
-  birth_place: z.string().optional(),
-  civil_status: z
-    .enum(["Single", "Married", "Widowed", "Separated", "Divorced"])
-    .optional(),
-  contact_number: z.string().optional(),
-  email_address: z
-    .string()
-    .email("Invalid email address")
-    .optional()
-    .or(z.literal("")),
+  sex: z.enum(["Male", "Female"], { message: "Gender is required" }),
+  birth_date: z.string().min(1, "Birth date is required"),
+  birth_place: z.string().min(1, "Birth place is required"),
+  civil_status: z.enum(["Single", "Married", "Widowed", "Separated", "Divorced"], { message: "Civil status is required" }),
+  contact_number: z.string().regex(/^\d{11}$/, "Contact number must be exactly 11 digits"),
+  email_address: z.string().email("Invalid email address").min(1, "Email address is required"),
   current_address: z.string().optional(),
   permanent_address: z.string().optional(),
   tin: z.string().optional(),
@@ -87,21 +75,21 @@ const employeeSchema = z.object({
   pagibig_number: z.string().optional(),
   philhealth_number: z.string().optional(),
   sss_number: z.string().optional(),
+  
+  // Employment Information - Required
   appointment_date: z.string().min(1, "Appointment date is required"),
-  plantilla_position: z.string().optional(),
-  department: z.string().optional(),
-  plantilla_number: z.string().optional(),
-  salary_grade: z.number().min(1).max(33).optional(),
-  step_increment: z.number().min(1).max(8).optional(),
-  current_daily_rate: z.number().min(0).optional(),
-  employment_status: z
-    .enum(["Active", "Resigned", "Retired", "Terminated", "AWOL"])
-    .optional(),
+  plantilla_position: z.string().min(1, "Position is required"),
+  department: z.string().min(1, "Department is required"),
+  plantilla_number: z.string().min(1, "Plantilla number is required"),
+  salary_grade: z.number().min(1, "Salary grade is required").max(33),
+  step_increment: z.number().min(1, "Step increment is required").max(8),
+  current_daily_rate: z.number().min(0, "Daily rate is required"),
+  employment_status: z.enum(["Active", "Resigned", "Retired", "Terminated", "AWOL"]),
   separation_date: z.string().optional(),
   separation_reason: z.string().optional(),
 
-  // Additional PDS fields
-  height: z.number().min(0).optional(),
+  // Additional PDS fields - mobile_no required
+  height: z.number().min(0).max(300, "Height must be less than 300 cm").optional(),
   weight: z.number().min(0).optional(),
   blood_type: z.string().optional(),
   umid_id_no: z.string().optional(),
@@ -110,26 +98,26 @@ const employeeSchema = z.object({
   citizenship: z.string().optional(),
   dual_citizenship_country: z.string().optional(),
 
-  // Residential Address
-  residential_house_no: z.string().optional(),
-  residential_street: z.string().optional(),
+  // Residential Address - Required
+  residential_house_no: z.string().min(1, "House/Block/Lot No. is required"),
+  residential_street: z.string().min(1, "Street is required"),
   residential_subdivision: z.string().optional(),
-  residential_barangay: z.string().optional(),
-  residential_city: z.string().optional(),
-  residential_province: z.string().optional(),
-  residential_zipcode: z.string().optional(),
+  residential_barangay: z.string().min(1, "Barangay is required"),
+  residential_city: z.string().min(1, "City/Municipality is required"),
+  residential_province: z.string().min(1, "Province is required"),
+  residential_zipcode: z.string().min(1, "ZIP Code is required"),
 
-  // Permanent Address
-  permanent_house_no: z.string().optional(),
-  permanent_street: z.string().optional(),
+  // Permanent Address - Required
+  permanent_house_no: z.string().min(1, "House/Block/Lot No. is required"),
+  permanent_street: z.string().min(1, "Street is required"),
   permanent_subdivision: z.string().optional(),
-  permanent_barangay: z.string().optional(),
-  permanent_city: z.string().optional(),
-  permanent_province: z.string().optional(),
-  permanent_zipcode: z.string().optional(),
+  permanent_barangay: z.string().min(1, "Barangay is required"),
+  permanent_city: z.string().min(1, "City/Municipality is required"),
+  permanent_province: z.string().min(1, "Province is required"),
+  permanent_zipcode: z.string().min(1, "ZIP Code is required"),
 
-  telephone_no: z.string().optional(),
-  mobile_no: z.string().optional(),
+  telephone_no: z.string().regex(/^\d+$/, "Telephone must contain only numbers").optional().or(z.literal("")),
+  mobile_no: z.string().regex(/^\d{11}$/, "Mobile number must be exactly 11 digits"),
 });
 
 type EmployeeFormData = z.infer<typeof employeeSchema>;
@@ -148,6 +136,24 @@ export function EmployeeCreatePage() {
   );
   const [workExperiences, setWorkExperiences] = useState<any[]>([]);
   const [trainings, setTrainings] = useState<any[]>([]);
+
+  const copyResidentialToPermanent = () => {
+    const residentialValues = {
+      permanent_house_no: form.getValues("residential_house_no"),
+      permanent_street: form.getValues("residential_street"),
+      permanent_subdivision: form.getValues("residential_subdivision"),
+      permanent_barangay: form.getValues("residential_barangay"),
+      permanent_city: form.getValues("residential_city"),
+      permanent_province: form.getValues("residential_province"),
+      permanent_zipcode: form.getValues("residential_zipcode"),
+    };
+    
+    Object.entries(residentialValues).forEach(([key, value]) => {
+      form.setValue(key as any, value);
+    });
+    
+    showToast.success("Residential address copied to permanent address");
+  };
 
   const form = useForm<EmployeeFormData>({
     resolver: zodResolver(employeeSchema),
@@ -183,33 +189,6 @@ export function EmployeeCreatePage() {
       mobile_no: "",
     },
   });
-
-  const generateCredentials = (
-    firstName: string,
-    lastName: string,
-    employeeNumber: string
-  ) => {
-    // Generate username: first name + last name + last 3 digits of employee number
-    const username = `${firstName.toLowerCase()}${lastName.toLowerCase()}${employeeNumber.slice(
-      -3
-    )}`;
-
-    // Generate a random password
-    const generatePassword = () => {
-      const chars =
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
-      let password = "";
-      for (let i = 0; i < 12; i++) {
-        password += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-      return password;
-    };
-
-    return {
-      username,
-      password: generatePassword(),
-    };
-  };
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -426,7 +405,7 @@ export function EmployeeCreatePage() {
                     <FormItem>
                       <DatePicker
                         id="birth_date"
-                        label="Birth Date"
+                        label="Birth Date *"
                         placeholder="Select birth date"
                         value={dateStringToDateObject(field.value)}
                         onChange={(date) =>
@@ -442,7 +421,7 @@ export function EmployeeCreatePage() {
                   name="sex"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Gender</FormLabel>
+                      <FormLabel>Gender *</FormLabel>
                       <Select
                         onValueChange={field.onChange}
                         value={field.value}
@@ -466,7 +445,7 @@ export function EmployeeCreatePage() {
                   name="civil_status"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Civil Status</FormLabel>
+                      <FormLabel>Civil Status *</FormLabel>
                       <Select
                         onValueChange={field.onChange}
                         value={field.value}
@@ -493,7 +472,7 @@ export function EmployeeCreatePage() {
                   name="email_address"
                   render={({ field }) => (
                     <FormItem className="md:col-span-2">
-                      <FormLabel>Email Address</FormLabel>
+                      <FormLabel>Email Address *</FormLabel>
                       <FormControl>
                         <Input
                           type="email"
@@ -514,7 +493,7 @@ export function EmployeeCreatePage() {
                   name="birth_place"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Birth Place</FormLabel>
+                      <FormLabel>Birth Place *</FormLabel>
                       <FormControl>
                         <Input placeholder="City, Province" {...field} />
                       </FormControl>
@@ -535,19 +514,21 @@ export function EmployeeCreatePage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-6">
-              {/* Row 1: Height, Weight, Blood Type */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Row 1: Height, Weight, Citizenship, Blood Type */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                 <FormField
                   control={form.control}
                   name="height"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Height (m)</FormLabel>
+                      <FormLabel>Height (cm)</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
-                          step="0.01"
-                          placeholder="1.75"
+                          step="1"
+                          min="0"
+                          max="300"
+                          placeholder="175"
                           {...field}
                           value={field.value ?? ""}
                           onChange={(e) =>
@@ -557,6 +538,11 @@ export function EmployeeCreatePage() {
                                 : undefined
                             )
                           }
+                          onKeyPress={(e) => {
+                            if (!/[0-9]/.test(e.key)) {
+                              e.preventDefault();
+                            }
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
@@ -573,6 +559,7 @@ export function EmployeeCreatePage() {
                         <Input
                           type="number"
                           step="0.01"
+                          min="0"
                           placeholder="70.5"
                           {...field}
                           value={field.value ?? ""}
@@ -583,12 +570,59 @@ export function EmployeeCreatePage() {
                                 : undefined
                             )
                           }
+                          onKeyPress={(e) => {
+                            if (!/[0-9.]/.test(e.key)) {
+                              e.preventDefault();
+                            }
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={form.control}
+                  name="citizenship"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Citizenship</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select citizenship" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Filipino">Filipino</SelectItem>
+                          <SelectItem value="Dual Citizenship">
+                            Dual Citizenship
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                {form.watch("citizenship") === "Dual Citizenship" && (
+                
+                  <FormField
+                    control={form.control}
+                    name="dual_citizenship_country"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Dual Citizenship Country</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Country name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+              )}
                 <FormField
                   control={form.control}
                   name="blood_type"
@@ -600,7 +634,7 @@ export function EmployeeCreatePage() {
                         value={field.value}
                       >
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger className="w-full">
                             <SelectValue placeholder="Select blood type" />
                           </SelectTrigger>
                         </FormControl>
@@ -621,7 +655,57 @@ export function EmployeeCreatePage() {
                 />
               </div>
 
-              {/* Row 2: Additional Government IDs */}
+              {/* Row 2: Dual Citizenship Country (conditional) */}
+              
+
+              {/* Row 3: Mobile and Telephone */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="mobile_no"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Mobile No. (11 digits) *</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="09123456789" 
+                          maxLength={11}
+                          {...field}
+                          onKeyPress={(e) => {
+                            if (!/[0-9]/.test(e.key)) {
+                              e.preventDefault();
+                            }
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="telephone_no"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Telephone No.</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="021234567" 
+                          {...field}
+                          onKeyPress={(e) => {
+                            if (!/[0-9]/.test(e.key)) {
+                              e.preventDefault();
+                            }
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              {/* Row 4: Additional Government IDs */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <FormField
                   control={form.control}
@@ -663,99 +747,26 @@ export function EmployeeCreatePage() {
                   )}
                 />
               </div>
-
-              {/* Row 3: Citizenship */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-
-              {/* Row 4: Contact Numbers */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <FormField
-                  control={form.control}
-                  name="citizenship"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Citizenship</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select citizenship" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Filipino">Filipino</SelectItem>
-                          <SelectItem value="Dual Citizenship">
-                            Dual Citizenship
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                {form.watch("citizenship") === "Dual Citizenship" && (
-                  <FormField
-                    control={form.control}
-                    name="dual_citizenship_country"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Dual Citizenship Country</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Country name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
-                <FormField
-                  control={form.control}
-                  name="telephone_no"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Telephone No.</FormLabel>
-                      <FormControl>
-                        <Input placeholder="(02) 1234-5678" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="mobile_no"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Mobile No.</FormLabel>
-                      <FormControl>
-                        <Input placeholder="+63 912 345 6789" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
             </CardContent>
           </Card>
 
-          {/* Residential Address (Detailed) */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Residential Address</CardTitle>
-              <CardDescription>
-                Complete residential address details
-              </CardDescription>
-            </CardHeader>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Residential Address (Detailed) */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Residential Address</CardTitle>
+                <CardDescription>
+                  Complete residential address details
+                </CardDescription>
+              </CardHeader>
             <CardContent className="grid gap-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <FormField
                   control={form.control}
                   name="residential_house_no"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>House/Block/Lot No.</FormLabel>
+                      <FormLabel>Block/Lot No. *</FormLabel>
                       <FormControl>
                         <Input placeholder="Block 1 Lot 2" {...field} />
                       </FormControl>
@@ -768,7 +779,7 @@ export function EmployeeCreatePage() {
                   name="residential_street"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Street</FormLabel>
+                      <FormLabel>Street *</FormLabel>
                       <FormControl>
                         <Input placeholder="Main Street" {...field} />
                       </FormControl>
@@ -789,14 +800,27 @@ export function EmployeeCreatePage() {
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={form.control}
+                  name="residential_zipcode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>ZIP Code *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="1234" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <FormField
                   control={form.control}
                   name="residential_barangay"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Barangay</FormLabel>
+                      <FormLabel>Barangay *</FormLabel>
                       <FormControl>
                         <Input placeholder="Barangay Name" {...field} />
                       </FormControl>
@@ -809,7 +833,7 @@ export function EmployeeCreatePage() {
                   name="residential_city"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>City/Municipality</FormLabel>
+                      <FormLabel>City/Municipality *</FormLabel>
                       <FormControl>
                         <Input placeholder="City Name" {...field} />
                       </FormControl>
@@ -822,7 +846,7 @@ export function EmployeeCreatePage() {
                   name="residential_province"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Province</FormLabel>
+                      <FormLabel>Province *</FormLabel>
                       <FormControl>
                         <Input placeholder="Province Name" {...field} />
                       </FormControl>
@@ -830,39 +854,38 @@ export function EmployeeCreatePage() {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="residential_zipcode"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>ZIP Code</FormLabel>
-                      <FormControl>
-                        <Input placeholder="1234" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                
               </div>
             </CardContent>
           </Card>
 
-          {/* Permanent Address (Detailed) */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Permanent Address</CardTitle>
-              <CardDescription>
-                Complete permanent address details
-              </CardDescription>
-            </CardHeader>
+            {/* Permanent Address (Detailed) */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Permanent Address</CardTitle>
+                  <CardDescription>
+                    Complete permanent address details
+                  </CardDescription>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={copyResidentialToPermanent}
+                >
+                  <Copy className="mr-2 h-4 w-4" />
+                  Copy from Residential
+                </Button>
+              </CardHeader>
             <CardContent className="grid gap-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <FormField
                   control={form.control}
                   name="permanent_house_no"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>House/Block/Lot No.</FormLabel>
+                      <FormLabel>Block/Lot No. *</FormLabel>
                       <FormControl>
                         <Input placeholder="Block 1 Lot 2" {...field} />
                       </FormControl>
@@ -875,7 +898,7 @@ export function EmployeeCreatePage() {
                   name="permanent_street"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Street</FormLabel>
+                      <FormLabel>Street *</FormLabel>
                       <FormControl>
                         <Input placeholder="Main Street" {...field} />
                       </FormControl>
@@ -896,14 +919,27 @@ export function EmployeeCreatePage() {
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={form.control}
+                  name="permanent_zipcode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>ZIP Code *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="1234" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <FormField
                   control={form.control}
                   name="permanent_barangay"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Barangay</FormLabel>
+                      <FormLabel>Barangay *</FormLabel>
                       <FormControl>
                         <Input placeholder="Barangay Name" {...field} />
                       </FormControl>
@@ -916,7 +952,7 @@ export function EmployeeCreatePage() {
                   name="permanent_city"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>City/Municipality</FormLabel>
+                      <FormLabel>City/Municipality *</FormLabel>
                       <FormControl>
                         <Input placeholder="City Name" {...field} />
                       </FormControl>
@@ -929,7 +965,7 @@ export function EmployeeCreatePage() {
                   name="permanent_province"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Province</FormLabel>
+                      <FormLabel>Province *</FormLabel>
                       <FormControl>
                         <Input placeholder="Province Name" {...field} />
                       </FormControl>
@@ -937,22 +973,11 @@ export function EmployeeCreatePage() {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="permanent_zipcode"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>ZIP Code</FormLabel>
-                      <FormControl>
-                        <Input placeholder="1234" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                
               </div>
             </CardContent>
-          </Card>
+            </Card>
+          </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Employment Information Card */}
@@ -972,7 +997,7 @@ export function EmployeeCreatePage() {
                       name="plantilla_position"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Position</FormLabel>
+                          <FormLabel>Position *</FormLabel>
                           <FormControl>
                             <Input
                               placeholder="Software Developer"
@@ -988,7 +1013,7 @@ export function EmployeeCreatePage() {
                       name="department"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Department</FormLabel>
+                          <FormLabel>Department *</FormLabel>
                           <FormControl>
                             <Input placeholder="IT Department" {...field} />
                           </FormControl>
@@ -1005,7 +1030,7 @@ export function EmployeeCreatePage() {
                       name="plantilla_number"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Plantilla Number</FormLabel>
+                          <FormLabel>Plantilla Number *</FormLabel>
                           <FormControl>
                             <Input placeholder="P-001" {...field} />
                           </FormControl>
@@ -1041,7 +1066,7 @@ export function EmployeeCreatePage() {
                       name="current_daily_rate"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Daily Rate</FormLabel>
+                          <FormLabel>Daily Rate *</FormLabel>
                           <FormControl>
                             <Input
                               type="number"
@@ -1057,6 +1082,11 @@ export function EmployeeCreatePage() {
                                     : undefined
                                 )
                               }
+                              onKeyPress={(e) => {
+                                if (!/[0-9.]/.test(e.key)) {
+                                  e.preventDefault();
+                                }
+                              }}
                             />
                           </FormControl>
                           <FormMessage />
@@ -1068,7 +1098,7 @@ export function EmployeeCreatePage() {
                       name="salary_grade"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Salary Grade</FormLabel>
+                          <FormLabel>Salary Grade *</FormLabel>
                           <FormControl>
                             <Input
                               type="number"
@@ -1084,6 +1114,11 @@ export function EmployeeCreatePage() {
                                     : undefined
                                 )
                               }
+                              onKeyPress={(e) => {
+                                if (!/[0-9]/.test(e.key)) {
+                                  e.preventDefault();
+                                }
+                              }}
                             />
                           </FormControl>
                           <FormMessage />
@@ -1095,7 +1130,7 @@ export function EmployeeCreatePage() {
                       name="step_increment"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Step Increment</FormLabel>
+                          <FormLabel>Step Increment *</FormLabel>
                           <FormControl>
                             <Input
                               type="number"
@@ -1111,6 +1146,11 @@ export function EmployeeCreatePage() {
                                     : undefined
                                 )
                               }
+                              onKeyPress={(e) => {
+                                if (!/[0-9]/.test(e.key)) {
+                                  e.preventDefault();
+                                }
+                              }}
                             />
                           </FormControl>
                           <FormMessage />
@@ -1125,7 +1165,7 @@ export function EmployeeCreatePage() {
                       name="employment_status"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Employment Status</FormLabel>
+                          <FormLabel>Employment Status *</FormLabel>
                           <Select
                             onValueChange={field.onChange}
                             value={field.value}
@@ -1285,44 +1325,44 @@ export function EmployeeCreatePage() {
             </Card>
           </div>
 
-          {/* Civil Service Eligibility */}
-          <Card>
-            <CardHeader>
-              <CardTitle>IV. Civil Service Eligibility</CardTitle>
-              <CardDescription>
-                Career service, RA 1080 (Board/Bar) eligibility, and
-                professional licenses
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ExamCertificateManager
-                certificates={examCertificates}
-                onChange={setExamCertificates}
-              />
-            </CardContent>
-          </Card>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Civil Service Eligibility */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Civil Service Eligibility</CardTitle>
+                <CardDescription>
+                  Career Service, RA 1080 (Board/Bar) eligibility, and professional licenses
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ExamCertificateManager
+                  certificates={examCertificates}
+                  onChange={setExamCertificates}
+                />
+              </CardContent>
+            </Card>
 
-          {/* Work Experience */}
-          <Card>
-            <CardHeader>
-              <CardTitle>V. Work Experience</CardTitle>
-              <CardDescription>
-                Include all work experience starting from most recent (write in
-                full)
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <WorkExperienceManager
-                workExperiences={workExperiences}
-                onChange={setWorkExperiences}
-              />
-            </CardContent>
-          </Card>
+            {/* Work Experience */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Work Experience</CardTitle>
+                <CardDescription>
+                  Include all work experience starting from most recent
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <WorkExperienceManager
+                  workExperiences={workExperiences}
+                  onChange={setWorkExperiences}
+                />
+              </CardContent>
+            </Card>
+          </div>
 
           {/* Learning and Development */}
           <Card>
             <CardHeader>
-              <CardTitle>VII. Learning and Development (L&D)</CardTitle>
+              <CardTitle>Learning and Development (L&D)</CardTitle>
               <CardDescription>
                 Training programs and interventions attended
               </CardDescription>

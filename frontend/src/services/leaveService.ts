@@ -84,6 +84,11 @@ class LeaveService {
     return response.data;
   }
 
+  async createLeaveApplicationWithFile(formData: FormData): Promise<LeaveApplication> {
+    const response = await apiService.postFormData<{ success: boolean; data: LeaveApplication }>('/leaves', formData);
+    return response.data;
+  }
+
   async updateLeaveApplication(id: number, application: UpdateLeaveApplicationDTO): Promise<LeaveApplication> {
     const response = await apiService.put<{ success: boolean; data: LeaveApplication }>(`/leaves/${id}`, application);
     return response.data;
