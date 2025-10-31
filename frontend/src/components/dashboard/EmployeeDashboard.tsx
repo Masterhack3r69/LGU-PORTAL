@@ -14,8 +14,6 @@ import {
   Clock,
   GraduationCap,
   User,
-  DollarSign,
-  Award,
   CheckCircle,
   Activity,
   Info,
@@ -74,7 +72,6 @@ export function EmployeeDashboard({
       return <Calendar className="h-4 w-4" />;
     }
     if (type === "training") return <GraduationCap className="h-4 w-4" />;
-    if (type === "payroll") return <DollarSign className="h-4 w-4" />;
     return <User className="h-4 w-4" />;
   };
 
@@ -85,7 +82,6 @@ export function EmployeeDashboard({
       return "bg-blue-100 text-blue-600";
     }
     if (type === "training") return "bg-purple-100 text-purple-600";
-    if (type === "payroll") return "bg-orange-100 text-orange-600";
     return "bg-gray-100 text-gray-600";
   };
 
@@ -239,22 +235,6 @@ export function EmployeeDashboard({
             >
               <Calendar className="mr-2 h-4 w-4 text-blue-600" />
               <span className="font-medium">Apply for Leave</span>
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full justify-start hover:bg-green-50 hover:border-green-200 transition-colors"
-              onClick={() => onQuickAction("view-payroll")}
-            >
-              <DollarSign className="mr-2 h-4 w-4 text-green-600" />
-              <span className="font-medium">View Payroll</span>
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full justify-start hover:bg-purple-50 hover:border-purple-200 transition-colors"
-              onClick={() => onQuickAction("view-benefits")}
-            >
-              <Award className="mr-2 h-4 w-4 text-purple-600" />
-              <span className="font-medium">View Benefits</span>
             </Button>
             <Button
               variant="outline"

@@ -11,7 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import {
   Users,
   Clock,
-  DollarSign,
   Activity,
   BarChart3,
   Calendar,
@@ -97,8 +96,6 @@ export function AdminDashboard({ stats, onQuickAction }: AdminDashboardProps) {
         return <Users className="h-4 w-4" />;
       case "leave":
         return <Calendar className="h-4 w-4" />;
-      case "payroll":
-        return <DollarSign className="h-4 w-4" />;
       case "training":
         return <FileText className="h-4 w-4" />;
       default:
@@ -112,8 +109,6 @@ export function AdminDashboard({ stats, onQuickAction }: AdminDashboardProps) {
         return "bg-blue-100 text-blue-600";
       case "leave":
         return "bg-green-100 text-green-600";
-      case "payroll":
-        return "bg-purple-100 text-purple-600";
       case "training":
         return "bg-orange-100 text-orange-600";
       default:
@@ -127,9 +122,6 @@ export function AdminDashboard({ stats, onQuickAction }: AdminDashboardProps) {
       .replace(/CREATE_POST_/g, "Created ")
       .replace(/UPDATE_POST_/g, "Updated ")
       .replace(/DELETE_POST_/g, "Deleted ")
-      .replace(/\/periods\/\d+\/finalize/g, " payroll period")
-      .replace(/\/items\/\d+\/finalize/g, " payroll item")
-      .replace(/\/periods\/\d+\/employees/g, " employee payroll")
       .replace(/_/g, " ")
       .toLowerCase()
       .replace(/^\w/, (c) => c.toUpperCase());
@@ -138,7 +130,7 @@ export function AdminDashboard({ stats, onQuickAction }: AdminDashboardProps) {
   return (
     <>
       {/* Admin Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card className="border-l-4 border-l-blue-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -166,33 +158,6 @@ export function AdminDashboard({ stats, onQuickAction }: AdminDashboardProps) {
               {stats.pendingLeaveApplications}
             </div>
             <p className="text-xs text-muted-foreground">leave applications</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-green-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Payroll Status
-            </CardTitle>
-            <DollarSign className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div
-              className={`text-2xl font-bold ${
-                stats.monthlyPayrollStatus === "completed"
-                  ? "text-green-600"
-                  : stats.monthlyPayrollStatus === "processing"
-                  ? "text-yellow-600"
-                  : "text-red-600"
-              }`}
-            >
-              {stats.monthlyPayrollStatus === "completed"
-                ? "Completed"
-                : stats.monthlyPayrollStatus === "processing"
-                ? "Processing"
-                : "Pending"}
-            </div>
-            <p className="text-xs text-muted-foreground">this month</p>
           </CardContent>
         </Card>
 
@@ -288,7 +253,7 @@ export function AdminDashboard({ stats, onQuickAction }: AdminDashboardProps) {
       </div>
 
       {/* Monthly Overview */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">New Employees</CardTitle>
@@ -333,26 +298,6 @@ export function AdminDashboard({ stats, onQuickAction }: AdminDashboardProps) {
             <p className="text-xs text-muted-foreground">sessions this month</p>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">
-              Payroll Status
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div
-              className={`text-2xl font-bold ${
-                stats.monthlyStats.payrollProcessed
-                  ? "text-green-600"
-                  : "text-red-600"
-              }`}
-            >
-              {stats.monthlyStats.payrollProcessed ? "Done" : "Pending"}
-            </div>
-            <p className="text-xs text-muted-foreground">for this month</p>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Admin Quick Actions and Recent Activities */}
@@ -380,14 +325,6 @@ export function AdminDashboard({ stats, onQuickAction }: AdminDashboardProps) {
             >
               <Calendar className="mr-2 h-4 w-4 text-green-600" />
               <span className="font-medium">Approve Leave Applications</span>
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full justify-start hover:bg-purple-50 hover:border-purple-200 transition-colors"
-              onClick={() => onQuickAction("payroll-management")}
-            >
-              <DollarSign className="mr-2 h-4 w-4 text-purple-600" />
-              <span className="font-medium">Payroll Management</span>
             </Button>
             <Button
               variant="outline"

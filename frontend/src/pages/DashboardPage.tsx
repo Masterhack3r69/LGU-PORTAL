@@ -61,12 +61,6 @@ export function DashboardPage() {
       case 'update-profile':
         navigate('/profile');
         break;
-      case 'view-payroll':
-        navigate('/payroll/employee');
-        break;
-      case 'view-benefits':
-        navigate('/benefits/employee');
-        break;
       case 'view-training':
         navigate('/training/my-trainings');
         break;
@@ -75,9 +69,6 @@ export function DashboardPage() {
         break;
       case 'approve-leaves':
         navigate('/leaves/approvals');
-        break;
-      case 'payroll-management':
-        navigate('/payroll/periods');
         break;
       case 'view-reports':
         navigate('/reports');
